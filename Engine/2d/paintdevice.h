@@ -33,6 +33,11 @@ inline AlignFlag operator & (AlignFlag a,const AlignFlag& b) {
 
 class PaintDevice {
   public:
+    PaintDevice()=default;
+    PaintDevice(PaintDevice&)=default;
+    PaintDevice(PaintDevice&&)=default;
+    PaintDevice& operator=(const PaintDevice&)=default;
+    PaintDevice& operator=(PaintDevice&&)=default;
     virtual ~PaintDevice()=default;
 
     enum Blend : uint8_t {

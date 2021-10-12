@@ -179,10 +179,10 @@ struct Pixmap::Impl {
     r = uint16_t(std::fmax(0.f,std::fmin(v,1.f))*65535);
     }
   static void copy(float& r,uint8_t v){
-    r = v/255.f;
+    r = (float)v/255.f;
     }
   static void copy(float& r,uint16_t v){
-    r = v/65535.f;
+    r = (float)v/65535.f;
     }
   static void copy(float& r,float v){
     r = v;
@@ -190,8 +190,8 @@ struct Pixmap::Impl {
 
   static uint8_t bytesPerChannel(Pixmap::Format frm) {
     switch(frm) {
-      case Pixmap::Format::DXT1:    return 0;
-      case Pixmap::Format::DXT3:    return 0;
+      case Pixmap::Format::DXT1:    //return 0;
+      case Pixmap::Format::DXT3:    //return 0;
       case Pixmap::Format::DXT5:    return 0;
       //---
       default:
@@ -223,7 +223,7 @@ struct Pixmap::Impl {
         for(uint32_t x=0; x<4; ++x)
           for(uint32_t y=0; y<4; ++y){
             uint8_t * v = &px[ (i+x + (r+y)*w)*bpp ];
-            std::memcpy( v, pixels[y][x], bpp);
+            std::memcpy( v, (squish::u8*)pixels[y][x], bpp);
             }
         }
     }
@@ -284,11 +284,11 @@ Pixmap::Pixmap(const Pixmap &src)
   :impl(new Impl(*src.impl)){
   }
 
-Pixmap::Pixmap(Pixmap &&p)
+Pixmap::Pixmap(Pixmap &&p) noexcept
   :impl(std::move(p.impl)){
   }
 
-Pixmap& Pixmap::operator=(Pixmap &&p) {
+Pixmap& Pixmap::operator=(Pixmap &&p) noexcept {
   impl=std::move(p.impl);
   return *this;
   }
@@ -300,8 +300,7 @@ Pixmap& Pixmap::operator=(const Pixmap &p) {
   return *this;
   }
 
-Pixmap::~Pixmap() {
-  }
+Pixmap::~Pixmap() = default;
 
 void Pixmap::save(const char *path, const char *ext) const {
   WFile f(path);

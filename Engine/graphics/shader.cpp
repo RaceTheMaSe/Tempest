@@ -9,5 +9,4 @@ Shader::Shader(Tempest::Device &dev, Detail::DSharedPtr<AbstractGraphicsApi::Sha
   :dev(&dev),impl(std::move(impl)) {
   }
 
-Shader::~Shader(){
-  }
+Shader::~Shader()= default;

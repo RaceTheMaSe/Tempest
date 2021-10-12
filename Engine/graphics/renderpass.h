@@ -14,14 +14,12 @@ class Encoder;
 
 class FboMode final {
   public:
-    enum {
-      ClearBit = 1<<2,
-      };
     enum Mode {
       Discard     = 0,
       PreserveIn  = 1,
       PreserveOut = 1<<1,
-      Preserve    = (PreserveIn|PreserveOut),
+      ClearBit    = 1<<2, // don't use directly
+      Preserve    = (PreserveIn|PreserveOut)
       };
     FboMode()=default;
     FboMode(Mode m):mode(m){}

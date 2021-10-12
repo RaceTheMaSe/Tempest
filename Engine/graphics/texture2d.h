@@ -16,13 +16,13 @@ class CommandBuffer;
 class Texture2d final {
   public:
     Texture2d()=default;
-    Texture2d(Texture2d&&);
+    Texture2d(Texture2d&&) noexcept;
     ~Texture2d();
-    Texture2d& operator=(Texture2d&&);
+    Texture2d& operator=(Texture2d&&) noexcept;
 
     int           w() const { return texW; }
     int           h() const { return texH; }
-    Size          size() const { return Size(texW,texH); }
+    Size          size() const { return {texW,texH}; }
     bool          isEmpty() const { return texW<=0 || texH<=0; }
     TextureFormat format() const { return frm; }
     uint32_t      mipCount() const;

@@ -34,7 +34,7 @@ class VCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
 
     VCommandBuffer()=delete;
     VCommandBuffer(VDevice &device, VkCommandPoolCreateFlags flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    ~VCommandBuffer();
+    ~VCommandBuffer() override;
 
     VkCommandBuffer                impl=nullptr;
     std::vector<VSwapchain::Sync*> swapchainSync;

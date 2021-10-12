@@ -8,7 +8,7 @@
 using namespace Tempest;
 using namespace Tempest::Detail;
 
-VTexture::VTexture(VTexture &&other) {
+VTexture::VTexture(VTexture &&other)  noexcept {
   std::swap(impl,     other.impl);
   std::swap(view,     other.view);
   std::swap(format,   other.format);

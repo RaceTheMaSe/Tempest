@@ -13,7 +13,7 @@ class DxBuffer : public AbstractGraphicsApi::Buffer {
   public:
     DxBuffer() = delete;
     DxBuffer(DxDevice* dev, ComPtr<ID3D12Resource>&& b, UINT sizeInBytes);
-    DxBuffer(DxBuffer&& other);
+    DxBuffer(DxBuffer&& other) noexcept ;
 
     void  update(const void* data,size_t off,size_t count,size_t sz,size_t alignedSz) override;
     void  read  (void* data, size_t off, size_t sz) override;

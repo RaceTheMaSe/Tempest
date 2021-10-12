@@ -13,10 +13,10 @@ class VSwapchain;
 class VFramebufferLayout : public AbstractGraphicsApi::FboLayout {
   public:
     VFramebufferLayout(VDevice &dev, VSwapchain** sw, const VkFormat* attach, uint8_t attCount);
-    VFramebufferLayout(VFramebufferLayout&& other);
-    ~VFramebufferLayout();
+    VFramebufferLayout(VFramebufferLayout&& other) noexcept;
+    ~VFramebufferLayout() override;
 
-    void operator =(VFramebufferLayout &&other);
+    VFramebufferLayout& operator =(VFramebufferLayout &&other) noexcept;
 
     VkRenderPass                   impl=VK_NULL_HANDLE;
     std::unique_ptr<VkFormat[]>    frm;

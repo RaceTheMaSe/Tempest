@@ -104,21 +104,21 @@ inline uint8_t codepointToUtf8(uint32_t cp, char *dst) {
 
   if(cp < 0x800) {
     dst[0] = char((cp >> 6) | 128 | 64);
-    dst[1] = char(cp & 0x3F) | 128;
+    dst[1] = char((cp & 0x3F) | 128);
     return 2;
     }
 
   if(cp < 0x10000) {
-    dst[0] = char((cp >> 12) | 128 | 64 | 32);
-    dst[1] = char((cp >> 6) & 0x3F) | 128;
-    dst[2] = char(cp & 0x3F) | 128;
+    dst[0] = char(((cp >> 12) | 128 | 64 | 32));
+    dst[1] = char(((cp >> 6) & 0x3F) | 128);
+    dst[2] = char((cp & 0x3F) | 128);
     return 3;
     }
 
-  dst[0] = char((cp >> 18) | 128 | 64 | 32 | 16);
-  dst[1] = char((cp >> 12) & 0x3F) | 128;
-  dst[2] = char((cp >> 6) & 0x3F) | 128;
-  dst[3] = char(cp & 0x3F) | 128;
+  dst[0] = char(((cp >> 18) | 128 | 64 | 32 | 16));
+  dst[1] = char(((cp >> 12) & 0x3F) | 128);
+  dst[2] = char(((cp >> 6) & 0x3F) | 128);
+  dst[3] = char((cp & 0x3F) | 128);
   return 4;
   }
 
@@ -199,7 +199,7 @@ class Utf8Iterator {
         return '\0';
         }
 
-      char32_t ch;
+      char32_t ch=0;
       switch(l){
         case 1:
           ch=Detail::getChar1(str);

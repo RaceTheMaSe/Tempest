@@ -1,5 +1,7 @@
 #include "painter.h"
 
+#include <cmath>
+
 #include <Tempest/Application>
 #include <Tempest/PaintDevice>
 #include <Tempest/Event>
@@ -17,8 +19,8 @@ Painter::Painter(PaintEvent &ev, Mode m)
   s.tr.mat = Transform(1,0,0,
                        0,1,0,
                        float(dp.x), float(dp.y), 1);
-  s.tr.invW = 2.f/(ev.w());
-  s.tr.invH = 2.f/(ev.h());
+  s.tr.invW = 2.f/((float)ev.w());
+  s.tr.invH = 2.f/((float)ev.h());
 
   const Rect&  r = ev.viewPort();
   s.scRect.ox = dp.x;
@@ -65,8 +67,8 @@ void Painter::implAddPoint(float x, float y, float u, float v) {
   }
 
 void Painter::implAddPoint(int x, int y, float u, float v) {
-  pt.x=x*s.tr.invW-1.f;
-  pt.y=y*s.tr.invH-1.f;
+  pt.x=(float)x*s.tr.invW-1.f;
+  pt.y=(float)y*s.tr.invH-1.f;
   pt.u=u;
   pt.v=v;
   dev.addPoint(pt);
@@ -86,7 +88,7 @@ void Painter::drawTriangle(int x0, int y0, float u0, float v0,
   implDrawTrig( float(x0), float(y0), s.dU+u0*s.invW,s.dV+v0*s.invH,
                 float(x1), float(y1), s.dU+u1*s.invW,s.dV+v1*s.invH,
                 float(x2), float(y2), s.dU+u2*s.invW,s.dV+v2*s.invH,
-                trigBuf, 0 );
+                (Tempest::Painter::FPoint*)trigBuf, 0 );
   }
 
 void Painter::drawTriangle(float x0, float y0, float u0, float v0,
@@ -96,7 +98,7 @@ void Painter::drawTriangle(float x0, float y0, float u0, float v0,
   implDrawTrig( x0, y0, s.dU+u0*s.invW,s.dV+v0*s.invH,
                 x1, y1, s.dU+u1*s.invW,s.dV+v1*s.invH,
                 x2, y2, s.dU+u2*s.invW,s.dV+v2*s.invH,
-                trigBuf, 0 );
+                (Tempest::Painter::FPoint*)trigBuf, 0 );
   }
 
 void Painter::implDrawTrig( float x0, float y0, float u0, float v0,
@@ -112,7 +114,7 @@ void Painter::implDrawTrig( float x0, float y0, float u0, float v0,
   float u[4] = {u0,u1,u2,u0};
   float v[4] = {v0,v1,v2,v0};
 
-  float mid;
+  float mid = 0;
   float sx = 0.f;
   bool  cs = false, ns = false;
 
@@ -272,7 +274,7 @@ void Painter::implDrawRect(int x1, int y1, int x2, int y2, float u1, float v1, f
       x1+=dx;
       if(x1>=x2)
         return;
-      u1+=dx*invW;
+      u1+=(float)dx*invW;
       }
 
     if(sc.x1<x2){
@@ -280,7 +282,7 @@ void Painter::implDrawRect(int x1, int y1, int x2, int y2, float u1, float v1, f
       x2+=dx;
       if(x1>=x2)
         return;
-      u2+=dx*invW;
+      u2+=(float)dx*invW;
       }
 
     if(y1<sc.y){
@@ -288,7 +290,7 @@ void Painter::implDrawRect(int x1, int y1, int x2, int y2, float u1, float v1, f
       y1+=dy;
       if(y1>=y2)
         return;
-      v1+=dy*invH;
+      v1+=(float)dy*invH;
       }
 
     if(sc.y1<y2){
@@ -296,7 +298,7 @@ void Painter::implDrawRect(int x1, int y1, int x2, int y2, float u1, float v1, f
       y2+=dy;
       if(y1>=y2)
         return;
-      v2+=dy*invH;
+      v2+=(float)dy*invH;
       }
 
     implAddPoint(x1,y1, u1,v1);
@@ -316,11 +318,11 @@ void Painter::implDrawRect(int x1, int y1, int x2, int y2, float u1, float v1, f
     implDrawTrig( x[0], y[0], u1, v1,
                   x[1], y[1], u2, v1,
                   x[2], y[2], u2, v2,
-                  trigBuf, 0 );
+                  (Tempest::Painter::FPoint*)trigBuf, 0 );
     implDrawTrig(x[0],y[0], u1,v1,
                  x[2],y[2], u2,v2,
                  x[3],y[3], u1,v2,
-                 trigBuf, 0 );
+                 (Tempest::Painter::FPoint*)trigBuf, 0 );
     }
   }
 
@@ -339,11 +341,11 @@ void Painter::implDrawRectF(float x1, float y1, float x2, float y2, float u1, fl
   implDrawTrig( x[0], y[0], u1, v1,
                 x[1], y[1], u2, v1,
                 x[2], y[2], u2, v2,
-                trigBuf, 0 );
+                (Tempest::Painter::FPoint*)trigBuf, 0 );
   implDrawTrig(x[0],y[0], u1,v1,
                x[2],y[2], u2,v2,
                x[3],y[3], u1,v2,
-               trigBuf, 0 );
+               (Tempest::Painter::FPoint*)trigBuf, 0 );
   }
 
 void Painter::drawRect(float x, float y, float w, float h, float u1, float v1, float u2, float v2) {
@@ -361,15 +363,15 @@ void Painter::drawRect(int x, int y, int w, int h, float u1, float v1, float u2,
   }
 
 void Painter::drawRect(int x, int y, int w, int h, int u1, int v1, int u2, int v2) {
-  implDrawRect(x,y,x+w,y+h, s.dU+u1*s.invW,s.dV+v1*s.invH,u2*s.invW+s.dU,v2*s.invH+s.dV);
+  implDrawRect(x,y,x+w,y+h, s.dU+(float)u1*s.invW,s.dV+(float)v1*s.invH,(float)u2*s.invW+s.dU,(float)v2*s.invH+s.dV);
   }
 
 void Painter::drawRect(int x, int y, int w, int h) {
-  implDrawRect(x,y,x+w,y+h, s.dU,s.dV,w*s.invW+s.dU,h*s.invH+s.dV);
+  implDrawRect(x,y,x+w,y+h, s.dU,s.dV,(float)w*s.invW+s.dU,(float)h*s.invH+s.dV);
   }
 
 void Painter::drawRect(int x, int y, unsigned w, unsigned h) {
-  implDrawRect(x,y,x+int(w),y+int(h), s.dU,s.dV,w*s.invW+s.dU,h*s.invH+s.dV);
+  implDrawRect(x,y,x+int(w),y+int(h), s.dU,s.dV,(float)w*s.invW+s.dU,(float)h*s.invH+s.dV);
   }
 
 void Painter::drawRect(const Rect& rect) {
@@ -388,7 +390,7 @@ void Painter::drawLine(int ix1, int iy1, int ix2, int iy2) {
     return;
     }*/
 
-  float x1,y1,x2,y2;
+  float x1=0,y1=0,x2=0,y2=0;
 
   s.tr.mat.map(float(ix1),float(iy1),x1,y1);
   s.tr.mat.map(float(ix2),float(iy2),x2,y2);
@@ -398,26 +400,26 @@ void Painter::drawLine(int ix1, int iy1, int ix2, int iy2) {
     std::swap(y2, y1);
     }
 
-  if(x1>sc.x1 && x2>sc.x1)
+  if(x1>(float)sc.x1 && x2>(float)sc.x1)
     return;
-  if(x1<sc.x  && x2<sc.x)
+  if(x1<(float)sc.x  && x2<(float)sc.x)
     return;
-  if(y1>sc.y1 && y2>sc.y1)
+  if(y1>(float)sc.y1 && y2>(float)sc.y1)
     return;
-  if(y1<sc.y  && y2<sc.y)
+  if(y1<(float)sc.y  && y2<(float)sc.y)
     return;
 
-  if( x1<sc.x ){
+  if( x1<(float)sc.x ){
     if(std::fabs(x1-x2)<0.0001f)
       return;
-    y1 += (sc.x-x1)*(y2-y1)/(x2-x1);
+    y1 += ((float)sc.x-x1)*(y2-y1)/(x2-x1);
     x1 = float(sc.x);
     }
 
-  if( x2 > sc.x1 ){
+  if( x2 > (float)sc.x1 ){
     if(std::fabs(x1-x2)<0.0001f)
       return;
-    y2 += (sc.x1-x2)*(y2-y1)/(x2-x1);
+    y2 += ((float)sc.x1-x2)*(y2-y1)/(x2-x1);
     x2 = float(sc.x1);
     }
 
@@ -426,17 +428,17 @@ void Painter::drawLine(int ix1, int iy1, int ix2, int iy2) {
     std::swap(y2, y1);
     }
 
-  if( y1<sc.y ){
+  if( y1<(float)sc.y ){
     if(std::fabs(y1-y2)<0.0001f)
       return;
-    x1 += (sc.y-y1)*(x2-x1)/(y2-y1);
+    x1 += ((float)sc.y-y1)*(x2-x1)/(y2-y1);
     y1 = float(sc.y);
     }
 
-  if( y2 > sc.y1 ){
+  if( y2 > (float)sc.y1 ){
     if(std::fabs(y1-y2)<0.0001f)
       return;
-    x2 += (sc.y1-y2)*(x2-x1)/(y2-y1);
+    x2 += ((float)sc.y1-y2)*(x2-x1)/(y2-y1);
     y2 = float(sc.y1);
     }
 
@@ -506,8 +508,8 @@ void Painter::drawText(int x, int y, const char *txt) {
     auto l = s.fnt.letterGeometry(c);
     if(!l.size.isEmpty()) {
       auto& v     = fx.letter(c,ta);
-      float dposX = float(v.dpos.x*kH), dposY = float(v.dpos.y*kV);
-      float szX   = float(v.size.w*kH), szY   = float(v.size.h*kV);
+      auto  dposX = float(v.dpos.x)*kH, dposY = float(v.dpos.y)*kV;
+      float szX   = float(v.size.w)*kH, szY   = float(v.size.h)*kV;
 
       setBrush(Brush(v.view,pb.color,PaintDevice::Alpha));
       drawRect(float(x)+dposX,float(y)+dposY,szX,szY,
@@ -532,8 +534,8 @@ void Painter::drawText(int x, int y, const char16_t *txt) {
     auto l = s.fnt.letterGeometry(*txt);
     if(!l.size.isEmpty()) {
       auto& v     = fx.letter(*txt,ta);
-      float dposX = float(v.dpos.x*kH), dposY = float(v.dpos.y*kV);
-      float szX   = float(v.size.w*kH), szY   = float(v.size.h*kV);
+      auto  dposX = float(v.dpos.x)*kH, dposY = float(v.dpos.y)*kV;
+      float szX   = float(v.size.w)*kH, szY   = float(v.size.h)*kV;
 
       setBrush(Brush(v.view,pb.color,PaintDevice::Alpha));
       drawRect(float(x)+dposX,float(y)+dposY,szX,szY,
@@ -651,8 +653,8 @@ void Painter::drawText(int rx, int ry, int w, int h, const char *txt, AlignFlag 
 
       if(!l.size.isEmpty()) {
         auto& v     = fx.letter(c,ta);
-        float dposX = float(v.dpos.x*kH), dposY = float(v.dpos.y*kV);
-        float szX   = float(v.size.w*kH), szY   = float(v.size.h*kV);
+        auto  dposX = float(v.dpos.x)*kH, dposY = float(v.dpos.y)*kV;
+        float szX   = float(v.size.w)*kH, szY   = float(v.size.h)*kV;
 
         setBrush(Brush(v.view,pb.color,PaintDevice::Alpha));
         drawRect(float(rx)+float(x)+dposX,float(ry)+float(y)+dposY,szX,szY,

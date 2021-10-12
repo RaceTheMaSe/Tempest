@@ -13,7 +13,7 @@ DescriptorSet::DescriptorSet(AbstractGraphicsApi::Desc *desc)
     impl = &emptyDesc;
   }
 
-DescriptorSet::DescriptorSet(DescriptorSet&& u)
+DescriptorSet::DescriptorSet(DescriptorSet&& u) noexcept
   : impl(std::move(u.impl)) {
   }
 
@@ -23,7 +23,7 @@ DescriptorSet::~DescriptorSet() {
   delete impl.handler;
   }
 
-DescriptorSet& DescriptorSet::operator=(DescriptorSet&& u) {
+DescriptorSet& DescriptorSet::operator=(DescriptorSet&& u) noexcept {
   impl=std::move(u.impl);
   return *this;
   }

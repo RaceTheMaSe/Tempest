@@ -2,6 +2,7 @@
 
 #include <Tempest/Platform>
 #include <Tempest/Rect>
+#include <Tempest/Event>
 #include <Tempest/WidgetState>
 
 #include <memory>
@@ -12,6 +13,7 @@ namespace Tempest {
 class SizeEvent;
 class MouseEvent;
 class KeyEvent;
+class GamepadKeyEvent;
 class CloseEvent;
 class PaintEvent;
 
@@ -30,7 +32,7 @@ class SystemApi {
       Maximized,
       FullScreen,
 
-      Hidden, //internal
+      Hidden //internal
       };
 
     struct TranslateKeyPair final {
@@ -39,10 +41,11 @@ class SystemApi {
       };
 
     virtual ~SystemApi()=default;
-    static Window*  createWindow(Tempest::Window* owner, uint32_t width, uint32_t height);
-    static Window*  createWindow(Tempest::Window* owner, ShowMode sm);
+    static Window*  createWindow(Tempest::Window* owner, uint32_t width, uint32_t height, const char* title);
+    static Window*  createWindow(Tempest::Window* owner, ShowMode sm, const char* title);
     static void     destroyWindow(Window* w);
     static void     exit();
+    static void     shutdown();
 
     static Rect     windowClientRect(SystemApi::Window *w);
 
@@ -55,6 +58,14 @@ class SystemApi {
     static void     addOverlay (UiOverlay* ui);
     static void     takeOverlay(UiOverlay* ui);
 
+    static void     setKeyRepeatDelay(uint64_t delay);
+    static uint64_t getKeyRepeatDelay();
+    static void     setKeyFirstRepeatDelay(uint64_t delay);
+    static uint64_t getKeyFirstRepeatDelay();
+    static void     setTickCount(uint64_t t);
+    static uint64_t getTickCount();
+    static void     clearInput();
+
   protected:
     struct AppCallBack {
       virtual ~AppCallBack()=default;
@@ -62,8 +73,8 @@ class SystemApi {
       };
 
     SystemApi();
-    virtual Window*  implCreateWindow (Tempest::Window *owner,uint32_t width,uint32_t height) = 0;
-    virtual Window*  implCreateWindow (Tempest::Window *owner,ShowMode sm) = 0;
+    virtual Window*  implCreateWindow (Tempest::Window *owner,uint32_t width,uint32_t height, const char* title) = 0;
+    virtual Window*  implCreateWindow (Tempest::Window *owner,ShowMode sm, const char* title) = 0;
     virtual void     implDestroyWindow(Window* w) = 0;
     virtual void     implExit() = 0;
 
@@ -76,9 +87,16 @@ class SystemApi {
     virtual void     implShowCursor(SystemApi::Window *w, CursorShape show) = 0;
 
     virtual bool     implIsRunning() = 0;
+    virtual bool     implIsPaused() { return false; }
+    virtual bool     implIsResumeRequested() { return false; }
+    virtual void     implRegisterApplication  (Application*) {}
+    virtual void     implUnregisterApplication(Application*) {}
     virtual int      implExec(AppCallBack& cb) = 0;
     virtual void     implProcessEvents(AppCallBack& cb) = 0;
+    virtual void     implShutdown() = 0;
 
+    static void      registerApplication  (Application *pApplication);
+    static void      unregisterApplication(Application *pApplication);
     static void      setCursorPosition(SystemApi::Window *w, int x, int y);
     static void      showCursor(SystemApi::Window *w, CursorShape c);
 
@@ -92,11 +110,23 @@ class SystemApi {
     static void      dispatchKeyDown   (Tempest::Window& cb, KeyEvent& e, uint32_t scancode);
     static void      dispatchKeyUp     (Tempest::Window& cb, KeyEvent& e, uint32_t scancode);
 
+    static void      dispatchKeyDown   (Tempest::Window& cb, GamepadKeyEvent& e, uint32_t scancode);
+    static void      dispatchKeyUp     (Tempest::Window& cb, GamepadKeyEvent& e, uint32_t scancode);
+    static void      dispatchGamepadMove(Tempest::Window& cb, AnalogEvent& e);
+
+    static void      dispatchPointerDown(Tempest::Window& cb, PointerEvent& e);
+    static void      dispatchPointerUp  (Tempest::Window& cb, PointerEvent& e);
+    static void      dispatchPointerMove(Tempest::Window& cb, PointerEvent& e);
+
     static void      dispatchResize    (Tempest::Window& cb, SizeEvent& e);
     static void      dispatchClose     (Tempest::Window& cb, CloseEvent& e);
+    static void      dispatchAppState  (Tempest::Window& cb, AppStateEvent& e);
+    static void      dispatchFocus     (Tempest::Window& cb, FocusEvent& e);
 
   private:
     static bool       isRunning();
+    static bool       isPaused();
+    static bool       isResumeRequested();
     static int        exec(AppCallBack& cb);
     static void       processEvent(AppCallBack& cb);
     static SystemApi& inst();

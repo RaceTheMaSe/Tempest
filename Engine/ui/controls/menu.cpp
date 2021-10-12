@@ -12,11 +12,11 @@ struct Menu::Delegate : public ListDelegate {
     Delegate( Menu& owner, const std::vector<Menu::Item>& items )
       :owner(owner), items(items){}
 
-    size_t  size() const{ return items.size(); }
-    Widget* createView(size_t position){
+    size_t  size() const override { return items.size(); }
+    Widget* createView(size_t position) override {
       return owner.createItem(items[position]);
       }
-    void    removeView(Widget* w, size_t /*position*/){
+    void    removeView(Widget* w, size_t /*position*/) override{
       delete w;
       }
 
@@ -127,7 +127,7 @@ Widget *Menu::createDropList( Widget& owner,
 
   sz.w = std::max(minW,sz.w);
 
-  MenuPanel *box = new MenuPanel();
+  auto *box = new MenuPanel();
   box->setMargins(Margin(0));
   sz.w+=box->margins().xMargin();
   sz.h+=box->margins().yMargin();
@@ -143,7 +143,7 @@ Widget *Menu::createDropList( Widget& owner,
   }
 
 Widget *Menu::createItems(const std::vector<Item>& items) {
-  ListView* list = new ListView(Vertical);
+  auto* list = new ListView(Vertical);
   list->setDelegate(new Delegate(*this,items));
   auto sz = list->centralWidget().sizeHint();
   list->resize(sz);
@@ -151,7 +151,7 @@ Widget *Menu::createItems(const std::vector<Item>& items) {
   }
 
 Widget *Menu::createItem(const Menu::Item &decl) {
-  ItemButton* b = new ItemButton(decl.items);
+  auto* b = new ItemButton(decl.items);
 
   b->setText(decl.text);
   b->setExtraText(decl.text2);

@@ -1,4 +1,5 @@
 #include "device.h"
+#include "graphics/framebuffer.h"
 
 #include <Tempest/Fence>
 #include <Tempest/PipelineLayout>
@@ -39,8 +40,7 @@ Device::Device(AbstractGraphicsApi &api, const char* name)
   api.getCaps(dev,devProps);
   }
 
-Device::~Device() {
-  }
+Device::~Device() = default;
 
 void Device::waitIdle() {
   impl.dev->waitIdle();
@@ -230,22 +230,22 @@ TextureFormat Device::formatOf(const Attachment& a) {
 
 FrameBuffer Device::frameBuffer(Attachment &out) {
   TextureFormat att[1] = {formatOf(out)};
-  uint32_t      w      = uint32_t(out.w());
-  uint32_t      h      = uint32_t(out.h());
+  auto          w      = uint32_t(out.w());
+  auto          h      = uint32_t(out.h());
 
   AbstractGraphicsApi::Texture*   cl[1]    = { out.tImpl.impl.handler };
   AbstractGraphicsApi::Swapchain* sw[1]    = { out.sImpl.swapchain    };
   uint32_t                        imgId[1] = { out.sImpl.id           };
-  auto                            lay      = FrameBufferLayout(api.createFboLayout(dev,sw,att,1));
+  auto                            lay      = FrameBufferLayout(api.createFboLayout(dev,(AbstractGraphicsApi::Swapchain**)sw,(Tempest::TextureFormat*)att,1));
 
-  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,1, sw,cl,imgId,nullptr);
+  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,1, (AbstractGraphicsApi::Swapchain**)sw,(AbstractGraphicsApi::Texture**)cl,(const uint32_t*)imgId,nullptr);
   return FrameBuffer(std::move(fbo),std::move(lay),w,h);
   }
 
 FrameBuffer Device::frameBuffer(Attachment& out, ZBuffer& zbuf) {
   TextureFormat att[2] = {formatOf(out),zbuf.tImpl.frm};
-  uint32_t      w      = uint32_t(out.w());
-  uint32_t      h      = uint32_t(out.h());
+  auto          w      = uint32_t(out.w());
+  auto          h      = uint32_t(out.h());
   auto          zImpl  = zbuf.tImpl.impl.handler;
 
   if(out.w()!=zbuf.w() || out.h()!=zbuf.h())
@@ -254,31 +254,31 @@ FrameBuffer Device::frameBuffer(Attachment& out, ZBuffer& zbuf) {
   AbstractGraphicsApi::Texture*   cl[1]    = { out.tImpl.impl.handler };
   AbstractGraphicsApi::Swapchain* sw[1]    = { out.sImpl.swapchain    };
   uint32_t                        imgId[1] = { out.sImpl.id           };
-  auto                            lay      = FrameBufferLayout(api.createFboLayout(dev,sw,att,2));
+  auto                            lay      = FrameBufferLayout(api.createFboLayout(dev,(AbstractGraphicsApi::Swapchain**)sw,(Tempest::TextureFormat*)att,2));
 
-  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,1, sw,cl,imgId,zImpl);
+  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,1, (AbstractGraphicsApi::Swapchain**)sw,(AbstractGraphicsApi::Texture**)cl,(const uint32_t*)imgId,zImpl);
   return FrameBuffer(std::move(fbo),std::move(lay),w,h);
   }
 
 FrameBuffer Device::frameBuffer(Attachment& out0, Attachment& out1, ZBuffer& zbuf) {
   Attachment* out[2] = {&out0, &out1};
-  return frameBuffer(out,2,&zbuf);
+  return frameBuffer((Tempest::Attachment**)out,2,&zbuf);
   }
 
 FrameBuffer Device::frameBuffer(Attachment& out0, Attachment& out1, Attachment& out2, ZBuffer& zbuf) {
   Attachment* out[3] = {&out0, &out1, &out2};
-  return frameBuffer(out,3,&zbuf);
+  return frameBuffer((Tempest::Attachment**)out,3,&zbuf);
   }
 
 FrameBuffer Device::frameBuffer(Attachment& out0, Attachment& out1, Attachment& out2, Attachment& out3, ZBuffer& zbuf) {
   Attachment* out[4] = {&out0, &out1, &out2, &out3};
-  return frameBuffer(out,4,&zbuf);
+  return frameBuffer((Tempest::Attachment**)out,4,&zbuf);
   }
 
 FrameBuffer Device::frameBuffer(Attachment** out, uint8_t count, ZBuffer* zbuf) {
   TextureFormat att[257] = {}; // 256+zbuf
-  uint32_t      w        = uint32_t(out[0]->w());
-  uint32_t      h        = uint32_t(out[0]->h());
+  auto          w        = uint32_t(out[0]->w());
+  auto          h        = uint32_t(out[0]->h());
 
   AbstractGraphicsApi::Texture*   zImpl      = nullptr;
   AbstractGraphicsApi::Swapchain* sw[256]    = {};
@@ -300,39 +300,39 @@ FrameBuffer Device::frameBuffer(Attachment** out, uint8_t count, ZBuffer* zbuf) 
     att[count] = zbuf->tImpl.frm;
     }
 
-  auto lay = FrameBufferLayout(api.createFboLayout(dev,sw,att,count+(zbuf!=nullptr ? 1 : 0)));
-  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,count, sw,cl,imgId,zImpl);
+  auto lay = FrameBufferLayout(api.createFboLayout(dev,(AbstractGraphicsApi::Swapchain**)sw,(Tempest::TextureFormat*)att,count+(zbuf!=nullptr ? 1 : 0)));
+  auto fbo = api.createFbo(dev,lay.impl.handler,w,h,count,(AbstractGraphicsApi::Swapchain**)sw,(AbstractGraphicsApi::Texture**)cl,(const uint32_t*)imgId,zImpl);
   return FrameBuffer(std::move(fbo),std::move(lay),w,h);
   }
 
 RenderPass Device::pass(const FboMode &color) {
   const FboMode* att[1]={&color};
-  RenderPass f(api.createPass(dev,att,1));
+  RenderPass f(api.createPass(dev,(const Tempest::FboMode**)att,1));
   return f;
   }
 
 RenderPass Device::pass(const FboMode& color, const FboMode& depth) {
   const FboMode* att[2]={&color,&depth};
-  RenderPass f(api.createPass(dev,att,2));
+  RenderPass f(api.createPass(dev,(const Tempest::FboMode**)att,2));
   return f;
   }
 
 RenderPass Device::pass(const FboMode& c0, const FboMode& c1, const FboMode& depth) {
   const FboMode* att[3]={&c0,&c1,&depth};
-  RenderPass f(api.createPass(dev,att,3));
+  RenderPass f(api.createPass(dev,(const Tempest::FboMode**)att,3));
   return f;
   }
 
 RenderPass Device::pass(const FboMode& c0, const FboMode& c1, const FboMode& c2, const FboMode& depth) {
   const FboMode* att[4]={&c0,&c1,&c2,&depth};
-  RenderPass f(api.createPass(dev,att,4));
+  RenderPass f(api.createPass(dev,(const Tempest::FboMode**)att,4));
   return f;
   }
 
 RenderPass Device::pass(const FboMode& c0, const FboMode& c1,
                         const FboMode& c2, const FboMode& c3, const FboMode& depth) {
   const FboMode* att[5]={&c0,&c1,&c2,&c3,&depth};
-  RenderPass f(api.createPass(dev,att,5));
+  RenderPass f(api.createPass(dev,(const Tempest::FboMode**)att,5));
   return f;
   }
 
@@ -382,6 +382,10 @@ CommandBuffer Device::commandBuffer() {
 
 const Builtin& Device::builtin() const {
   return builtins;
+  }
+
+const std::vector<AbstractGraphicsApi::Props> Device::deviceList() const {
+  return api.devices();
   }
 
 VideoBuffer Device::createVideoBuffer(const void *data, size_t count, size_t size, size_t alignedSz, MemUsage usage, BufferHeap flg) {

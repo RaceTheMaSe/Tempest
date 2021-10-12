@@ -25,7 +25,7 @@ class VPipelineLay : public AbstractGraphicsApi::PipelineLay {
   public:
     VPipelineLay(VDevice& dev, const std::vector<ShaderReflection::Binding>& comp);
     VPipelineLay(VDevice& dev, const std::vector<ShaderReflection::Binding>* sh[], size_t cnt);
-    ~VPipelineLay();
+    ~VPipelineLay() override;
 
     size_t descriptorsCount() override;
 

@@ -130,21 +130,21 @@ void VCommandBuffer::endRenderPass() {
 void VCommandBuffer::setPipeline(AbstractGraphicsApi::Pipeline& p) {
   if(curFbo==nullptr)
     throw std::system_error(Tempest::GraphicsErrc::DrawCallWithoutFbo);
-  VPipeline&           px = reinterpret_cast<VPipeline&>(p);
-  VFramebufferLayout*  l  = reinterpret_cast<VFramebufferLayout*>(curFbo->rp.handler);
-  auto& v = px.instance(*l);
+  auto& px = reinterpret_cast<VPipeline&>(p);
+  auto* l  = reinterpret_cast<VFramebufferLayout*>(curFbo->rp.handler);
+  auto& v  = px.instance(*l);
   vkCmdBindPipeline(impl,VK_PIPELINE_BIND_POINT_GRAPHICS,v.val);
   ssboBarriers = px.ssboBarriers;
   }
 
 void VCommandBuffer::setBytes(AbstractGraphicsApi::Pipeline& p, const void* data, size_t size) {
-  VPipeline&        px=reinterpret_cast<VPipeline&>(p);
+  auto& px=reinterpret_cast<VPipeline&>(p);
   vkCmdPushConstants(impl, px.pipelineLayout, px.pushStageFlags, 0, uint32_t(size), data);
   }
 
 void VCommandBuffer::setUniforms(AbstractGraphicsApi::Pipeline &p, AbstractGraphicsApi::Desc &u) {
-  VPipeline&        px=reinterpret_cast<VPipeline&>(p);
-  VDescriptorArray& ux=reinterpret_cast<VDescriptorArray&>(u);
+  auto& px=reinterpret_cast<VPipeline&>(p);
+  auto& ux=reinterpret_cast<VDescriptorArray&>(u);
   curUniforms = &ux;
   vkCmdBindDescriptorSets(impl,VK_PIPELINE_BIND_POINT_GRAPHICS,
                           px.pipelineLayout,0,
@@ -159,19 +159,19 @@ void VCommandBuffer::setComputePipeline(AbstractGraphicsApi::CompPipeline& p) {
     resState.flushLayout(*this);
     isInCompute = true;
     }
-  VCompPipeline& px = reinterpret_cast<VCompPipeline&>(p);
+  auto& px = reinterpret_cast<VCompPipeline&>(p);
   vkCmdBindPipeline(impl,VK_PIPELINE_BIND_POINT_COMPUTE,px.impl);
   ssboBarriers = px.ssboBarriers;
   }
 
 void VCommandBuffer::setBytes(AbstractGraphicsApi::CompPipeline& p, const void* data, size_t size) {
-  VCompPipeline& px=reinterpret_cast<VCompPipeline&>(p);
+  auto& px=reinterpret_cast<VCompPipeline&>(p);
   vkCmdPushConstants(impl, px.pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, uint32_t(size), data);
   }
 
 void VCommandBuffer::setUniforms(AbstractGraphicsApi::CompPipeline& p, AbstractGraphicsApi::Desc& u) {
-  VCompPipeline&    px=reinterpret_cast<VCompPipeline&>(p);
-  VDescriptorArray& ux=reinterpret_cast<VDescriptorArray&>(u);
+  auto& px=reinterpret_cast<VCompPipeline&>(p);
+  auto& ux=reinterpret_cast<VDescriptorArray&>(u);
   curUniforms = &ux;
   vkCmdBindDescriptorSets(impl,VK_PIPELINE_BIND_POINT_COMPUTE,
                           px.pipelineLayout,0,
@@ -184,11 +184,11 @@ void VCommandBuffer::draw(const AbstractGraphicsApi::Buffer& ivbo, size_t offset
     curUniforms->ssboBarriers(resState);
     resState.flushSSBO(*this);
     }
-  const VBuffer& vbo=reinterpret_cast<const VBuffer&>(ivbo);
+  const auto& vbo=reinterpret_cast<const VBuffer&>(ivbo);
   if(curVbo!=vbo.impl) {
     VkBuffer     buffers[1] = {vbo.impl};
     VkDeviceSize offsets[1] = {0};
-    vkCmdBindVertexBuffers(impl, 0, 1, buffers, offsets );
+    vkCmdBindVertexBuffers(impl, 0, 1, (VkBuffer*)buffers, (VkDeviceSize*)offsets );
     curVbo = vbo.impl;
     }
   vkCmdDraw(impl, uint32_t(size), uint32_t(instanceCount), uint32_t(offset), uint32_t(firstInstance));
@@ -205,12 +205,12 @@ void VCommandBuffer::drawIndexed(const AbstractGraphicsApi::Buffer& ivbo, const 
     VK_INDEX_TYPE_UINT32
     };
 
-  const VBuffer& vbo = reinterpret_cast<const VBuffer&>(ivbo);
-  const VBuffer& ibo = reinterpret_cast<const VBuffer&>(iibo);
+  const auto& vbo = reinterpret_cast<const VBuffer&>(ivbo);
+  const auto& ibo = reinterpret_cast<const VBuffer&>(iibo);
   if(curVbo!=vbo.impl) {
     VkBuffer     buffers[1] = {vbo.impl};
     VkDeviceSize offsets[1] = {0};
-    vkCmdBindVertexBuffers(impl, 0, 1, buffers, offsets );
+    vkCmdBindVertexBuffers(impl, 0, 1, (VkBuffer*)buffers, (VkDeviceSize*)offsets );
     curVbo = vbo.impl;
     }
   vkCmdBindIndexBuffer(impl, ibo.impl, 0, type[uint32_t(cls)]);
@@ -455,8 +455,8 @@ void VCommandBuffer::generateMipmap(AbstractGraphicsApi::Texture& img,
   if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     throw std::runtime_error("texture image format does not support linear blitting!");
 
-  int32_t w = int32_t(texWidth);
-  int32_t h = int32_t(texHeight);
+  auto w = int32_t(texWidth);
+  auto h = int32_t(texHeight);
 
   if(defLayout!=TextureLayout::TransferDest) {
     changeLayout(img,defLayout,TextureLayout::TransferDest,uint32_t(-1));
@@ -528,10 +528,12 @@ static VkAccessFlags layoutToAccess(VkImageLayout lay) {
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
       return VK_ACCESS_TRANSFER_WRITE_BIT;
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+#if !defined(__ANDROID__)
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
     case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL:
     case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL:
     case VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL:
+#endif
       return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
       return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT|VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -544,17 +546,29 @@ static VkAccessFlags layoutToAccess(VkImageLayout lay) {
       return VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT;
     case VK_IMAGE_LAYOUT_UNDEFINED:
     case VK_IMAGE_LAYOUT_MAX_ENUM:
+#if defined (ANDROID)
+      Log::i("Invalid layout transition: %08X", lay);
+#endif
       throw std::invalid_argument("invalid layout transition!");
     case VK_IMAGE_LAYOUT_PREINITIALIZED:
     case VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR:
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
     case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
-    //case VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV:
-    //case VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT:
+    case VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV:
+    case VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT:
+#if VK_HEADER_VERSION < 140
+    case VK_IMAGE_LAYOUT_RANGE_SIZE:
+#endif
       //TODO
+#if defined (ANDROID)
+      Log::i("Invalid layout transition: %08X", lay);
+#endif
       throw std::invalid_argument("unimplemented layout transition!");
     }
+#if defined (ANDROID)
+  Log::i("Invalid layout transition: %08X", lay);
+#endif
   throw std::invalid_argument("unimplemented layout transition!");
   }
 
@@ -572,15 +586,15 @@ void VCommandBuffer::implChangeLayout(VkImage dest, VkFormat imageFormat,
   barrier.image                = dest;
 
   if(device.graphicsQueue->family!=device.presentQueue->family) {
-    if(newLayout==VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-      barrier.srcQueueFamilyIndex  = device.graphicsQueue->family;
-      barrier.dstQueueFamilyIndex  = device.presentQueue->family;
-      }
-    else if(oldLayout==VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-      barrier.srcQueueFamilyIndex  = device.presentQueue->family;
-      barrier.dstQueueFamilyIndex  = device.graphicsQueue->family;
-      }
-    }
+   if(newLayout==VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+     barrier.srcQueueFamilyIndex  = device.graphicsQueue->family;
+     barrier.dstQueueFamilyIndex  = device.presentQueue->family;
+     }
+   else if(oldLayout==VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+     barrier.srcQueueFamilyIndex  = device.presentQueue->family;
+     barrier.dstQueueFamilyIndex  = device.graphicsQueue->family;
+     }
+   }
 
   barrier.subresourceRange.baseMipLevel   = mipBase;
   barrier.subresourceRange.levelCount     = mipCount;

@@ -25,7 +25,7 @@ class DxRenderPass;
 class DxCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
   public:
     DxCommandBuffer(DxDevice& d);
-    ~DxCommandBuffer();
+    ~DxCommandBuffer() override;
 
     void begin() override;
     void end()   override;

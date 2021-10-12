@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 //#include <thirdparty/nv_math/nv_matrix.h>
 // code is based on NvMath
@@ -499,15 +500,15 @@ void Matrix4x4::project( float   x, float   y, float   z, float   w,
   }
 
 void Matrix4x4::perspective(float angle, float aspect, float zNear, float zFar) {
-  float range = float(tan( 3.141592654*(double(angle) / 2.0)/180.0 )) * zNear;
+  float range = float(tan( M_PI*(double(angle) / 2.0)/180.0 )) * zNear;
   float left = -range * aspect;
   float right = range * aspect;
   float bottom = -range;
   float top = range;
 
-  for( int i=0; i<4; ++i )
-    for( int r=0; r<4; ++r )
-       m[i][r] = 0;
+  for(auto & i:m)
+    for(float & r:i)
+       r = 0;
 
   m[0][0] = (float(2) * zNear) / (right - left);
   m[1][1] = (float(2) * zNear) / (top - bottom);
@@ -592,10 +593,56 @@ void Matrix4x4::project(float &x, float &y, float &z) const {
   z /= w;
   }
 
+void Matrix4x4::projectChecked(float &x, float &y, float &z) const {
+  float w = 1;
+  project(x,y,z,w);
+  if(w<0) {
+    x=std::numeric_limits<float>::max();
+    y=std::numeric_limits<float>::max();
+    z=std::numeric_limits<float>::max();
+    return;
+    }
+  x /= w;
+  y /= w;
+  z /= w;
+  }
+
 void Matrix4x4::project(Vec4& v) const {
   project(v.x,v.y,v.z,v.w);
   }
 
 void Matrix4x4::project(Vec3& v) const {
   project(v.x,v.y,v.z);
+  }
+
+Tempest::Vec3 Matrix4x4::position() const {
+  Tempest::Vec3 pos;
+  pos.x = at(3,0);
+  pos.y = at(3,1);
+  pos.z = at(3,2);
+  return pos;
+  }
+
+// from btMatrix
+Tempest::Vec3 Matrix4x4::yawPitchRoll() const {
+  float yaw   = std::atan2(at(1,0),at(0,0));
+  float pitch = std::asin(-at(2,0));
+  float roll  = std::atan2(at(2,1),at(2,3));
+  if(pitch==M_PI_2) {
+    if(yaw>0)
+      yaw-=(float)M_PI;
+    else
+      yaw+=(float)M_PI;
+
+    if(roll>0)
+      roll-=(float)M_PI;
+    else
+      roll+=(float)M_PI;
+    }
+  return {yaw,pitch,roll};
+  }
+
+Tempest::Matrix4x4 Matrix4x4::identityMatrix() {
+  static Tempest::Matrix4x4 id; id.identity();
+  return id;
   }

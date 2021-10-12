@@ -27,7 +27,7 @@ class Pixmap final {
       RGBA32F = 11,
       DXT1    = 12,
       DXT3    = 13,
-      DXT5    = 14,
+      DXT5    = 14
       };
 
     Pixmap();
@@ -40,8 +40,8 @@ class Pixmap final {
     Pixmap(IDevice& input);
 
     Pixmap(const Pixmap& src);
-    Pixmap(Pixmap&& p);
-    Pixmap& operator=(Pixmap&& p);
+    Pixmap(Pixmap&& p) noexcept;
+    Pixmap& operator=(Pixmap&& p) noexcept;
     Pixmap& operator=(const Pixmap& p);
 
     ~Pixmap();

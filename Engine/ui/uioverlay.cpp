@@ -4,8 +4,7 @@
 
 using namespace Tempest;
 
-UiOverlay::UiOverlay() {
-  }
+UiOverlay::UiOverlay() = default;
 
 UiOverlay::~UiOverlay() {
   updateWindow();

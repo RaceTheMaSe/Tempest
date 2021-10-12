@@ -50,17 +50,17 @@ class Widget {
     Point   mapToRoot  ( const Point & p ) const noexcept;
     Point   mapToGlobal( const Point & p ) const noexcept;
 
-    Point                pos()      const { return Point(wrect.x,wrect.y);}
+    Point                pos()      const { return {wrect.x,wrect.y};}
     const Tempest::Rect& rect()     const { return wrect; }
-    Tempest::Size        size()     const { return Size(wrect.w,wrect.h); }
+    Tempest::Size        size()     const { return {wrect.w,wrect.h}; }
     const Tempest::Size& sizeHint() const { return szHint; }
 
     void  setPosition(int x,int y);
     void  setPosition(const Point& pos);
     void  setGeometry(const Rect& rect);
     void  setGeometry(int x,int y,int w,int h);
-    void 	resize(const Size& size);
-    void 	resize(int w,int h);
+    void  resize(const Size& size);
+    void  resize(int w,int h);
 
     int   x() const { return  wrect.x; }
     int   y() const { return  wrect.y; }
@@ -91,6 +91,7 @@ class Widget {
     int  spacing() const { return spa; }
 
     Rect clientRect() const;
+    Rect absoluteRect() const;
 
     void setEnabled(bool e);
     bool isEnabled() const;
@@ -137,9 +138,22 @@ class Widget {
     virtual void keyRepeatEvent (Tempest::KeyEvent&    event);
     virtual void keyUpEvent     (Tempest::KeyEvent&    event);
 
+    virtual void keyDownEvent   (Tempest::GamepadKeyEvent&    event);
+    virtual void keyRepeatEvent (Tempest::GamepadKeyEvent&    event);
+    virtual void keyUpEvent     (Tempest::GamepadKeyEvent&    event);
+    virtual void analogMoveEvent(Tempest::AnalogEvent&  event);
+
+    virtual void pointerDownEvent(Tempest::PointerEvent&  event);
+    virtual void pointerUpEvent  (Tempest::PointerEvent&  event);
+    virtual void pointerMoveEvent(Tempest::PointerEvent&  event);
+
+    virtual void pointerEnterEvent(Tempest::PointerEvent&  event);
+    virtual void pointerLeaveEvent(Tempest::PointerEvent&  event);
+
     virtual void mouseEnterEvent(Tempest::MouseEvent&  event);
     virtual void mouseLeaveEvent(Tempest::MouseEvent&  event);
 
+    virtual void appStateEvent  (Tempest::AppStateEvent&  event);
     virtual void focusEvent     (Tempest::FocusEvent&  event);
     virtual void closeEvent     (Tempest::CloseEvent&  event);
     virtual void polishEvent    (Tempest::PolishEvent& event);

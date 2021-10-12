@@ -15,7 +15,7 @@ class DxDevice;
 class DxShader:public AbstractGraphicsApi::Shader {
   public:
     DxShader(const void* source, size_t src_size);
-    ~DxShader();
+    ~DxShader() override;
 
     using Binding = ShaderReflection::Binding;
 

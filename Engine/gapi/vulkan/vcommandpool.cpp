@@ -18,7 +18,7 @@ VCommandPool::VCommandPool(VDevice& device,VkCommandPoolCreateFlags flags)
   vkAssert(vkCreateCommandPool(device.device.impl,&poolInfo,nullptr,&impl));
   }
 
-VCommandPool::VCommandPool(VCommandPool &&other) {
+VCommandPool::VCommandPool(VCommandPool &&other)  noexcept {
   std::swap(device,other.device);
   std::swap(impl,  other.impl);
   }

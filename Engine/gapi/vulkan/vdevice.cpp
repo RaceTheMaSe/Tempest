@@ -1,3 +1,4 @@
+#include "gapi/vulkan/vsamplercache.h"
 #if defined(TEMPEST_BUILD_VULKAN)
 
 #include "vdevice.h"
@@ -9,9 +10,11 @@
 #include "vbuffer.h"
 #include "vtexture.h"
 #include "system/api/x11api.h"
+#include "system/api/androidapi.h"
 
 #include <Tempest/Log>
 #include <Tempest/Platform>
+#include <memory>
 #include <thread>
 #include <set>
 #include <cstring>
@@ -25,6 +28,10 @@
 #  define VK_USE_PLATFORM_XLIB_KHR
 #  include <X11/Xlib.h>
 #  include <vulkan/vulkan_xlib.h>
+#  undef Always
+#elif defined(__ANDROID__)
+#  define VK_USE_PLATFORM_ANDROID_KHR
+#  include <vulkan/vulkan_android.h>
 #  undef Always
 #else
 #  error "WSI is not implemented on this platform"
@@ -41,7 +48,7 @@ class VDevice::FakeWindow final {
   public:
     FakeWindow(VDevice& dev)
       :instance(dev.instance) {
-      w = SystemApi::createWindow(nullptr,SystemApi::Hidden);
+      w = SystemApi::createWindow(nullptr,SystemApi::Hidden,"Tempest.HiddenWindow");
       }
     ~FakeWindow() {
       if(surface!=VK_NULL_HANDLE)
@@ -60,15 +67,16 @@ VDevice::autoDevice::~autoDevice() {
   }
 
 VDevice::VDevice(VulkanInstance &api, const char* gpuName)
-  :instance(api.instance)  {
+  :instance(*api.instance)  {
+
   uint32_t deviceCount = 0;
-  vkEnumeratePhysicalDevices(api.instance, &deviceCount, nullptr);
+  vkEnumeratePhysicalDevices(*api.instance, &deviceCount, nullptr);
 
   if(deviceCount==0)
     throw std::system_error(Tempest::GraphicsErrc::NoDevice);
 
   std::vector<VkPhysicalDevice> devices(deviceCount);
-  vkEnumeratePhysicalDevices(api.instance, &deviceCount, devices.data());
+  vkEnumeratePhysicalDevices(*api.instance, &deviceCount, devices.data());
   //std::swap(devices[0],devices[1]);
 
   FakeWindow fakeWnd{*this};
@@ -98,7 +106,7 @@ void VDevice::implInit(VkPhysicalDevice pdev, VkSurfaceKHR surf) {
 
   physicalDevice = pdev;
   allocator.setDevice(*this);
-  data.reset(new DataMgr(*this));
+  data = std::make_unique<DataMgr>(*this);
   }
 
 VkSurfaceKHR VDevice::createSurface(void* hwnd) {
@@ -121,6 +129,14 @@ VkSurfaceKHR VDevice::createSurface(void* hwnd) {
   createInfo.dpy    = reinterpret_cast<Display*>(X11Api::display());
   createInfo.window = ::Window(hwnd);
   if(vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &ret)!=VK_SUCCESS)
+    throw std::system_error(Tempest::GraphicsErrc::NoDevice);
+#elif defined(__ANDROID__)
+  VkAndroidSurfaceCreateInfoKHR createInfo = {};
+  createInfo.sType  = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+  createInfo.pNext = nullptr;
+  createInfo.flags = 0;
+  createInfo.window = static_cast<ANativeWindow*>(hwnd);
+  if(vkCreateAndroidSurfaceKHR(instance, &createInfo, nullptr, &ret)!=VK_SUCCESS)
     throw std::system_error(Tempest::GraphicsErrc::NoDevice);
 #else
 #warning "wsi for vulkan not implemented on this platform"
@@ -158,9 +174,9 @@ void VDevice::deviceQueueProps(VulkanInstance::VkProp& prop,VkPhysicalDevice dev
   std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
   vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-  uint32_t graphics  = uint32_t(-1);
-  uint32_t present   = uint32_t(-1);
-  uint32_t universal = uint32_t(-1);
+  auto graphics  = uint32_t(-1);
+  auto present   = uint32_t(-1);
+  auto universal = uint32_t(-1);
 
   for(uint32_t i=0;i<queueFamilyCount;++i) {
     const auto& queueFamily = queueFamilies[i];
@@ -204,7 +220,7 @@ bool VDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
   }
 
 std::vector<VkExtensionProperties> VDevice::extensionsList(VkPhysicalDevice device) {
-  uint32_t extensionCount;
+  uint32_t extensionCount = 0;
   vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
   std::vector<VkExtensionProperties> ext(extensionCount);
@@ -225,7 +241,7 @@ VDevice::SwapChainSupport VDevice::querySwapChainSupport(VkPhysicalDevice device
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
-  uint32_t formatCount;
+  uint32_t formatCount = 0;
   vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
 
   if(formatCount != 0){
@@ -233,10 +249,11 @@ VDevice::SwapChainSupport VDevice::querySwapChainSupport(VkPhysicalDevice device
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
     }
 
-  uint32_t presentModeCount;
+  uint32_t presentModeCount = 0;
   vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
-  if(presentModeCount != 0){
+  if(presentModeCount != 0 && presentModeCount != -1){
+    // with invalid surface presentModeCount was large - happened when started with screen on and came here with screen off, so surface is lost, but event not handled in androidapi, because its in the same thread as this code path
     details.presentModes.resize(presentModeCount);
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
     }
@@ -261,10 +278,9 @@ void VDevice::createLogicalDevice(VkPhysicalDevice pdev) {
   float                   queuePriority       = 1.0f;
   size_t                  queueCnt            = 0;
   VkDeviceQueueCreateInfo qinfo[3]={};
-  for(size_t i=0;i<uniqueQueueFamilies.size();++i) {
+  for(unsigned int family : uniqueQueueFamilies) {
     auto&    q      = queues[queueCnt];
-    uint32_t family = uniqueQueueFamilies[i];
-    if(family==uint32_t(-1))
+     if(family==uint32_t(-1))
       continue;
 
     bool nonUnique=false;
@@ -357,7 +373,7 @@ VDevice::MemIndex VDevice::memoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFl
   }
 
 void VDevice::waitIdle() {
-  waitIdleSync(queues,sizeof(queues)/sizeof(queues[0]));
+  waitIdleSync((Tempest::Detail::VDevice::Queue*)queues,sizeof(queues)/sizeof(queues[0]));
   }
 
 void VDevice::waitIdleSync(VDevice::Queue* q, size_t n) {

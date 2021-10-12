@@ -19,7 +19,7 @@ class DPtr {
     DPtr(const DPtr&)=delete;
     DPtr(Handler h):handler(h){}
     DPtr(DPtr&& other) noexcept :handler(other.handler){ other.handler=Handler(); }
-    ~DPtr(){}
+    ~DPtr()= default;
 
     DPtr& operator = (DPtr&& other) noexcept { std::swap(handler,other.handler); return *this; }
     DPtr& operator = (const DPtr& other) = delete;
@@ -44,7 +44,7 @@ class DSharedPtr {
         addRef();
       }
 
-    DSharedPtr(DSharedPtr&& t):handler(t.handler){
+    DSharedPtr(DSharedPtr&& t) noexcept :handler(t.handler) {
       t.handler=nullptr;
       }
 
@@ -53,7 +53,7 @@ class DSharedPtr {
         decRef();
       }
 
-    DSharedPtr& operator=(DSharedPtr&& other){
+    DSharedPtr& operator=(DSharedPtr&& other) noexcept {
       std::swap(handler,other.handler);
       return *this;
       }

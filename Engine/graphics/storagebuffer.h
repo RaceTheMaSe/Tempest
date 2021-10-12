@@ -17,8 +17,8 @@ class StorageBuffer final {
     void   update(const void* data, size_t offset, size_t size) { return impl.update(data,offset,size,1,1); }
 
   private:
-    StorageBuffer(Tempest::VideoBuffer&& impl)
-      :impl(std::move(impl)) {
+    StorageBuffer(Tempest::VideoBuffer&& implIn)
+      :impl(std::move(implIn)) {
       }
 
     Tempest::VideoBuffer impl;

@@ -8,8 +8,7 @@ CheckBox::CheckBox() {
   setButtonType(Button::T_CheckableButton);
   }
 
-CheckBox::~CheckBox() {
-  }
+CheckBox::~CheckBox() = default;
 
 void CheckBox::paintEvent(PaintEvent& e) {
   Tempest::Painter p(e);

@@ -509,7 +509,9 @@ AL_API void AL_APIENTRY alSource3f(ALuint source, ALenum param, ALfloat value1, 
 AL_API void AL_APIENTRY alSourcefv(ALuint source, ALenum param, const ALfloat *values);
 AL_API void AL_APIENTRY alSourcefvCt(ALCcontext *Context, ALuint source, ALenum param, const ALfloat *values);
 AL_API void AL_APIENTRY alSourcei(ALuint source, ALenum param, ALint value);
+AL_API void AL_APIENTRY alSourceiCt(ALCcontext *Context, ALuint source, ALenum param, ALint value);
 AL_API void AL_APIENTRY alSource3i(ALuint source, ALenum param, ALint value1, ALint value2, ALint value3);
+AL_API void AL_APIENTRY alSource3iCt(ALCcontext *Context, ALuint source, ALenum param, ALint value1, ALint value2, ALint value3);
 AL_API void AL_APIENTRY alSourceiv(ALuint source, ALenum param, const ALint *values);
 AL_API void AL_APIENTRY alSourceivCt(ALCcontext *Context, ALuint source, ALenum param, const ALint *values);
 AL_API ALenum AL_APIENTRY alSourceBufferCt(ALCcontext *Context, ALuint source, ALbuffer *buffer);

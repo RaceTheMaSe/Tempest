@@ -2,5 +2,4 @@
 
 using namespace Tempest;
 
-ODevice::~ODevice() {
-  }
+ODevice::~ODevice() = default;

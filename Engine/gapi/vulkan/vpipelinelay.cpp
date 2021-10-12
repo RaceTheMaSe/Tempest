@@ -16,7 +16,7 @@ VPipelineLay::VPipelineLay(VDevice& dev, const std::vector<ShaderReflection::Bin
 
   if(lay.size()<=32) {
     VkDescriptorSetLayoutBinding bind[32]={};
-    implCreate(bind);
+    implCreate((VkDescriptorSetLayoutBinding*)bind);
     } else {
     std::unique_ptr<VkDescriptorSetLayoutBinding[]> bind(new VkDescriptorSetLayoutBinding[lay.size()]);
     implCreate(bind.get());
@@ -30,7 +30,7 @@ VPipelineLay::VPipelineLay(VDevice& dev, const std::vector<ShaderReflection::Bin
 
   if(lay.size()<=32) {
     VkDescriptorSetLayoutBinding bind[32]={};
-    implCreate(bind);
+    implCreate((VkDescriptorSetLayoutBinding*)bind);
     } else {
     std::unique_ptr<VkDescriptorSetLayoutBinding[]> bind(new VkDescriptorSetLayoutBinding[lay.size()]);
     implCreate(bind.get());
@@ -58,10 +58,8 @@ void VPipelineLay::implCreate(VkDescriptorSetLayoutBinding* bind) {
     };
 
   uint32_t count = 0;
-  for(size_t i=0;i<lay.size();++i){
+  for(auto& e:lay){
     auto& b=bind[count];
-    auto& e=lay[i];
-
     if(e.stage==ShaderReflection::Stage(0))
       continue;
 

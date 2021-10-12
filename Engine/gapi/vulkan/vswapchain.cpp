@@ -3,6 +3,7 @@
 #include "vswapchain.h"
 
 #include <Tempest/SystemApi>
+#include <vulkan/vulkan_core.h>
 
 #include "vdevice.h"
 
@@ -10,7 +11,7 @@ using namespace Tempest;
 using namespace Tempest::Detail;
 
 VSwapchain::FenceList::FenceList(VkDevice dev, uint32_t cnt)
-  :dev(dev), size(0) {
+  :dev(dev) {
   aquire .reset(new VkFence[cnt]);
   present.reset(new VkFence[cnt]);
   for(uint32_t i=0; i<cnt; ++i) {
@@ -39,14 +40,14 @@ VSwapchain::FenceList::FenceList(VkDevice dev, uint32_t cnt)
     }
   }
 
-VSwapchain::FenceList::FenceList(VSwapchain::FenceList&& oth)
+VSwapchain::FenceList::FenceList(VSwapchain::FenceList&& oth) noexcept
   :dev(oth.dev), size(oth.size) {
   aquire   = std::move(oth.aquire);
   present  = std::move(oth.present);
   oth.size = 0;
   }
 
-VSwapchain::FenceList& VSwapchain::FenceList::operator =(VSwapchain::FenceList&& oth) {
+VSwapchain::FenceList& VSwapchain::FenceList::operator =(VSwapchain::FenceList&& oth) noexcept {
   std::swap(dev,     oth.dev);
   std::swap(aquire,  oth.aquire);
   std::swap(present, oth.present);
@@ -61,8 +62,8 @@ VSwapchain::FenceList::~FenceList() {
     }
   }
 
-VSwapchain::VSwapchain(VDevice &device, SystemApi::Window* hwnd)
-  :device(device), hwnd(hwnd) {
+VSwapchain::VSwapchain(VDevice &device, SystemApi::Window* handle)
+  :device(device), hwnd(handle) {
   try {
     surface = device.createSurface(hwnd);
 
@@ -113,6 +114,8 @@ void VSwapchain::cleanupSurface() noexcept {
   }
 
 void VSwapchain::reset() {
+  if(surface==VK_NULL_HANDLE)
+    surface = device.createSurface(hwnd);
   const Rect rect = SystemApi::windowClientRect(hwnd);
   if(rect.isEmpty())
     return;
@@ -125,7 +128,7 @@ void VSwapchain::reset() {
     }
   catch(...) {
     cleanup();
-    throw;
+    throw DeviceLostException();
     }
   }
 
@@ -159,13 +162,19 @@ void VSwapchain::createSwapchain(VDevice& device, const SwapChainSupport& swapCh
     const uint32_t qidx[]  = {device.graphicsQueue->family,device.presentQueue->family};
     createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
     createInfo.queueFamilyIndexCount = 2;
-    createInfo.pQueueFamilyIndices   = qidx;
+    createInfo.pQueueFamilyIndices   = (const uint32_t*)qidx;
     } else {
     createInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     }
 
   createInfo.preTransform   = swapChainSupport.capabilities.currentTransform;
+#if (__ANDROID__)
+  createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+  // should be VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR - identity gives correct result but validation error
+  createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+#else
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+#endif
   createInfo.presentMode    = presentMode;
   createInfo.clipped        = VK_TRUE;
 
@@ -237,9 +246,9 @@ VkPresentModeKHR VSwapchain::getSwapPresentMode(const std::vector<VkPresentModeK
     * https://software.intel.com/content/www/us/en/develop/articles/api-without-secrets-introduction-to-vulkan-part-2.html
     **/
   std::initializer_list<VkPresentModeKHR> modes={
-    VK_PRESENT_MODE_MAILBOX_KHR,      // vsync; wait until vsync
-    VK_PRESENT_MODE_FIFO_RELAXED_KHR, // vsync; optimal, but tearing
     VK_PRESENT_MODE_FIFO_KHR,         // vsync; optimal
+    VK_PRESENT_MODE_FIFO_RELAXED_KHR, // vsync; optimal, but tearing
+    VK_PRESENT_MODE_MAILBOX_KHR,      // vsync; wait until vsync
     VK_PRESENT_MODE_IMMEDIATE_KHR,    // no vsync
     };
 
@@ -287,7 +296,7 @@ void VSwapchain::aquireNextImage() {
   vkWaitForFences(device.device.impl,1,&f,VK_TRUE,std::numeric_limits<uint64_t>::max());
   vkResetFences(device.device.impl,1,&f);
 
-  uint32_t id   = uint32_t(-1);
+  auto id   = uint32_t(-1);
   VkResult code = vkAcquireNextImageKHR(device.device.impl,
                                         swapChain,
                                         std::numeric_limits<uint64_t>::max(),

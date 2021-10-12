@@ -22,12 +22,12 @@ Encoder<Tempest::CommandBuffer>::Encoder(Tempest::CommandBuffer* ow)
   impl->begin();
   }
 
-Encoder<CommandBuffer>::Encoder(Encoder<CommandBuffer> &&e)
+Encoder<CommandBuffer>::Encoder(Encoder<CommandBuffer> &&e) noexcept
   :impl(e.impl),state(std::move(e.state)) {
   e.impl  = nullptr;
   }
 
-Encoder<CommandBuffer> &Encoder<CommandBuffer>::operator =(Encoder<CommandBuffer> &&e) {
+Encoder<CommandBuffer> &Encoder<CommandBuffer>::operator =(Encoder<CommandBuffer> &&e) noexcept {
   impl   = e.impl;
   state  = std::move(e.state);
 
@@ -136,7 +136,7 @@ void Encoder<CommandBuffer>::setFramebuffer(std::nullptr_t) {
 void Encoder<CommandBuffer>::setFramebuffer(const FrameBuffer &fbo, const RenderPass &p) {
   implEndRenderPass();
 
-  if(fbo.impl.handler==nullptr && p.impl.handler==nullptr) {
+  if(fbo.impl.handler==nullptr || p.impl.handler==nullptr) {
     state.curPipeline = nullptr;
     return;
     }

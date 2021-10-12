@@ -26,7 +26,7 @@ class ZBuffer final {
     friend const Texture2d& textureCast(const ZBuffer& a);
 
   private:
-    ZBuffer(Texture2d&& t, bool sampleFormat):tImpl(std::move(t)), sampleFormat(sampleFormat) {}
+    ZBuffer(Texture2d&& t, bool sampleFormatIn):tImpl(std::move(t)), sampleFormat(sampleFormatIn) {}
 
     Texture2d tImpl;
     bool      sampleFormat=false;

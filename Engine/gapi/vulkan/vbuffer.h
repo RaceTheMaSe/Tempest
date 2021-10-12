@@ -11,10 +11,10 @@ namespace Detail {
 class VBuffer : public AbstractGraphicsApi::Buffer {
   public:
     VBuffer()=default;
-    VBuffer(VBuffer &&other);
-    ~VBuffer();
+    VBuffer(VBuffer &&other) noexcept;
+    ~VBuffer() override;
 
-    VBuffer& operator=(VBuffer&& other);
+    VBuffer& operator=(VBuffer&& other) noexcept;
 
     void update  (const void* data, size_t off, size_t count, size_t sz, size_t alignedSz) override;
     void read    (void* data, size_t off, size_t sz) override;

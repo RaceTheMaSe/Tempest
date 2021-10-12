@@ -24,14 +24,14 @@ TextModel::CommandInsert::CommandInsert(const char* txtIn, TextModel::Cursor whe
 void TextModel::CommandInsert::redo(TextModel& subj) {
   if(txtShort[0]=='\0')
     subj.insert(txt.data(),where); else
-    subj.insert(txtShort,where);
+    subj.insert((char*)txtShort,where);
   }
 
 void TextModel::CommandInsert::undo(TextModel& subj) {
   if(txtShort[0]=='\0') {
     subj.erase(where,txt.size());
     } else {
-    subj.erase(where,std::strlen(txtShort));
+    subj.erase(where,std::strlen((char*)txtShort));
     }
   }
 
@@ -53,11 +53,11 @@ void TextModel::CommandReplace::redo(TextModel& subj) {
   subj.fetch(begin,end,prev);
   if(txtShort[0]=='\0')
     subj.replace(txt.data(),begin,end); else
-    subj.replace(txtShort,  begin,end);
+    subj.replace((char*)txtShort,  begin,end);
   }
 
 void TextModel::CommandReplace::undo(TextModel& subj) {
-  const char* t = txtShort;
+  const char* t = (char*)txtShort;
   if(txtShort[0]=='\0')
     t = txt.data();
 
@@ -77,7 +77,7 @@ void TextModel::CommandErase::redo(TextModel& subj) {
   auto s = subj.cursorCast(begin);
   auto e = subj.cursorCast(end);
   if(e-s<3) {
-    subj.fetch(begin,end,prevShort);
+    subj.fetch(begin,end,(char*)prevShort);
     } else {
     subj.fetch(begin,end,prev);
     }
@@ -87,7 +87,7 @@ void TextModel::CommandErase::redo(TextModel& subj) {
 void TextModel::CommandErase::undo(TextModel& subj) {
   if(prevShort[0]=='\0')
     subj.insert(prev.data(),begin); else
-    subj.insert(prevShort,begin);
+    subj.insert((char*)prevShort,begin);
   }
 
 
@@ -112,7 +112,7 @@ void TextModel::insert(const char* t, Cursor where) {
   size_t at  = cursorCast(where);
   size_t len = std::strlen(t);
 
-  txt.insert(txt.begin()+at,t,t+len);
+  txt.insert(txt.begin()+(std::vector<char>::difference_type)at,t,t+len);
   buildIndex();
   sz.actual=false;
 
@@ -125,7 +125,7 @@ void TextModel::erase(Cursor cs, Cursor ce) {
   if(e<s)
     std::swap(s,e);
 
-  txt.erase(txt.begin()+s,txt.begin()+e);
+  txt.erase(txt.begin()+(std::vector<char>::difference_type)s,txt.begin()+(std::vector<char>::difference_type)e);
   buildIndex();
   sz.actual=false;
   }
@@ -146,8 +146,8 @@ void TextModel::replace(const char* t, TextModel::Cursor cs, TextModel::Cursor c
   if(e<s)
     std::swap(s,e);
 
-  txt.erase (txt.begin()+s,txt.begin()+e);
-  txt.insert(txt.begin()+s,t,t+len);
+  txt.erase (txt.begin()+(std::vector<char>::difference_type)s,txt.begin()+(std::vector<char>::difference_type)e);
+  txt.insert(txt.begin()+(std::vector<char>::difference_type)s,t,t+len);
 
   buildIndex();
   sz.actual=false;
@@ -215,7 +215,7 @@ const Size &TextModel::sizeHint() const {
 Size TextModel::wrapSize() const {
   if(!sz.actual)
     calcSize();
-  return Size(sz.sizeHint.w,sz.wrapHeight);
+  return {sz.sizeHint.w,sz.wrapHeight};
   }
 
 bool TextModel::isEmpty() const {
@@ -227,8 +227,8 @@ void TextModel::paint(Painter& p, const Color& color, int x, int y) const {
   }
 
 void TextModel::paint(Painter &p, const Font& fnt, const Color& color, int fx, int fy) const {
-  float x = float(fx);
-  float y = float(fy);
+  auto x = float(fx);
+  auto y = float(fy);
 
   auto pb=p.brush();
   Utf8Iterator i(txt.data());
@@ -247,10 +247,10 @@ void TextModel::paint(Painter &p, const Font& fnt, const Color& color, int fx, i
     auto l=fnt.letter(ch,p);
     if(!l.view.isEmpty()) {
       p.setBrush(Brush(l.view,color,PaintDevice::Alpha));
-      p.drawRect(int(x+l.dpos.x),int(y+l.dpos.y),l.view.w(),l.view.h());
+      p.drawRect(int(x+(float)l.dpos.x),int(y+(float)l.dpos.y),l.view.w(),l.view.h());
       }
 
-    x += l.advance.x;
+    x += (float)l.advance.x;
     }
   p.setBrush(pb);
   }
@@ -273,7 +273,7 @@ TextModel::Sz TextModel::calcSize(const Font& fnt) const {
       top+=int(fnt.pixelSize());
       } else {
       auto l=fnt.letterGeometry(ch);
-      x += l.advance.x;
+      x += (float)l.advance.x;
       y =  std::max(-l.dpos.y,y);
       }
     }
@@ -329,7 +329,7 @@ TextModel::Cursor TextModel::charAt(int x, int y) const {
   if(x<0)
     x=0;
   Cursor c;
-  c.line   = size_t(y/fnt.pixelSize());
+  c.line   = size_t((float)y/fnt.pixelSize());
   if(c.line>=line.size())
     c.line=line.size()-1;
 
@@ -370,9 +370,9 @@ TextModel::Cursor TextModel::charAt(size_t symbol) const {
 
 Point TextModel::mapToCoords(Cursor c) const {
   if(!isValid(c))
-    return Point();
+    return {};
   Point p;
-  p.y = int(c.line*fnt.pixelSize());
+  p.y = int((float)c.line*fnt.pixelSize());
   auto& ln = line[c.line];
 
   Utf8Iterator str(ln.txt,ln.size);

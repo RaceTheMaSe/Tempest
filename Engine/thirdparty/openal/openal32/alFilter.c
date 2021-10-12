@@ -18,6 +18,7 @@
  * Or go to http://www.gnu.org/copyleft/lgpl.html
  */
 
+#include "AL/alc.h"
 #include "config.h"
 
 #include <stdlib.h>
@@ -78,6 +79,46 @@ AL_API ALvoid AL_APIENTRY alGenFilters(ALsizei n, ALuint *filters)
     ALCcontext_DecRef(Context);
 }
 
+AL_API ALvoid AL_APIENTRY alGenFiltersCt(ALCcontext* Context, ALsizei n, ALuint *filters)
+{
+    ALsizei    cur = 0;
+
+    al_try
+    {
+        ALCdevice *device = Context->Device;
+        ALenum err;
+
+        CHECK_VALUE(Context, n >= 0);
+        for(cur = 0;cur < n;cur++)
+        {
+            ALfilter *filter = calloc(1, sizeof(ALfilter));
+            if(!filter)
+                al_throwerr(Context, AL_OUT_OF_MEMORY);
+            InitFilterParams(filter, AL_FILTER_NULL);
+
+            err = NewThunkEntry(&filter->id);
+            if(err == AL_NO_ERROR)
+                err = InsertUIntMapEntry(&device->FilterMap, filter->id, filter);
+            if(err != AL_NO_ERROR)
+            {
+                FreeThunkEntry(filter->id);
+                memset(filter, 0, sizeof(ALfilter));
+                free(filter);
+
+                al_throwerr(Context, err);
+            }
+
+            filters[cur] = filter->id;
+        }
+    }
+    al_catchany()
+    {
+        if(cur > 0)
+            alDeleteFilters(cur, filters);
+    }
+    al_endtry;
+}
+
 AL_API ALvoid AL_APIENTRY alDeleteFilters(ALsizei n, const ALuint *filters)
 { 
     ALCcontext *Context;
@@ -128,6 +169,16 @@ AL_API ALboolean AL_APIENTRY alIsFilter(ALuint filter)
     return result;
 }
 
+AL_API ALboolean AL_APIENTRY alIsFilterCt(ALCcontext* Context, ALuint filter)
+{
+    ALboolean  result;
+
+    result = ((!filter || LookupFilter(Context->Device, filter)) ?
+              AL_TRUE : AL_FALSE);
+
+    return result;
+}
+
 AL_API ALvoid AL_APIENTRY alFilteri(ALuint filter, ALenum param, ALint value)
 {
     ALCcontext *Context;
@@ -157,6 +208,31 @@ AL_API ALvoid AL_APIENTRY alFilteri(ALuint filter, ALenum param, ALint value)
     }
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alFilteriCt(ALCcontext* Context, ALuint filter, ALenum param, ALint value)
+{
+    ALCdevice  *Device;
+    ALfilter   *ALFilter;
+
+    Device = Context->Device;
+    if((ALFilter=LookupFilter(Device, filter)) == NULL)
+        alSetError(Context, AL_INVALID_NAME);
+    else
+    {
+        if(param == AL_FILTER_TYPE)
+        {
+            if(value == AL_FILTER_NULL || value == AL_FILTER_LOWPASS)
+                InitFilterParams(ALFilter, value);
+            else
+                alSetError(Context, AL_INVALID_VALUE);
+        }
+        else
+        {
+            /* Call the appropriate handler */
+            ALfilter_SetParami(ALFilter, Context, param, value);
+        }
+    }
 }
 
 AL_API ALvoid AL_APIENTRY alFilteriv(ALuint filter, ALenum param, const ALint *values)
@@ -206,6 +282,21 @@ AL_API ALvoid AL_APIENTRY alFilterf(ALuint filter, ALenum param, ALfloat value)
     }
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alFilterfCt(ALCcontext* Context, ALuint filter, ALenum param, ALfloat value)
+{
+    ALCdevice  *Device;
+    ALfilter   *ALFilter;
+
+    Device = Context->Device;
+    if((ALFilter=LookupFilter(Device, filter)) == NULL)
+        alSetError(Context, AL_INVALID_NAME);
+    else
+    {
+        /* Call the appropriate handler */
+        ALfilter_SetParamf(ALFilter, Context, param, value);
+    }
 }
 
 AL_API ALvoid AL_APIENTRY alFilterfv(ALuint filter, ALenum param, const ALfloat *values)

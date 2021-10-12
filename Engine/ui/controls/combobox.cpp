@@ -9,7 +9,7 @@ using namespace Tempest;
 
 struct ComboBox::Overlay:UiOverlay {
   Overlay(ComboBox* owner):owner(owner) {}
-  ~Overlay() {
+  ~Overlay() override {
     owner->overlay = nullptr;
     }
 
@@ -22,7 +22,7 @@ struct ComboBox::Overlay:UiOverlay {
 
 
 struct ComboBox::DropPanel:Tempest::Panel {
-  void paintEvent(Tempest::PaintEvent& e) {
+  void paintEvent(Tempest::PaintEvent& e) override {
     Tempest::Painter p(e);
     style().draw(p,this,Style::E_MenuBackground,state(),Rect(0,0,w(),h()),Style::Extra(*this));
     }
@@ -227,7 +227,7 @@ Widget* ComboBox::createDropList() {
   p->setLayout(Horizontal);
   p->setMargins(0);
 
-  ListView* list = new ListView();
+  auto* list = new ListView();
   proxyDelegate = new ProxyDelegate(*delegate);
   list->setDelegate(proxyDelegate);
   list->onItemSelected.bind(this,&ComboBox::applyItemSelection);

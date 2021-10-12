@@ -43,7 +43,7 @@ WFile::WFile(const std::u16string &path)
   :WFile(path.c_str()){
   }
 
-WFile::WFile(WFile &&other)
+WFile::WFile(WFile &&other) noexcept
   :handle(other.handle){
   other.handle = nullptr;
   }
@@ -74,7 +74,7 @@ WFile::~WFile() {
 #endif
   }
 
-WFile &WFile::operator =(WFile &&other) {
+WFile &WFile::operator =(WFile &&other) noexcept {
   std::swap(handle,other.handle);
   return *this;
   }

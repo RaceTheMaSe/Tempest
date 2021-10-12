@@ -59,7 +59,7 @@ static uint8_t* loadUnorm(stbi__context& s, uint32_t &ow, uint32_t &oh, Pixmap::
   int w=0,h=0,compCnt=0;
   stbi__result_info ri;
 
-  uint8_t *result = reinterpret_cast<uint8_t*>(stbi__load_main(&s, &w, &h, &compCnt, STBI_default, &ri, 8));
+  auto *result = reinterpret_cast<uint8_t*>(stbi__load_main(&s, &w, &h, &compCnt, STBI_default, &ri, 8));
   if(result==nullptr)
     return nullptr;
 
@@ -106,14 +106,13 @@ static uint8_t* loadFloat(stbi__context& s, uint32_t &ow, uint32_t &oh, Pixmap::
   return reinterpret_cast<uint8_t*>(result);
   }
 
-PixmapCodecCommon::PixmapCodecCommon() {
-  }
+PixmapCodecCommon::PixmapCodecCommon() = default;
 
 bool PixmapCodecCommon::testFormat(const Tempest::PixmapCodec::Context &ctx) const {
   char buf[128]={};
   size_t bufSiz = std::min(sizeof(buf),ctx.bufferSize());
-  ctx.peek(buf,bufSiz);
-  Tempest::MemReader dev(buf,bufSiz);
+  ctx.peek((char*)buf,bufSiz);
+  Tempest::MemReader dev((char*)buf,bufSiz);
   StbContext f = {dev,false};
 
   stbi__context s;
@@ -155,7 +154,7 @@ uint8_t* PixmapCodecCommon::load(PixmapCodec::Context &ctx, uint32_t &ow, uint32
   if(result==nullptr)
     return nullptr;
   // need to 'unget' all the characters in the IO buffer
-  size_t extra = size_t(s.img_buffer_end-s.img_buffer);
+  auto extra = size_t(s.img_buffer_end-s.img_buffer);
   if(f.err || f.device.unget(extra)!=extra)
     throw std::system_error(Tempest::SystemErrc::UnableToLoadAsset);
 
@@ -203,7 +202,7 @@ uint8_t* PixmapCodecCommon::load(PixmapCodec::Context &ctx, uint32_t &ow, uint32
       // not supported by common codec
       throw std::system_error(Tempest::SystemErrc::UnableToLoadAsset);
     }
-  dataSz = size_t(ow*oh*bpp);
+  dataSz = ow*oh*bpp;
   mipCnt = 1;
   return result;
   }
@@ -216,7 +215,7 @@ bool PixmapCodecCommon::save(ODevice &f, const char *ext, const uint8_t* cdata,
   if(bpp==0)
     return false;
 
-  uint8_t *data = const_cast<uint8_t*>(cdata);
+  auto *data = const_cast<uint8_t*>(cdata);
 
   if(ext==nullptr || std::strcmp("png",ext)==0) {
     int len=0;
@@ -236,7 +235,7 @@ bool PixmapCodecCommon::save(ODevice &f, const char *ext, const uint8_t* cdata,
     bool     badbit = false;
 
     static void write(void* ctx,void* data,int len) {
-      WContext* c = reinterpret_cast<WContext*>(ctx);
+      auto* c = reinterpret_cast<WContext*>(ctx);
       c->badbit = c->badbit || (c->dev->write(data,size_t(len))!=size_t(len));
       }
     };

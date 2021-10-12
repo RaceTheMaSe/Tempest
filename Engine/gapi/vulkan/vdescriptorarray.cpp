@@ -3,6 +3,7 @@
 #include "vbuffer.h"
 
 #include <Tempest/PipelineLayout>
+#include <memory>
 
 #include "vdevice.h"
 #include "vdescriptorarray.h"
@@ -14,7 +15,7 @@ using namespace Tempest::Detail;
 VDescriptorArray::VDescriptorArray(VkDevice device, VPipelineLay& vlay)
   :device(device),lay(&vlay) {
   if(lay.handler->hasSSBO)
-    ssbo.reset(new SSBO[vlay.lay.size()]);
+    ssbo = std::make_unique<SSBO[]>(vlay.lay.size());
 
   std::lock_guard<Detail::SpinLock> guard(vlay.sync);
   for(auto& i:vlay.pool){
@@ -50,15 +51,15 @@ VkDescriptorPool VDescriptorArray::allocPool(const VPipelineLay& lay, size_t siz
   VkDescriptorPoolSize poolSize[3] = {};
   size_t               pSize=0;
 
-  for(size_t i=0;i<lay.lay.size();++i){
-    auto cls = lay.lay[i].cls;
+  for(const auto & i:lay.lay){
+    auto cls = i.cls;
     switch(cls) {
-      case ShaderReflection::Ubo:     addPoolSize(poolSize,pSize,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);         break;
-      case ShaderReflection::Texture: addPoolSize(poolSize,pSize,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); break;
+      case ShaderReflection::Ubo:     addPoolSize((VkDescriptorPoolSize*)poolSize,pSize,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);         break;
+      case ShaderReflection::Texture: addPoolSize((VkDescriptorPoolSize*)poolSize,pSize,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); break;
       case ShaderReflection::SsboR:
-      case ShaderReflection::SsboRW:  addPoolSize(poolSize,pSize,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);         break;
+      case ShaderReflection::SsboRW:  addPoolSize((VkDescriptorPoolSize*)poolSize,pSize,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);         break;
       case ShaderReflection::ImgR:
-      case ShaderReflection::ImgRW:   addPoolSize(poolSize,pSize,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);          break;
+      case ShaderReflection::ImgRW:   addPoolSize((VkDescriptorPoolSize*)poolSize,pSize,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);          break;
       case ShaderReflection::Push:    break;
       }
     }
@@ -71,7 +72,7 @@ VkDescriptorPool VDescriptorArray::allocPool(const VPipelineLay& lay, size_t siz
   poolInfo.maxSets       = uint32_t(size);
   poolInfo.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   poolInfo.poolSizeCount = uint32_t(pSize);
-  poolInfo.pPoolSizes    = poolSize;
+  poolInfo.pPoolSizes    = (const VkDescriptorPoolSize*)poolSize;
 
   VkDescriptorPool ret = VK_NULL_HANDLE;
   vkAssert(vkCreateDescriptorPool(device,&poolInfo,nullptr,&ret));
@@ -94,7 +95,7 @@ bool VDescriptorArray::allocDescSet(VkDescriptorPool pool, VkDescriptorSetLayout
   }
 
 void VDescriptorArray::set(size_t id, Tempest::AbstractGraphicsApi::Texture* t, const Sampler2d& smp) {
-  VTexture* tex=reinterpret_cast<VTexture*>(t);
+  auto* tex=reinterpret_cast<VTexture*>(t);
 
   VkDescriptorImageInfo imageInfo = {};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -114,7 +115,7 @@ void VDescriptorArray::set(size_t id, Tempest::AbstractGraphicsApi::Texture* t, 
   }
 
 void VDescriptorArray::setSsbo(size_t id, AbstractGraphicsApi::Texture* t, uint32_t mipLevel) {
-  VTexture* tex=reinterpret_cast<VTexture*>(t);
+  auto* tex=reinterpret_cast<VTexture*>(t);
 
   VkDescriptorImageInfo imageInfo = {};
   imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -136,7 +137,7 @@ void VDescriptorArray::setSsbo(size_t id, AbstractGraphicsApi::Texture* t, uint3
   }
 
 void VDescriptorArray::setUbo(size_t id, Tempest::AbstractGraphicsApi::Buffer *buf, size_t offset) {
-  VBuffer* memory=reinterpret_cast<VBuffer*>(buf);
+  auto* memory=reinterpret_cast<VBuffer*>(buf);
   VkDescriptorBufferInfo bufferInfo = {};
   bufferInfo.buffer = memory->impl;
   bufferInfo.offset = offset;
@@ -155,7 +156,7 @@ void VDescriptorArray::setUbo(size_t id, Tempest::AbstractGraphicsApi::Buffer *b
   }
 
 void VDescriptorArray::setSsbo(size_t id, Tempest::AbstractGraphicsApi::Buffer *buf, size_t offset) {
-  VBuffer* memory=reinterpret_cast<VBuffer*>(buf);
+  auto* memory=reinterpret_cast<VBuffer*>(buf);
   VkDescriptorBufferInfo bufferInfo = {};
   bufferInfo.buffer = memory->impl;
   bufferInfo.offset = offset;

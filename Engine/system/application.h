@@ -20,6 +20,8 @@ class Application {
 
     int                 exec();
     static bool         isRunning();
+    static bool         isPaused();
+    static bool         isResumeRequested();
     static void         processEvents();
 
     static void         setStyle(const Style* stl);

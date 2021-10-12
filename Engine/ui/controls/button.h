@@ -14,7 +14,7 @@ class Menu;
 class Button : public Widget {
   public:
     Button();
-    ~Button();
+    ~Button() override;
 
     using Type=Tempest::WidgetState::ButtonType;
     static constexpr Type T_PushButton      = Type::T_PushButton;

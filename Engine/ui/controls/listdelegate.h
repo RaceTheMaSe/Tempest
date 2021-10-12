@@ -23,7 +23,7 @@ class ListDelegate {
       R_Count
       };
 
-    virtual ~ListDelegate(){}
+    virtual ~ListDelegate()= default;
 
     virtual size_t  size() const = 0;
 
@@ -52,7 +52,7 @@ class AbstractListDelegate : public ListDelegate {
 
     using ListDelegate::createView;
     Widget* createView(size_t position) override {
-      ListItem<Ctrl>* b = new ListItem<Ctrl>(position);
+      auto* b = new ListItem<Ctrl>(position);
       b->onClick.bind(this,&AbstractListDelegate<T,VT,Ctrl>::implItemSelected);
       if(position<data.size())
         initializeItem(b,data[position]);

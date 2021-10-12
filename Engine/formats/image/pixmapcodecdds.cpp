@@ -9,12 +9,11 @@
 
 using namespace Tempest;
 
-PixmapCodecDDS::PixmapCodecDDS() {  
-  }
+PixmapCodecDDS::PixmapCodecDDS() = default;
 
 bool PixmapCodecDDS::testFormat(const PixmapCodec::Context &c) const {
   char buf[4]={};
-  return c.peek(buf,4)==4 && std::memcmp(buf,"DDS ",4)==0;
+  return c.peek((char*)buf,4)==4 && std::memcmp((char*)buf,"DDS ",4)==0;
   }
 
 uint8_t* PixmapCodecDDS::load(PixmapCodec::Context &c, uint32_t &ow, uint32_t &oh,
@@ -23,7 +22,7 @@ uint8_t* PixmapCodecDDS::load(PixmapCodec::Context &c, uint32_t &ow, uint32_t &o
 
   auto& f = c.device;
   uint8_t head[4]={};
-  if(f.read(head,4)!=4)
+  if(f.read((uint8_t*)head,4)!=4)
     return nullptr;
 
   DDSURFACEDESC2 ddsd={};
@@ -64,7 +63,7 @@ uint8_t* PixmapCodecDDS::load(PixmapCodec::Context &c, uint32_t &ow, uint32_t &o
   size_t blocksize  = (compressType==squish::kDxt1) ? 8 : 16;
   size_t bufferSize = 0;
 
-  size_t w = size_t(ow), h = size_t(oh);
+  auto w = size_t(ow), h = size_t(oh);
   for(size_t i=0; i<mipCnt; i++){
     size_t blockcount = ((w+3)/4)*((h+3)/4);
     bufferSize += blockcount*blocksize;
@@ -72,7 +71,7 @@ uint8_t* PixmapCodecDDS::load(PixmapCodec::Context &c, uint32_t &ow, uint32_t &o
     h = std::max<size_t>(1,h/2);
     }
 
-  uint8_t* ddsv = reinterpret_cast<uint8_t*>(std::malloc(bufferSize));
+  auto* ddsv = reinterpret_cast<uint8_t*>(std::malloc(bufferSize));
   if(!ddsv || f.read(ddsv,bufferSize)!=bufferSize) {
     std::free(ddsv);
     return nullptr;
@@ -83,7 +82,7 @@ uint8_t* PixmapCodecDDS::load(PixmapCodec::Context &c, uint32_t &ow, uint32_t &o
   return ddsv;
   }
 
-bool PixmapCodecDDS::save(ODevice &, const char* /*ext*/, const uint8_t *data, size_t dataSz,
-                          uint32_t w, uint32_t h, Pixmap::Format frm) const {
+bool PixmapCodecDDS::save(ODevice &, const char* /*ext*/, const uint8_t * /*data*/, size_t  /*dataSz*/,
+                          uint32_t  /*w*/, uint32_t  /*h*/, Pixmap::Format  /*frm*/) const {
   return false;
   }

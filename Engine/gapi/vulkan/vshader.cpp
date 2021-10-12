@@ -10,7 +10,7 @@
 using namespace Tempest::Detail;
 
 VShader::VShader(VDevice& device, const void *source, size_t src_size)
-  :device(device.device.impl) {
+  :impl(),device(device.device.impl) {
   if(src_size%4!=0)
     throw std::system_error(Tempest::GraphicsErrc::InvalidShaderModule);
 

@@ -18,6 +18,7 @@ class Brush {
 
     int w() const { return info.w; }
     int h() const { return info.h; }
+    void setColor(Tempest::Color c) { color = c; };
 
   private:
     using TexPtr=Detail::ResourcePtr<Tempest::Texture2d>;

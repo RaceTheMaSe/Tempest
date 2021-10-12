@@ -10,15 +10,14 @@ VideoBuffer::VideoBuffer(AbstractGraphicsApi::PBuffer&& impl, size_t size)
   :impl(std::move(impl)),sz(size) {
   }
 
-VideoBuffer::VideoBuffer(VideoBuffer &&other)
-  :impl(std::move(other.impl)),sz(other.sz) {
+VideoBuffer::VideoBuffer(VideoBuffer &&other) noexcept
+  :impl(std::move(other.impl)),sz(other.sz){
   other.sz = 0;
   }
 
-VideoBuffer::~VideoBuffer(){
-  }
+VideoBuffer::~VideoBuffer()= default;
 
-VideoBuffer &VideoBuffer::operator=(VideoBuffer &&other) {
+VideoBuffer &VideoBuffer::operator=(VideoBuffer &&other) noexcept {
   std::swap(impl,other.impl);
   std::swap(sz,  other.sz);
   return *this;

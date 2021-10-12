@@ -37,15 +37,15 @@ class ScrollBar : public Tempest::Widget {
     Tempest::Signal<void(int)> onValueChanged;
 
   protected:
-    void    paintEvent     (Tempest::PaintEvent& e);
-    void    resizeEvent    (Tempest::SizeEvent&  e);
+    void    paintEvent     (Tempest::PaintEvent& e) override;
+    void    resizeEvent    (Tempest::SizeEvent&  e) override;
 
-    void    mouseDownEvent (Tempest::MouseEvent& e);
-    void    mouseDragEvent (Tempest::MouseEvent& e);
-    void    mouseUpEvent   (Tempest::MouseEvent& e);
-    void    mouseWheelEvent(Tempest::MouseEvent& e);
+    void    mouseDownEvent (Tempest::MouseEvent& e) override;
+    void    mouseDragEvent (Tempest::MouseEvent& e) override;
+    void    mouseUpEvent   (Tempest::MouseEvent& e) override;
+    void    mouseWheelEvent(Tempest::MouseEvent& e) override;
 
-    void    polishEvent    (Tempest::PolishEvent&);
+    void    polishEvent    (Tempest::PolishEvent&) override;
 
   private:
     enum Elements : uint8_t {

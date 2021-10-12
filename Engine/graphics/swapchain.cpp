@@ -2,6 +2,7 @@
 
 #include <Tempest/Attachment>
 #include <Tempest/Device>
+#include <memory>
 
 using namespace Tempest;
 
@@ -12,7 +13,7 @@ Swapchain::Swapchain(AbstractGraphicsApi::Swapchain* sw)
 
 void Swapchain::implReset() {
   size_t cnt = imageCount();
-  img.reset(new Attachment[cnt]);
+  img = std::make_unique<Attachment[]>(cnt);
   for(uint32_t i=0;i<cnt;++i)
     img[i] = Attachment(impl.handler,i);
   }
@@ -25,7 +26,7 @@ Swapchain::~Swapchain() {
   delete impl.handler;
   }
 
-Swapchain& Swapchain::operator = (Swapchain&& s) {
+Swapchain& Swapchain::operator = (Swapchain&& s) noexcept {
   std::swap(impl, s.impl);
   std::swap(img,  s.img);
   return *this;

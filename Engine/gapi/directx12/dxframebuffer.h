@@ -19,7 +19,7 @@ class DxFramebuffer : public AbstractGraphicsApi::Fbo {
   public:
     DxFramebuffer(DxDevice& dev, DxFboLayout& lay, uint32_t cnt,
                   DxSwapchain** swapchain, DxTexture** cl, const uint32_t* imgId, DxTexture* zbuf);
-    ~DxFramebuffer();
+    ~DxFramebuffer() override;
 
     ComPtr<ID3D12DescriptorHeap>              rtvHeap;
     UINT                                      rtvHeapInc = 0;

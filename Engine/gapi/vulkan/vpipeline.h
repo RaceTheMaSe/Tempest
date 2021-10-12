@@ -23,8 +23,8 @@ class VPipeline : public AbstractGraphicsApi::Pipeline {
     VPipeline(VDevice &device,
               const RenderState &st, size_t stride, Topology tp, const VPipelineLay& ulayImpl,
               const VShader* vert, const VShader* ctrl, const VShader* tess, const VShader* geom,  const VShader* frag);
-    VPipeline(VPipeline&& other);
-    ~VPipeline();
+    VPipeline(VPipeline&& other) noexcept;
+    ~VPipeline() override;
 
     struct Inst final {
       Inst(VFramebufferLayout* lay,VkPipeline val):lay(lay),val(val){}
@@ -65,8 +65,8 @@ class VCompPipeline : public AbstractGraphicsApi::CompPipeline {
   public:
     VCompPipeline();
     VCompPipeline(VDevice &device, const VPipelineLay& ulay, VShader &comp);
-    VCompPipeline(VCompPipeline&& other);
-    ~VCompPipeline();
+    VCompPipeline(VCompPipeline&& other) noexcept;
+    ~VCompPipeline() override;
 
     VkDevice           device         = nullptr;
     VkPipelineLayout   pipelineLayout = VK_NULL_HANDLE;

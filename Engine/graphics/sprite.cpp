@@ -4,8 +4,7 @@
 
 using namespace Tempest;
 
-Sprite::Sprite() {
-  }
+Sprite::Sprite() = default;
 
 Sprite::Sprite(TextureAtlas::Allocation a, uint32_t w, uint32_t h)
   :alloc(std::move(a)),texW(int(w)),texH(int(h)) {

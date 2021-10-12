@@ -20,16 +20,16 @@ class ResourceState {
   private:
     struct State {
       AbstractGraphicsApi::Attach* img = nullptr;
-      TextureLayout                last;
-      TextureLayout                next;
-      bool                         outdated;
+      TextureLayout                last=TextureLayout::Undefined;
+      TextureLayout                next=TextureLayout::Undefined;
+      bool                         outdated{};
       };
 
     struct BufState {
       AbstractGraphicsApi::Buffer* buf = nullptr;
-      BufferLayout                 last;
-      BufferLayout                 next;
-      bool                         outdated;
+      BufferLayout                 last=BufferLayout::Undefined;
+      BufferLayout                 next=BufferLayout::Undefined;
+      bool                         outdated{};
       };
 
     State&    findImg(AbstractGraphicsApi::Attach* img, bool preserve);

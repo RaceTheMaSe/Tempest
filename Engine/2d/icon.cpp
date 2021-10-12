@@ -2,8 +2,7 @@
 
 using namespace Tempest;
 
-Icon::Icon() {
-  }
+Icon::Icon() = default;
 
 Icon::Icon(const Pixmap &pm, TextureAtlas &atl) {
   Sprite norm = atl.load(pm);
@@ -12,15 +11,15 @@ Icon::Icon(const Pixmap &pm, TextureAtlas &atl) {
   const uint32_t w = pm.w(), h = pm.h();
 
   Pixmap dst = Pixmap(w,h,pm.format());
-  const uint8_t* p = reinterpret_cast<const uint8_t*>(pm.data());
-  uint8_t*       d = reinterpret_cast<uint8_t*>(dst.data());
+  const auto* p = reinterpret_cast<const uint8_t*>(pm.data());
+  auto*       d = reinterpret_cast<uint8_t*>(dst.data());
 
   switch(pm.format()) {
     case Pixmap::Format::RGB: {
       for(uint32_t r=0; r<h; ++r)
         for(uint32_t i=0; i<w; ++i){
           //0.299, 0.587, 0.114
-          uint8_t cl = uint8_t(p[0]*0.299 + p[1]*0.587 + p[2]*0.114);
+          auto cl = uint8_t(p[0]*0.299 + p[1]*0.587 + p[2]*0.114);
           d[0] = cl;
           d[1] = cl;
           d[2] = cl;
@@ -35,7 +34,7 @@ Icon::Icon(const Pixmap &pm, TextureAtlas &atl) {
       for(uint32_t r=0; r<h; ++r)
         for(uint32_t i=0; i<w; ++i){
           //0.299, 0.587, 0.114
-          uint8_t cl = uint8_t(p[0]*0.299 + p[1]*0.587 + p[2]*0.114);
+          auto cl = uint8_t(p[0]*0.299 + p[1]*0.587 + p[2]*0.114);
           d[0] = cl;
           d[1] = cl;
           d[2] = cl;

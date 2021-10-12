@@ -13,7 +13,7 @@ class DxTexture : public AbstractGraphicsApi::Texture {
   public:
     DxTexture();
     DxTexture(ComPtr<ID3D12Resource>&& b,DXGI_FORMAT frm,UINT mips);
-    DxTexture(DxTexture&& other);
+    DxTexture(DxTexture&& other) noexcept;
 
     uint32_t mipCount() const override { return mips; }
 

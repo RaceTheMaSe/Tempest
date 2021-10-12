@@ -13,12 +13,12 @@
 
 #include <Tempest/PipelineLayout>
 #include <Tempest/RenderState>
+#include <memory>
 
 using namespace Tempest;
 using namespace Tempest::Detail;
 
-VPipeline::VPipeline(){
-  }
+VPipeline::VPipeline()= default;
 
 VPipeline::VPipeline(VDevice& device,
                      const RenderState &st, size_t stride, Topology tp, const VPipelineLay& ulay,
@@ -45,7 +45,7 @@ VPipeline::VPipeline(VDevice& device,
     }
   }
 
-VPipeline::VPipeline(VPipeline &&other) {
+VPipeline::VPipeline(VPipeline &&other)  noexcept {
   std::swap(device,         other.device);
   std::swap(inst,           other.inst);
   std::swap(pipelineLayout, other.pipelineLayout);
@@ -66,7 +66,7 @@ VPipeline::Inst &VPipeline::instance(VFramebufferLayout &lay) {
   try {
     val = initGraphicsPipeline(device,pipelineLayout,lay,st,
                                decl.get(),declSize,stride,
-                               tp,modules);
+                               tp,(DSharedPtr<const Tempest::Detail::VShader*>*)modules);
     inst.emplace_back(&lay,val);
     }
   catch(...) {
@@ -80,10 +80,10 @@ VPipeline::Inst &VPipeline::instance(VFramebufferLayout &lay) {
 void VPipeline::cleanup() {
   if(pipelineLayout==VK_NULL_HANDLE)
     return;
-  if(pipelineLayout!=VK_NULL_HANDLE)
-    vkDestroyPipelineLayout(device,pipelineLayout,nullptr);
   for(auto& i:inst)
     vkDestroyPipeline(device,i.val,nullptr);
+  if(pipelineLayout!=VK_NULL_HANDLE)
+    vkDestroyPipelineLayout(device,pipelineLayout,nullptr);
   }
 
 VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboLay, VkShaderStageFlags& pushStageFlags) {
@@ -116,7 +116,7 @@ VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboL
     pipelineLayoutInfo.pushConstantRangeCount = 1;
     }
 
-  VkPipelineLayout ret;
+  VkPipelineLayout ret = {};
   vkAssert(vkCreatePipelineLayout(device,&pipelineLayoutInfo,nullptr,&ret));
   return ret;
   }
@@ -155,7 +155,7 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
 
   VkVertexInputAttributeDescription                  vsInputsStk[16]={};
   std::unique_ptr<VkVertexInputAttributeDescription> vsInputHeap;
-  VkVertexInputAttributeDescription*                 vsInput = vsInputsStk;
+  auto*                                              vsInput = (VkVertexInputAttributeDescription*)vsInputsStk;
   if(declSize>16) {
     vsInputHeap.reset(new VkVertexInputAttributeDescription[declSize]);
     vsInput = vsInputHeap.get();
@@ -264,7 +264,7 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
   colorBlending.logicOpEnable     = VK_FALSE;
   colorBlending.logicOp           = VK_LOGIC_OP_COPY;
   colorBlending.attachmentCount   = lay.colorCount;
-  colorBlending.pAttachments      = blendAtt;
+  colorBlending.pAttachments      = (VkPipelineColorBlendAttachmentState*)blendAtt;
   colorBlending.blendConstants[0] = 0.0f;
   colorBlending.blendConstants[1] = 0.0f;
   colorBlending.blendConstants[2] = 0.0f;
@@ -303,13 +303,13 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
   VkPipelineDynamicStateCreateInfo dynamic = {};
   dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
   const VkDynamicState dySt[2] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-  dynamic.pDynamicStates    = dySt;
+  dynamic.pDynamicStates    = (const VkDynamicState*)dySt;
   dynamic.dynamicStateCount = 2;
 
   VkGraphicsPipelineCreateInfo pipelineInfo = {};
   pipelineInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount          = uint32_t(stagesCnt);
-  pipelineInfo.pStages             = shaderStages;
+  pipelineInfo.pStages             = (VkPipelineShaderStageCreateInfo*)shaderStages;
   pipelineInfo.pVertexInputState   = &vertexInputInfo;
   pipelineInfo.pInputAssemblyState = &inputAssembly;
   pipelineInfo.pViewportState      = &viewportState;
@@ -334,8 +334,7 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
   }
 
 
-VCompPipeline::VCompPipeline() {
-  }
+VCompPipeline::VCompPipeline() = default;
 
 VCompPipeline::VCompPipeline(VDevice& dev, const VPipelineLay& ulay, VShader& comp)
   :device(dev.device.impl) {
@@ -359,7 +358,7 @@ VCompPipeline::VCompPipeline(VDevice& dev, const VPipelineLay& ulay, VShader& co
     }
   }
 
-VCompPipeline::VCompPipeline(VCompPipeline&& other) {
+VCompPipeline::VCompPipeline(VCompPipeline&& other)  noexcept {
   std::swap(device,         other.device);
   std::swap(impl,           other.impl);
   std::swap(pipelineLayout, other.pipelineLayout);

@@ -14,7 +14,7 @@ class VDevice;
 class VShader:public AbstractGraphicsApi::Shader {
   public:
     VShader(VDevice& device, const void* source, size_t src_size);
-    ~VShader();
+    ~VShader() override;
 
     using Binding = ShaderReflection::Binding;
 

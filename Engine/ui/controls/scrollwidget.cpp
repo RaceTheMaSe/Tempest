@@ -8,7 +8,7 @@ using namespace Tempest;
 struct ScrollWidget::BoxLayout: public Tempest::LinearLayout {
   BoxLayout(ScrollWidget* sc,Orientation ori ):LinearLayout(ori), sc(sc){}
 
-  void applyLayout() {
+  void applyLayout() override {
     sc->complexLayout();
     }
 
@@ -56,7 +56,7 @@ struct ScrollWidget::BoxLayout: public Tempest::LinearLayout {
     if(orient==Horizontal)
       sw += m.xMargin(); else
       sh += m.yMargin();
-    return Size(sw,sh);
+    return {sw,sh};
     }
 
   ScrollWidget* sc = nullptr;
@@ -65,7 +65,7 @@ struct ScrollWidget::BoxLayout: public Tempest::LinearLayout {
 struct ScrollWidget::ProxyLayout : public Tempest::Layout {
   ProxyLayout(ScrollWidget* sc):sc(sc){}
 
-  void applyLayout() {
+  void applyLayout() override {
     sc->complexLayout();
     }
 
@@ -78,7 +78,7 @@ ScrollWidget::ScrollWidget()
   }
 
 ScrollWidget::ScrollWidget(Orientation ori)
-  : sbH(Horizontal), sbV(Vertical), vert(AsNeed), hor(AsNeed)  {
+  : sbH(Horizontal), sbV(Vertical) {
   layoutBusy=true;
 
   const Style::UIIntefaceCategory cat=style().idiom().category;

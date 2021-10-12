@@ -108,12 +108,12 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
   uint32_t   allocated   = 0;
   bool       hostVisible = false;
 
-  Page(uint32_t sz) noexcept {
+  explicit Page(uint32_t sz) noexcept {
     size   =sz;
     allSize=sz;
     }
 
-  Page(Page&& p) noexcept {
+  Page(Page&& p) noexcept : mmapSync() {
     std::swap(next,p.next);
     size  =p.size;
     offset=p.offset;
@@ -160,7 +160,7 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
           return alloc(*b,size,padding);
           } else
         if(size+padding<b->size){
-          Block* bp=new(std::nothrow) Block();
+          auto* bp=new(std::nothrow) Block();
           if(bp!=nullptr){
             bp->next=b->next;
             b->next =bp;
@@ -196,7 +196,7 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
     a.page  =this;
     a.size  =size;
 
-    uint32_t sz=uint32_t(size+padding);
+    auto sz=uint32_t(size+padding);
     b.offset +=sz;
     b.size   -=sz;
     allocated+=uint32_t(size);
@@ -210,6 +210,9 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
     while(b!=nullptr && (b->offset+b->size)<a.offset)
       b=b->next;
 
+    if(b==nullptr)
+      return;
+    
     if(b->offset+b->size==a.offset){
       b->size+=uint32_t(a.size);
       mergeWithNext(b);
@@ -221,7 +224,7 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
       return;
       }
 
-    Block* r=new(std::nothrow) Block();
+    auto* r=new(std::nothrow) Block();
     if(r==nullptr)
       return; // no error, but sort of leak in Page
     *r=*b;

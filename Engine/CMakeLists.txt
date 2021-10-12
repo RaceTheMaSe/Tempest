@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(Tempest)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 option(TEMPEST_BUILD_SHARED "Build shared Tempest." ON)
 
@@ -37,7 +37,7 @@ else()
   add_library(${PROJECT_NAME} STATIC)
 endif()
 
-### Compillers
+### Compilers
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
@@ -80,7 +80,7 @@ add_definitions(-DSTB_IMAGE_IMPLEMENTATION)
 add_definitions(-DSTB_TRUETYPE_IMPLEMENTATION)
 add_definitions(-DSTB_IMAGE_WRITE_IMPLEMENTATION)
 
-### OpenAl
+### OpenAL
 add_definitions(-DAL_ALEXT_PROTOTYPES)
 add_subdirectory("thirdparty/openal")
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenAL)
@@ -99,6 +99,8 @@ if(TEMPEST_BUILD_VULKAN)
   target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{VK_SDK_PATH}/include")
   if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE vulkan-1)
+  elseif(ANDROID)
+    target_link_libraries(${PROJECT_NAME} PRIVATE vulkan dl)
   else()
     target_link_libraries(${PROJECT_NAME} PRIVATE vulkan)
   endif()
@@ -205,6 +207,8 @@ set_target_properties(
 
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE shlwapi Kernel32)
+elseif(ANDROID)
+  target_link_libraries(${PROJECT_NAME} PRIVATE log android vulkan)
 elseif(APPLE)
   target_link_libraries(${PROJECT_NAME} PRIVATE "-framework AppKit" "-framework QuartzCore" "-framework Metal")
   # target_link_libraries(${PROJECT_NAME} PRIVATE "-framework UiKit")
@@ -214,6 +218,7 @@ endif()
 
 install(
     TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}

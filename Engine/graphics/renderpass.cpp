@@ -8,5 +8,4 @@ RenderPass::RenderPass(Detail::DSharedPtr<AbstractGraphicsApi::Pass *> &&impl)
   :impl(std::move(impl)) {
   }
 
-RenderPass::~RenderPass() {
-  }
+RenderPass::~RenderPass() = default;

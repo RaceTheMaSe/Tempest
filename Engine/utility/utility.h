@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 
 namespace Tempest {
 
@@ -24,7 +25,7 @@ template<class T>
 class BasicPoint<T,1> {
   public:
     BasicPoint()=default;
-    BasicPoint(T x):x(x){}
+    BasicPoint(T xIn):x(xIn){}
 
     BasicPoint& operator -= ( const BasicPoint & p ){ x-=p.x; return *this; }
     BasicPoint& operator += ( const BasicPoint & p ){ x+=p.x; return *this; }
@@ -43,6 +44,14 @@ class BasicPoint<T,1> {
     T length() const { return x<T() ? -x : x; }
     T quadLength()      const { return x*x; }
 
+    T operator[](size_t idx) {
+      assert(idx<1);
+      switch(idx) {
+        case 0: return x;
+        }
+      return T(-1);
+      }
+
     bool operator ==( const BasicPoint & other ) const { return x==other.x; }
     bool operator !=( const BasicPoint & other ) const { return x!=other.x; }
 
@@ -60,7 +69,7 @@ template<class T>
 class BasicPoint<T,2> {
   public:
     BasicPoint()=default;
-    BasicPoint(T x,T y):x(x),y(y){}
+    BasicPoint(T xIn,T yIn):x(xIn),y(yIn){}
 
     BasicPoint& operator -= ( const BasicPoint & p ){ x-=p.x; y-=p.y; return *this; }
     BasicPoint& operator += ( const BasicPoint & p ){ x+=p.x; y+=p.y; return *this; }
@@ -82,12 +91,21 @@ class BasicPoint<T,2> {
     bool operator ==( const BasicPoint & other ) const { return x==other.x && y==other.y; }
     bool operator !=( const BasicPoint & other ) const { return x!=other.x || y!=other.y; }
 
+    T operator[](size_t idx) {
+      assert(idx<2);
+      switch(idx) {
+        case 0: return x;
+        case 1: return y;
+        }
+      return T(-1);
+      }
+
     static T dotProduct(const BasicPoint<T,2>& a,const BasicPoint<T,2>& b) { return a.x*b.x+a.y*b.y; }
     static BasicPoint<T,2> crossProduct(const BasicPoint<T,2>& a) {
       return { a.y, -a.x };
       }
     static BasicPoint<T,2> normalize(const BasicPoint<T,2>& t) {
-      const T len = t.manhattanLength();
+      const T len = t.length();
       if(len==T())
         return t;
       return t/len;
@@ -101,7 +119,7 @@ template<class T>
 class BasicPoint<T,3> {
   public:
     BasicPoint()=default;
-    BasicPoint(T x,T y,T z):x(x),y(y),z(z){}
+    BasicPoint(T xIn,T yIn,T zIn):x(xIn),y(yIn),z(zIn){}
 
     BasicPoint& operator -= ( const BasicPoint & p ){ x-=p.x; y-=p.y; z-=p.z; return *this; }
     BasicPoint& operator += ( const BasicPoint & p ){ x+=p.x; y+=p.y; z+=p.z; return *this; }
@@ -122,6 +140,16 @@ class BasicPoint<T,3> {
 
     bool operator ==( const BasicPoint & other ) const { return x==other.x && y==other.y && z==other.z; }
     bool operator !=( const BasicPoint & other ) const { return x!=other.x || y!=other.y || z!=other.z; }
+
+    T operator[](size_t idx) {
+      assert(idx<3);
+      switch(idx) {
+        case 0: return x;
+        case 1: return y;
+        case 2: return z;
+        }
+      return T(-1);
+      }
 
     static T dotProduct(const BasicPoint<T,3>& a,const BasicPoint<T,3>& b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
     static BasicPoint<T,3> crossProduct(const BasicPoint<T,3>& a,const BasicPoint<T,3>& b) {
@@ -147,7 +175,7 @@ template<class T>
 class BasicPoint<T,4> {
   public:
     BasicPoint()=default;
-    BasicPoint(T x,T y,T z,T w):x(x),y(y),z(z),w(w){}
+    BasicPoint(T xIn,T yIn,T zIn,T wIn):x(xIn),y(yIn),z(zIn),w(wIn){}
 
     BasicPoint& operator -= ( const BasicPoint & p ){ x-=p.x; y-=p.y; z-=p.z; w-=p.w; return *this; }
     BasicPoint& operator += ( const BasicPoint & p ){ x+=p.x; y+=p.y; z+=p.z; w+=p.w; return *this; }
@@ -168,10 +196,21 @@ class BasicPoint<T,4> {
 
     bool operator ==( const BasicPoint & other ) const { return x==other.x && y==other.y && z==other.z && w==other.w; }
     bool operator !=( const BasicPoint & other ) const { return x!=other.x || y!=other.y || z!=other.z || w!=other.w; }
+    
+    T operator[](size_t idx) {
+      assert(idx<4);
+      switch(idx) {
+        case 0: return x;
+        case 1: return y;
+        case 2: return z;
+        case 3: return w;
+        }
+      return T(-1);
+      }
 
     static T dotProduct(const BasicPoint<T,4>& a,const BasicPoint<T,4>& b) { return a.x*b.x+a.y*b.y+a.z*b.z+a.w*b.w; }
     static BasicPoint<T,4> normalize(const BasicPoint<T,4>& t) {
-      const T len = t.manhattanLength();
+      const T len = t.length();
       if(len==T())
         return t;
       return t/len;
@@ -257,4 +296,4 @@ using Vec4   = BasicPoint<float,4>;
 
 using Size   = BasicSize<int>;
 using Rect   = BasicRect<int>;
-};
+}

@@ -88,6 +88,8 @@ typedef enum SrcFloatProp {
     sfDirectFilterGainHFAuto = AL_DIRECT_FILTER_GAINHF_AUTO,
     sfAuxSendFilterGainAuto = AL_AUXILIARY_SEND_FILTER_GAIN_AUTO,
     sfAuxSendFilterGainHFAuto = AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO,
+    sfAuxSendFilterGain = AL_AUXILIARY_SEND_FILTER_GAIN,
+    sfAuxSendFilterGainHF = AL_AUXILIARY_SEND_FILTER_GAINHF,
 
     /* AL_SOFT_direct_channels */
     sfDirectChannelsSOFT = AL_DIRECT_CHANNELS_SOFT,
@@ -126,7 +128,7 @@ typedef enum SrcIntProp {
 
     /* ALC_EXT_EFX */
     siDirectFilterGainHFAuto = AL_DIRECT_FILTER_GAINHF_AUTO,
-    siAuxSendFilterGainAutio = AL_AUXILIARY_SEND_FILTER_GAIN_AUTO,
+    siAuxSendFilterGainAuto = AL_AUXILIARY_SEND_FILTER_GAIN_AUTO,
     siAuxSendFilterGainHFAuto = AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO,
     siDirectFilter = AL_DIRECT_FILTER,
     siAuxSendFilter = AL_AUXILIARY_SEND_FILTER,
@@ -179,6 +181,8 @@ static ALint FloatValsByProp(ALenum prop)
         case sfDirectFilterGainHFAuto:
         case sfAuxSendFilterGainAuto:
         case sfAuxSendFilterGainHFAuto:
+        case sfAuxSendFilterGain:
+        case sfAuxSendFilterGainHF:
         case sfDirectChannelsSOFT:
         case sfDistanceModel:
         case sfSourceRelative:
@@ -230,6 +234,8 @@ static ALint DoubleValsByProp(ALenum prop)
         case sfDirectFilterGainHFAuto:
         case sfAuxSendFilterGainAuto:
         case sfAuxSendFilterGainHFAuto:
+        case sfAuxSendFilterGain:
+        case sfAuxSendFilterGainHF:
         case sfDirectChannelsSOFT:
         case sfDistanceModel:
         case sfSourceRelative:
@@ -277,7 +283,7 @@ static ALint IntValsByProp(ALenum prop)
         case siByteOffset:
         case siDopplerFactor:
         case siDirectFilterGainHFAuto:
-        case siAuxSendFilterGainAutio:
+        case siAuxSendFilterGainAuto:
         case siAuxSendFilterGainHFAuto:
         case siDirectFilter:
         case siDirectChannelsSOFT:
@@ -322,7 +328,7 @@ static ALint Int64ValsByProp(ALenum prop)
         case siByteOffset:
         case siDopplerFactor:
         case siDirectFilterGainHFAuto:
-        case siAuxSendFilterGainAutio:
+        case siAuxSendFilterGainAuto:
         case siAuxSendFilterGainHFAuto:
         case siDirectFilter:
         case siDirectChannelsSOFT:
@@ -356,6 +362,8 @@ static ALint Int64ValsByProp(ALenum prop)
 
 static ALenum SetSourcefv(ALsource *Source, ALCcontext *Context, SrcFloatProp prop, const ALfloat *values)
 {
+    ALCdevice *device = Context->Device;
+    ALeffectslot *slot = NULL;
     ALint ival;
 
     switch(prop)
@@ -534,13 +542,53 @@ static ALenum SetSourcefv(ALsource *Source, ALCcontext *Context, SrcFloatProp pr
         case sfAuxSendFilterGainHFAuto:
         case sfDirectChannelsSOFT:
             ival = (ALint)values[0];
-            return SetSourceiv(Source, Context, prop, &ival);
+            return SetSourceiv(Source, Context, (SrcIntProp)prop, &ival);
+        case sfAuxSendFilterGain: {
+            LockContext(Context);
+            for(ALuint effIdx=0; effIdx < device->NumAuxSends; effIdx++) {
+                if((slot=LookupEffectSlot(Context, effIdx)) == NULL)
+                {
+                    continue;
+                }
 
+                /* Add refcount on the new slot, and release the previous slot */
+                if(slot) IncrementRef(&slot->ref);
+                slot = ExchangePtr((XchgPtr*)&Source->Send[effIdx].Slot, slot);
+                if(slot) DecrementRef(&slot->ref);
+
+                // FIXME: overwrites filter gains if any are present
+                Source->Send[effIdx].Gain = values[0];
+                Source->NeedsUpdate = AL_TRUE;
+                
+            }
+            UnlockContext(Context);
+            return AL_NO_ERROR;
+        }
+        case sfAuxSendFilterGainHF: {
+            LockContext(Context);
+            for(ALuint effIdx=0; effIdx < device->NumAuxSends; effIdx++) {
+                if((slot=LookupEffectSlot(Context, effIdx)) == NULL)
+                {
+                    continue;
+                }
+
+                /* Add refcount on the new slot, and release the previous slot */
+                if(slot) IncrementRef(&slot->ref);
+                slot = ExchangePtr((XchgPtr*)&Source->Send[effIdx].Slot, slot);
+                if(slot) DecrementRef(&slot->ref);
+
+                // FIXME: overwrites filter gains if any are present
+                Source->Send[effIdx].GainHF = values[0];
+                Source->NeedsUpdate = AL_TRUE;
+            }
+            UnlockContext(Context);
+            return AL_NO_ERROR;
+        }
         case sfBuffer:
         case sfBuffersQueued:
         case sfBuffersProcessed:
             ival = (ALint)((ALuint)values[0]);
-            return SetSourceiv(Source, Context, prop, &ival);
+            return SetSourceiv(Source, Context, (SrcIntProp)prop, &ival);
     }
 
     ERR("Unexpected property: 0x%04x\n", prop);
@@ -688,28 +736,28 @@ static ALenum SetSourceiv(ALsource *Source, ALCcontext *Context, SrcIntProp prop
         case AL_DIRECT_FILTER_GAINHF_AUTO:
             CHECKVAL(*values == AL_FALSE || *values == AL_TRUE);
 
-            Source->DryGainHFAuto = *values;
+            Source->DryGainHFAuto = (ALboolean)*values;
             Source->NeedsUpdate = AL_TRUE;
             return AL_NO_ERROR;
 
         case AL_AUXILIARY_SEND_FILTER_GAIN_AUTO:
             CHECKVAL(*values == AL_FALSE || *values == AL_TRUE);
 
-            Source->WetGainAuto = *values;
+            Source->WetGainAuto = (ALboolean)*values;
             Source->NeedsUpdate = AL_TRUE;
             return AL_NO_ERROR;
 
         case AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO:
             CHECKVAL(*values == AL_FALSE || *values == AL_TRUE);
 
-            Source->WetGainHFAuto = *values;
+            Source->WetGainHFAuto = (ALboolean)*values;
             Source->NeedsUpdate = AL_TRUE;
             return AL_NO_ERROR;
 
         case AL_DIRECT_CHANNELS_SOFT:
             CHECKVAL(*values == AL_FALSE || *values == AL_TRUE);
 
-            Source->DirectChannels = *values;
+            Source->DirectChannels = (ALboolean)*values;
             Source->NeedsUpdate = AL_TRUE;
             return AL_NO_ERROR;
 
@@ -982,6 +1030,18 @@ static ALenum GetSourcedv(const ALsource *Source, ALCcontext *Context, SrcFloatP
             UnlockContext(Context);
             return AL_NO_ERROR;
 
+        case AL_AUXILIARY_SEND_FILTER_GAIN:
+            LockContext(Context);
+            values[0] = Source->Send[0].Gain; // FIXME: make a float / double vector to retrieve all slots
+            UnlockContext(Context);
+            return AL_NO_ERROR;
+        
+        case AL_AUXILIARY_SEND_FILTER_GAINHF:
+            LockContext(Context);
+            values[0] = Source->Send[0].GainHF; // FIXME: make a float / double vector to retrieve all slots
+            UnlockContext(Context);
+            return AL_NO_ERROR;
+        
         case AL_SOURCE_RELATIVE:
         case AL_LOOPING:
         case AL_BUFFER:
@@ -1579,6 +1639,17 @@ AL_API ALvoid AL_APIENTRY alSourcei(ALuint source, ALenum param, ALint value)
     ALCcontext_DecRef(Context);
 }
 
+AL_API ALvoid AL_APIENTRY alSourceiCt(ALCcontext* Context, ALuint source, ALenum param, ALint value)
+{
+    ALsource   *Source;
+    if((Source=LookupSource(Context, source)) == NULL)
+        alSetError(Context, AL_INVALID_NAME);
+    else if(!(IntValsByProp(param) == 1))
+        alSetError(Context, AL_INVALID_ENUM);
+    else
+        SetSourceiv(Source, Context, param, &value);
+}
+
 AL_API void AL_APIENTRY alSource3i(ALuint source, ALenum param, ALint value1, ALint value2, ALint value3)
 {
     ALCcontext *Context;
@@ -1598,6 +1669,21 @@ AL_API void AL_APIENTRY alSource3i(ALuint source, ALenum param, ALint value1, AL
     }
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API void AL_APIENTRY alSource3iCt(ALCcontext* Context, ALuint source, ALenum param, ALint value1, ALint value2, ALint value3)
+{
+    ALsource   *Source;
+
+    if((Source=LookupSource(Context, source)) == NULL)
+        alSetError(Context, AL_INVALID_NAME);
+    else if(!(IntValsByProp(param) == 3))
+        alSetError(Context, AL_INVALID_ENUM);
+    else
+    {
+        ALint ivals[3] = { value1, value2, value3 };
+        SetSourceiv(Source, Context, param, ivals);
+    }
 }
 
 AL_API void AL_APIENTRY alSourceiv(ALuint source, ALenum param, const ALint *values)

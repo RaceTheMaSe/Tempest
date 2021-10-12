@@ -9,7 +9,7 @@
 
 using namespace Tempest::Detail;
 
-VBuffer::VBuffer(VBuffer &&other) {
+VBuffer::VBuffer(VBuffer &&other)  noexcept {
   std::swap(impl, other.impl);
   std::swap(alloc,other.alloc);
   std::swap(page, other.page);
@@ -20,7 +20,7 @@ VBuffer::~VBuffer() {
     alloc->free(*this);
   }
 
-VBuffer& VBuffer::operator=(VBuffer&& other) {
+VBuffer& VBuffer::operator=(VBuffer&& other)  noexcept {
   std::swap(impl, other.impl);
   std::swap(alloc,other.alloc);
   std::swap(page, other.page);

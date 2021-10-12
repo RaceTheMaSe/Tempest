@@ -2,6 +2,7 @@
 
 #include <Tempest/AbstractGraphicsApi>
 #include <vector>
+#include <string>
 
 #include "vulkan_sdk.h"
 #include "utility/spinlock.h"
@@ -21,7 +22,7 @@ class VulkanInstance {
 
     std::vector<AbstractGraphicsApi::Props> devices() const;
 
-    VkInstance       instance;
+    VkInstance*       instance;
 
     struct VkProp:Tempest::AbstractGraphicsApi::Props {
       uint32_t graphicsFamily=uint32_t(-1);
@@ -46,8 +47,11 @@ class VulkanInstance {
                     VkSemaphore* ws, VkPipelineStageFlags* wflg, size_t waitCnt,
                     VFence *fence);
 
-    const std::initializer_list<const char*>& checkValidationLayerSupport();
+    const std::vector<const char*>& checkValidationLayerSupport();
     bool layerSupport(const std::vector<VkLayerProperties>& sup,const std::initializer_list<const char*> dest);
+    void addExternalLayers(std::vector<const char *> &activeLayers, const std::vector<VkLayerProperties> &supportedLayers);
+    void addSupportedLayers(std::vector<const char *> &activeLayers, const std::vector<VkLayerProperties> &instanceLayers,
+                            std::initializer_list<const char*> requestedLayers);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(
         VkDebugReportFlagsEXT       flags,
@@ -60,8 +64,13 @@ class VulkanInstance {
         void*                       pUserData);
 
     const bool                                      validation;
-    VkDebugReportCallbackEXT                        callback;
+    VkDebugReportCallbackEXT                        callback={};
     PFN_vkDestroyDebugReportCallbackEXT             vkDestroyDebugReportCallbackEXT = nullptr;
+    std::vector<std::string> externalLayers;
+    std::vector<const char*> activeLayers;
+    std::vector<const char*> extensions;
+
+    void VkCheck(VkResult err);
   };
 
 }}

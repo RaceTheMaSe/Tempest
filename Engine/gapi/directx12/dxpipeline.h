@@ -28,7 +28,7 @@ class DxPipeline : public AbstractGraphicsApi::Pipeline {
       Inst& operator = (Inst&&)=default;
 
       DxFboLayout                 lay;
-      ComPtr<ID3D12PipelineState> impl;
+      ComPtr<ID3D12PipelineState> impl{};
       };
 
     ComPtr<ID3D12RootSignature> sign;
@@ -67,8 +67,8 @@ class DxCompPipeline : public AbstractGraphicsApi::CompPipeline {
                    const DxPipelineLay& ulay,
                    DxShader& comp);
 
-    ComPtr<ID3D12RootSignature> sign;
-    ComPtr<ID3D12PipelineState> impl;
+    ComPtr<ID3D12RootSignature> sign{};
+    ComPtr<ID3D12PipelineState> impl{};
     size_t                      pushConstantId = 0;
     bool                        ssboBarriers = false;
   };

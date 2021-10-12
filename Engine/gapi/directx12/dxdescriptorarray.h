@@ -12,8 +12,8 @@ class VPipelineLay;
 class DxDescriptorArray : public AbstractGraphicsApi::Desc {
   public:
     DxDescriptorArray(DxPipelineLay& vlay);
-    DxDescriptorArray(DxDescriptorArray&& other);
-    ~DxDescriptorArray();
+    DxDescriptorArray(DxDescriptorArray&& other) noexcept ;
+    ~DxDescriptorArray() override;
 
     void set    (size_t id, const AbstractGraphicsApi::Texture* tex, uint32_t mipLevel, const Sampler2d& smp, DXGI_FORMAT vfrm);
 

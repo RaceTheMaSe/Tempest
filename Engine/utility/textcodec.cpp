@@ -9,7 +9,7 @@ std::string TextCodec::toUtf8(const std::u16string &s) {
   }
 
 std::string TextCodec::toUtf8(const char16_t *inS) {
-  const uint16_t* s  = reinterpret_cast<const uint16_t*>(inS);
+  const auto* s  = reinterpret_cast<const uint16_t*>(inS);
 
   size_t sz=0;
   for(size_t i=0;s[i];) {
@@ -32,7 +32,7 @@ std::string TextCodec::toUtf8(const char16_t *inS) {
   }
 
 void TextCodec::toUtf8(const uint32_t codePoint, char (&ret)[3]) {
-  size_t sz = Detail::codepointToUtf8(codePoint,ret);
+  size_t sz = Detail::codepointToUtf8(codePoint,(char*)ret);
   ret[sz] = '\0';
   }
 
@@ -41,12 +41,15 @@ std::u16string TextCodec::toUtf16(const std::string &s) {
   }
 
 std::u16string TextCodec::toUtf16(const char *inS) {
-  const uint8_t* s  = reinterpret_cast<const uint8_t*>(inS);
+  const auto* s  = reinterpret_cast<const uint8_t*>(inS);
   size_t         sz = 0;
 
   for(size_t i=0;s[i];) {
     uint32_t cp = 0;
     size_t   l  = Detail::utf8ToCodepoint(&s[i],cp);
+
+    if(l==0)  // FIXME: "endless" loop happening otherwise - coming here from X11 input processing with 0xA7 and then zeros as input - does not abort translation - reproduction steps: press shift and then 1,2,3 number keys simultanously produces 0xA7
+      return u"";
 
     if(cp > 0xFFFF)
       sz+=2; else

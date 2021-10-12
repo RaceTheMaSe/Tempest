@@ -26,6 +26,8 @@ class Dialog : public Panel {
     void         closeEvent  (CloseEvent& e) override;
     void         keyDownEvent(KeyEvent&   e) override;
     void         keyUpEvent  (KeyEvent&   e) override;
+    void         keyDownEvent(GamepadKeyEvent&   e) override;
+    void         keyUpEvent  (GamepadKeyEvent&   e) override;
     void         paintEvent  (PaintEvent& e) override;
     virtual void paintShadow (PaintEvent& e);
     virtual void showEvent();

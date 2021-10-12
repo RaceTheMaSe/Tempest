@@ -18,8 +18,8 @@ class VBuffer;
 class VTexture : public AbstractGraphicsApi::Texture {
   public:
     VTexture()=default;
-    VTexture(VTexture &&other);
-    ~VTexture();
+    VTexture(VTexture &&other) noexcept;
+    ~VTexture() override;
 
     VTexture& operator=(const VTexture& other)=delete;
 
@@ -44,7 +44,7 @@ class VTexture : public AbstractGraphicsApi::Texture {
     struct View {
       ComponentMapping m;
       uint32_t         mip = uint32_t(0);
-      VkImageView      v;
+      VkImageView      v{};
       };
     Detail::SpinLock  syncViews;
     std::vector<View> extViews;

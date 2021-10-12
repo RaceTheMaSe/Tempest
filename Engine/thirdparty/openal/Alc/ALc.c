@@ -222,9 +222,13 @@ static const ALCfunction alcFunctions[] = {
     DECL(alGetFilterf),
     DECL(alGetFilterfv),
     DECL(alGenEffects),
+    DECL(alGenEffectsCt),
     DECL(alDeleteEffects),
+    DECL(alDeleteEffectsCt),
     DECL(alIsEffect),
+    DECL(alIsEffectCt),
     DECL(alEffecti),
+    DECL(alEffectiCt),
     DECL(alEffectiv),
     DECL(alEffectf),
     DECL(alEffectfv),
@@ -1430,9 +1434,31 @@ static ALCenum UpdateDeviceParams(ALCdevice *device, const ALCint *attrList)
 
         while(attrList[attrIdx])
         {
+            if(attrList[attrIdx] == ALC_FORMAT_CHANNELS_SOFT)
+            {
+                ALCint val = attrList[attrIdx + 1];
+                if(!IsValidALCChannels(val) || !ChannelsFromDevFmt(val))
+                    return ALC_INVALID_VALUE;
+                oldChans = device->FmtChans;
+                device->FmtChans = val;
+                device->Flags |= DEVICE_CHANNELS_REQUEST;
+            }
+
+            if(attrList[attrIdx] == ALC_FORMAT_TYPE_SOFT)
+            {
+                ALCint val = attrList[attrIdx + 1];
+                if(!IsValidALCType(val) || !BytesFromDevFmt(val))
+                    return ALC_INVALID_VALUE;
+                oldType  = device->FmtType;
+                device->FmtType = val;
+                device->Flags |= DEVICE_SAMPLE_TYPE_REQUEST;
+            }
+
             if(attrList[attrIdx] == ALC_FREQUENCY)
             {
                 freq = attrList[attrIdx + 1];
+                oldFreq  = device->Frequency;
+                device->Frequency = freq;
                 device->Flags |= DEVICE_FREQUENCY_REQUEST;
             }
 

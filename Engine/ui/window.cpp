@@ -5,8 +5,8 @@
 
 using namespace Tempest;
 
-Window::Window() {
-  id = Tempest::SystemApi::createWindow(this,800,600);
+Window::Window(const char* title) {
+  id = Tempest::SystemApi::createWindow(this,800,600,title);
   if(id==nullptr)
     throw std::system_error(Tempest::SystemErrc::UnableToCreateWindow);
   setGeometry(SystemApi::windowClientRect(id));
@@ -14,8 +14,8 @@ Window::Window() {
   update();
   }
 
-Window::Window(Window::ShowMode sm) {
-  id = Tempest::SystemApi::createWindow(this,SystemApi::ShowMode(sm));
+Window::Window(Window::ShowMode sm, const char* title) {
+  id = Tempest::SystemApi::createWindow(this,SystemApi::ShowMode(sm),title);
   if(id==nullptr)
     throw std::system_error(Tempest::SystemErrc::UnableToCreateWindow);
   setGeometry(SystemApi::windowClientRect(id));

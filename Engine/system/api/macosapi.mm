@@ -160,7 +160,7 @@ static CVReturn displayLinkCallback(CVDisplayLinkRef /*displayLink*/,
 @end
 
 static SystemApi::Window* createWindow(Tempest::Window *owner,
-                                       uint32_t w, uint32_t h, uint flags, SystemApi::ShowMode mode) {
+                                       uint32_t w, uint32_t h, uint flags, SystemApi::ShowMode mode, const char* title) {
   // TODO: hDPI
   NSWindow* wnd = [[NSWindow alloc] initWithContentRect:
       NSMakeRect(0, 0, w, h)
@@ -253,7 +253,7 @@ MacOSApi::MacOSApi() {
   }
 
 SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height,
-                                              SystemApi::ShowMode sm) {
+                                              SystemApi::ShowMode sm, const char* /*title*/) {
   return ::createWindow(owner,width,height,
                         NSWindowStyleMaskTitled |
                         NSWindowStyleMaskClosable |
@@ -262,11 +262,11 @@ SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, uint32_t w
                         sm);
   }
 
-SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height) {
+SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height, const char* /*title*/) {
   return implCreateWindow(owner,width,height,ShowMode::Normal);
   }
 
-SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, SystemApi::ShowMode sm) {
+SystemApi::Window *MacOSApi::implCreateWindow(Tempest::Window *owner, SystemApi::ShowMode sm, const char* /*title*/) {
   return implCreateWindow(owner,800,600,sm);
   }
 

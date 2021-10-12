@@ -12,7 +12,7 @@ Shortcut::Shortcut(Widget& w, Event::Modifier md, Event::KeyType key) {
   m.owner->implRegisterSCut(this);
   }
 
-Shortcut::Shortcut(Shortcut&& sc) {
+Shortcut::Shortcut(Shortcut&& sc) noexcept {
   m           = sc.m;
   onActivated = std::move(sc.onActivated);
   m.owner->implRegisterSCut(this);
@@ -23,7 +23,7 @@ Shortcut::~Shortcut() {
     m.owner->implUnregisterSCut(this);
   }
 
-Shortcut &Shortcut::operator =(Shortcut&& sc ) {
+Shortcut &Shortcut::operator =(Shortcut&& sc ) noexcept {
   if(m.owner!=nullptr)
     m.owner->implUnregisterSCut(this);
 

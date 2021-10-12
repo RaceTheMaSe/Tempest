@@ -10,8 +10,8 @@ Brush::Brush(const Texture2d &texture, PaintDevice::Blend b, ClampMode c)
   :tex(texture),texFrm(texture.format()),color(1.f),blend(b),clamp(c) {
   info.w    = texture.w();
   info.h    = texture.h();
-  info.invW = 1.f/info.w;
-  info.invH = 1.f/info.h;
+  info.invW = 1.f/(float)info.w;
+  info.invH = 1.f/(float)info.h;
   }
 
 Brush::Brush(const Color &color, PaintDevice::Blend b)
@@ -26,8 +26,8 @@ Brush::Brush(const Texture2d &texture, const Color &color, PaintDevice::Blend b,
   :tex(texture),texFrm(texture.format()),color(color),blend(b),clamp(c) {
   info.w    = texture.w();
   info.h    = texture.h();
-  info.invW = 1.f/info.w;
-  info.invH = 1.f/info.h;
+  info.invW = 1.f/(float)info.w;
+  info.invH = 1.f/(float)info.h;
   }
 
 Brush::Brush(const Sprite &texture, PaintDevice::Blend b)
@@ -36,10 +36,10 @@ Brush::Brush(const Sprite &texture, PaintDevice::Blend b)
 
   info.w    = texture.w();
   info.h    = texture.h();
-  info.invW = 1.f/r.w;
-  info.invH = 1.f/r.h;
-  info.dx   = r.x*info.invW;
-  info.dy   = r.y*info.invH;
+  info.invW = 1.f/(float)r.w;
+  info.invH = 1.f/(float)r.h;
+  info.dx   = (float)r.x*info.invW;
+  info.dy   = (float)r.y*info.invH;
   }
 
 Brush::Brush(const Sprite &texture, const Color &color, PaintDevice::Blend b)
@@ -48,8 +48,8 @@ Brush::Brush(const Sprite &texture, const Color &color, PaintDevice::Blend b)
 
   info.w    = texture.w();
   info.h    = texture.h();
-  info.invW = 1.f/r.w;
-  info.invH = 1.f/r.h;
-  info.dx   = r.x*info.invW;
-  info.dy   = r.y*info.invH;
+  info.invW = 1.f/(float)r.w;
+  info.invH = 1.f/(float)r.h;
+  info.dx   = (float)r.x*info.invW;
+  info.dy   = (float)r.y*info.invH;
   }

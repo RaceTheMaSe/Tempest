@@ -7,6 +7,7 @@
 #include "../utility/utf8_helper.h"
 #include "thirdparty/stb_truetype.h"
 
+#include <memory>
 #include <unordered_map>
 #include <bitset>
 #include <algorithm>
@@ -44,11 +45,10 @@ namespace Detail {
 #ifdef __WINDOWS__
     return getFontFolderPath()+"\\georgia.ttf";
 #else
-    return "";
+    return getFontFolderPath();
 #endif
     }
   }
-
 }
 
 struct FontElement::LetterTable {
@@ -68,7 +68,7 @@ struct FontElement::LetterTable {
     }
 
   Letter* implFind(float sz,char32_t ch,bool create){
-    uint32_t size = uint32_t(sz*100);
+    auto size = uint32_t(sz*100);
 
     for(auto& i:chunk)
       if(i.size==size)
@@ -80,8 +80,8 @@ struct FontElement::LetterTable {
     }
 
   Letter* implFind(Chunk& c,uint32_t ch,bool create){
-    uint8_t* key = reinterpret_cast<uint8_t*>(&ch);
-    auto&    b   = c.next[*key];
+    auto* key = reinterpret_cast<uint8_t*>(&ch);
+    auto& b   = c.next[*key];
     return implFind(b,key+1,create);
     }
 
@@ -154,10 +154,10 @@ struct FontElement::Impl {
                                   int&  xoff, int& yoff) {
     assert(scale>0.f);
 
-    stbtt_vertex *vertices;
+    stbtt_vertex *vertices = nullptr;
     int num_verts = stbtt_GetGlyphShape(info, glyph, &vertices);
 
-    int ix0,iy0,ix1,iy1;
+    int ix0=0,iy0=0,ix1=0,iy1=0;
     stbtt_GetGlyphBitmapBoxSubpixel(info, glyph, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, &ix0,&iy0,&ix1,&iy1);
 
     stbtt__bitmap gbm={};
@@ -172,7 +172,7 @@ struct FontElement::Impl {
     yoff   = iy0;
 
     if(gbm.w>0 && gbm.h>0) {
-      gbm.pixels = ttfMalloc(size_t(gbm.w*gbm.h));
+      gbm.pixels = ttfMalloc(size_t(gbm.w)*size_t(gbm.h));
       if(gbm.pixels!=nullptr) {
         gbm.stride = gbm.w;
         stbtt_Rasterize(&gbm, 0.35f, vertices, num_verts, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, ix0, iy0, 1, info->userdata);
@@ -241,7 +241,7 @@ struct FontElement::Impl {
     lt.view    = std::move(spr);
     lt.size    = Size(w,h);
     lt.dpos    = Point(dx,dy);
-    lt.advance = Point(int(ax*scale),int(lineGap*scale));
+    lt.advance = Point(int((float)ax*scale),int((float)lineGap*scale));
     lt.hasView = (tex!=nullptr);
     return lt;
     }
@@ -250,7 +250,7 @@ struct FontElement::Impl {
     try {
       std::lock_guard<std::mutex> guard(syncMap);
       if(fallback==nullptr){
-        fallback.reset(new Impl(Detail::getFallbackFont().c_str()));
+        fallback = std::make_unique<Impl>(Detail::getFallbackFont().c_str());
         if(stbtt_InitFont(&fallback->info,fallback->data,0)==0)
           throw std::system_error(Tempest::SystemErrc::UnableToLoadAsset);
         }
@@ -267,11 +267,11 @@ struct FontElement::Impl {
 
   Metrics       metrics(float size) const {
     if(this->size==0)
-      return Metrics();
+      return {};
     const float scale = stbtt_ScaleForPixelHeight(&info,size);
     Metrics m = metrics0;
-    m.ascent  = int(m.ascent*scale);
-    m.descent = int(m.descent*scale);
+    m.ascent  = int((float)m.ascent*scale);
+    m.descent = int((float)m.descent*scale);
     return m;
     }
 

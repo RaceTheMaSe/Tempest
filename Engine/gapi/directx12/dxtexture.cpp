@@ -13,7 +13,7 @@ DxTexture::DxTexture(ComPtr<ID3D12Resource>&& b, DXGI_FORMAT frm, UINT mips)
   :impl(std::move(b)), format(frm), mips(mips) {
   }
 
-DxTexture::DxTexture(DxTexture&& other)
+DxTexture::DxTexture(DxTexture&& other) noexcept
   :impl(std::move(other.impl)), format(other.format), mips(other.mips) {
   }
 

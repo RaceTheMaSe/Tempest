@@ -165,6 +165,7 @@ class Device {
     CommandBuffer        commandBuffer();
 
     const Builtin&       builtin() const;
+    const std::vector<AbstractGraphicsApi::Props>   deviceList() const;
 
   private:
     struct Impl {
@@ -250,13 +251,13 @@ inline UniformBuffer<T> Device::ubo(BufferHeap ht, const T *mem, size_t size) {
 template<class Vertex>
 RenderPipeline Device::pipeline(Topology tp, const RenderState &st, const Shader &vs, const Shader &fs) {
   const Shader* sh[] = {&vs,nullptr,nullptr,nullptr,&fs};
-  return implPipeline(st,sh,sizeof(Vertex),tp);
+  return implPipeline(st,(const Shader**)sh,sizeof(Vertex),tp);
   }
 
 template<class Vertex>
 RenderPipeline Device::pipeline(Topology tp, const RenderState &st, const Shader &vs, const Shader &tc, const Shader &te, const Shader &fs) {
   const Shader* sh[] = {&vs,&tc,&te,nullptr,&fs};
-  return implPipeline(st,sh,sizeof(Vertex),tp);
+  return implPipeline(st,(const Shader**)sh,sizeof(Vertex),tp);
   }
 
 }

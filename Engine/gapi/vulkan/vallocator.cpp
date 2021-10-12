@@ -17,11 +17,9 @@
 using namespace Tempest;
 using namespace Tempest::Detail;
 
-VAllocator::VAllocator() {
-  }
+VAllocator::VAllocator() = default;
 
-VAllocator::~VAllocator() {
-  }
+VAllocator::~VAllocator() = default;
 
 void VAllocator::setDevice(VDevice &d) {
   dev             = d.device.impl;
@@ -128,12 +126,11 @@ VBuffer VAllocator::alloc(const void *mem, size_t count, size_t size, size_t ali
     props[1] = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     //props[1]|=(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);// to avoid vkFlushMappedMemoryRanges
     }
-  else if(bufHeap==BufferHeap::Upload)
+  else if(bufHeap==BufferHeap::Upload || 
+          bufHeap==BufferHeap::Readback)
     props[0] = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
   else if(bufHeap==BufferHeap::Device)
     props[0] = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-  else if(bufHeap==BufferHeap::Readback)
-    props[0] = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
   for(uint8_t i=0; i<propsCnt; ++i) {
     VDevice::MemIndex memId = provider.device->memoryTypeIndex(memRq.memoryTypeBits,VkMemoryPropertyFlagBits(props[i]),VK_IMAGE_TILING_LINEAR);
@@ -171,7 +168,7 @@ VTexture VAllocator::alloc(const Pixmap& pm,uint32_t mip,VkFormat format) {
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-  imageInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  imageInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT /*| VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT*/;
 
   vkAssert(vkCreateImage(dev, &imageInfo, nullptr, &ret.impl));
 
@@ -212,7 +209,7 @@ VTexture VAllocator::alloc(const uint32_t w, const uint32_t h, const uint32_t mi
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.usage         = isDepthFormat(frm) ?
         (VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) :
-        (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+        (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT/*|VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT*/);
   imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
   imageInfo.format        = nativeFormat(frm);

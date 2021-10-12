@@ -55,7 +55,7 @@ class DxPipelineLay : public AbstractGraphicsApi::PipelineLay {
 
     struct DescriptorPool {
       DescriptorPool(DxPipelineLay& lay);
-      DescriptorPool(DescriptorPool&& oth);
+      DescriptorPool(DescriptorPool&& oth) noexcept ;
       ~DescriptorPool();
 
       ID3D12DescriptorHeap*     heap[MAX_BINDS] = {};
@@ -86,7 +86,7 @@ class DxPipelineLay : public AbstractGraphicsApi::PipelineLay {
 
   private:
     struct Parameter final {
-      D3D12_DESCRIPTOR_RANGE  rgn;
+      D3D12_DESCRIPTOR_RANGE  rgn{};
       uint32_t                id=0;
       D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
       };

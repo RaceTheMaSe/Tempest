@@ -69,7 +69,7 @@ Widget::Ref::~Ref() {
 
 
 Widget::Widget() {
-  lay = new(layBuf) Layout();
+  lay = new((char*)layBuf) Layout();
   lay->bind(this);
   }
 
@@ -85,7 +85,7 @@ Widget::~Widget() {
 void Widget::setLayout(Orientation ori) noexcept {
   static_assert(sizeof(LinearLayout)<=sizeof(layBuf),"layBuf is too small");
   freeLayout();
-  new(layBuf) LinearLayout(ori);
+  new((char*)layBuf) LinearLayout(ori);
   lay=reinterpret_cast<Layout*>(layBuf);
   lay->bind(this);
   }
@@ -115,7 +115,7 @@ void Widget::removeAllWidgets() {
   }
 
 void Widget::freeLayout() noexcept {
-  if(reinterpret_cast<char*>(lay)!=layBuf){
+  if(reinterpret_cast<char*>(lay)!=(char*)layBuf){
     delete lay;
     } else {
     layout().~Layout();
@@ -406,7 +406,11 @@ void Widget::setMinimumSize(int w, int h) {
   }
 
 Rect Widget::clientRect() const {
-  return Rect(marg.left,marg.top,wrect.w-marg.xMargin(),wrect.h-marg.yMargin());
+  return {marg.left,marg.top,wrect.w-marg.xMargin(),wrect.h-marg.yMargin()};
+  }
+
+Rect Widget::absoluteRect() const {
+  return wrect;
   }
 
 void Widget::setEnabled(bool e) {
@@ -654,11 +658,51 @@ void Widget::keyUpEvent(KeyEvent &e) {
   e.ignore();
   }
 
+void Widget::keyDownEvent(GamepadKeyEvent& e) {
+  e.ignore();
+  }
+
+void Widget::keyRepeatEvent(GamepadKeyEvent& e) {
+  e.ignore();
+  }
+
+void Widget::keyUpEvent(GamepadKeyEvent &e) {
+  e.ignore();
+  }
+
+void Widget::analogMoveEvent(AnalogEvent &e) {
+  e.ignore();
+  }
+
+void Widget::pointerDownEvent(PointerEvent &e) {
+  e.ignore();
+  }
+
+void Widget::pointerUpEvent(PointerEvent &e) {
+  e.ignore();
+  }
+
+void Widget::pointerMoveEvent(PointerEvent &e) {
+  e.ignore();
+  }
+
+void Widget::pointerEnterEvent(PointerEvent &e) {
+  e.ignore();
+}
+
+void Widget::pointerLeaveEvent(PointerEvent &e) {
+  e.ignore();
+}
+
 void Widget::mouseEnterEvent(MouseEvent &e) {
   e.ignore();
   }
 
 void Widget::mouseLeaveEvent(MouseEvent &e) {
+  e.ignore();
+  }
+
+void Widget::appStateEvent(AppStateEvent &e) {
   e.ignore();
   }
 
@@ -672,3 +716,4 @@ void Widget::closeEvent(CloseEvent& e) {
 
 void Widget::polishEvent(PolishEvent&) {
   }
+

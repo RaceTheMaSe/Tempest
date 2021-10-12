@@ -21,10 +21,13 @@ class Painter {
     constexpr static auto Alpha  =Blend::Alpha;
     constexpr static auto Add    =Blend::Add;
 
+    Painter()=delete;
     Painter(PaintEvent& ev, Mode m=Preserve);
     Painter(const Painter&)=delete;
+    Painter(Painter&&)=delete;
     ~Painter();
-    Painter& operator = (const Painter&)=delete;
+    Painter& operator=(const Painter&)=delete;
+    Painter& operator=(Painter&&)=delete;
 
     void setScissor(int x,int y,int w,int h);
     void setScissor(int x,int y,unsigned w,unsigned h);
@@ -40,8 +43,8 @@ class Painter {
     void rotate   (float angle);
     void scale    (float x, float y);
 
-    Rect         scissor() const { return Rect(s.scRect.x -s.scRect.ox,s.scRect.y -s.scRect.oy,
-                                               s.scRect.x1-s.scRect.x, s.scRect.y1-s.scRect.y); }
+    Rect         scissor() const { return {s.scRect.x -s.scRect.ox,s.scRect.y -s.scRect.oy,
+                                               s.scRect.x1-s.scRect.x, s.scRect.y1-s.scRect.y}; }
     const Brush& brush()   const { return s.br;  }
     const Pen&   pen()     const { return s.pn;  }
     const Font&  font()    const { return s.fnt; }

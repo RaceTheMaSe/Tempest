@@ -25,7 +25,7 @@ inline MemUsage operator & (MemUsage a,const MemUsage& b) {
 enum class BufferHeap : uint8_t {
   Device   = 0,
   Upload   = 1,
-  Readback = 3,
+  Readback = 3
   };
 
 
@@ -37,7 +37,7 @@ enum class TextureLayout : uint8_t {
   Present,
   TransferSrc,
   TransferDest,
-  Unordered,
+  Unordered
   };
 
 enum class BufferLayout : uint8_t {
@@ -47,6 +47,6 @@ enum class BufferLayout : uint8_t {
   Uniform,
   ComputeRead,
   ComputeWrite,
-  ComputeReadWrite,
+  ComputeReadWrite
   };
 }

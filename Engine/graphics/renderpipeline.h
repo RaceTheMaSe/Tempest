@@ -18,7 +18,7 @@ class RenderPipeline final {
     RenderPipeline()=default;
     RenderPipeline(RenderPipeline&& f)=default;
     ~RenderPipeline() = default;
-    RenderPipeline& operator = (RenderPipeline&& other);
+    RenderPipeline& operator = (RenderPipeline&& other) noexcept;
 
     bool isEmpty() const { return impl.handler==nullptr; }
     const PipelineLayout& layout() const { return ulay; }

@@ -6,20 +6,23 @@
 #ifdef __WINDOWS__
 #include <windows.h>
 #else
-#include <errno.h>
+#include <cerrno>
+#include <utility>
 #include <dirent.h>
+#if __ANDROID__
+#include <errno.h>
+#endif
 #endif
 
 using namespace Tempest;
 
-Dir::Dir() {  
-  }
+Dir::Dir() = default;
 
-bool Dir::scan(const std::string &path, std::function<void (const std::string &, Dir::FileType)> cb) {
+bool Dir::scan(const std::string &path, const std::function<void (const std::string &, Dir::FileType)>& cb) {
   return scan(path.c_str(),cb);
   }
 
-bool Dir::scan(const char *name, std::function<void(const std::string&,FileType)> cb) {
+bool Dir::scan(const char *name, const std::function<void(const std::string&,FileType)>& cb) {
 #if defined(__WINDOWS__) || defined(__WINDOWS_PHONE__)
   WIN32_FIND_DATAW ffd;
   HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -64,7 +67,7 @@ bool Dir::scan(const char *name, std::function<void(const std::string&,FileType)
     while (dirp) {
       errno = 0;
       if(dirent* dp = readdir(dirp)) {
-        tmp = dp->d_name;
+        tmp = (char*)dp->d_name;
         if(dp->d_type==DT_DIR)
           cb(tmp,FT_Dir); else
           cb(tmp,FT_File);
@@ -86,11 +89,11 @@ bool Dir::scan(const char *name, std::function<void(const std::string&,FileType)
   return true;
   }
 
-bool Dir::scan(const std::u16string &path, std::function<void (const std::u16string &, Dir::FileType)> cb) {
+bool Dir::scan(const std::u16string &path, const std::function<void (const std::u16string &, Dir::FileType)>& cb) {
   return scan(path.c_str(),cb);
   }
 
-bool Dir::scan(const char16_t *path, std::function<void (const std::u16string &, Dir::FileType)> cb) {
+bool Dir::scan(const char16_t *path, const std::function<void (const std::u16string &, Dir::FileType)>& cb) {
 #if defined(__WINDOWS__) || defined(__WINDOWS_PHONE__)
   WIN32_FIND_DATAW ffd;
   HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -123,7 +126,7 @@ bool Dir::scan(const char16_t *path, std::function<void (const std::u16string &,
     while (dirp) {
       errno = 0;
       if(dirent* dp = readdir(dirp)) {
-        tmp = TextCodec::toUtf16(dp->d_name);
+        tmp = TextCodec::toUtf16((char*)dp->d_name);
         if(dp->d_type==DT_DIR)
           cb(tmp,FT_Dir); else
           cb(tmp,FT_File);

@@ -4,9 +4,9 @@
 
 namespace Tempest {
   namespace Detail {
-    typedef uint32_t PTR32;
-    typedef uint32_t DWORD;
-    typedef uint16_t WORD;
+    using PTR32 = uint32_t;
+    using DWORD = uint32_t;
+    using WORD  = uint16_t;
 
     struct DDCOLORKEY {
       DWORD       dwColorSpaceLowValue;
@@ -113,6 +113,6 @@ namespace Tempest {
     const unsigned int FOURCC_DXT1 = 827611204;
     const unsigned int FOURCC_DXT3 = 861165636;
     const unsigned int FOURCC_DXT5 = 894720068;
-    }
 #pragma pack(pop)
+    }
   }

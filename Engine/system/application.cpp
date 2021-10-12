@@ -55,10 +55,13 @@ struct Application::Impl : SystemApi::AppCallBack {
 Application::Impl Application::impl = {};
 
 Application::Application() {
+  SystemApi::registerApplication(this);
   }
 
 Application::~Application(){
+  SystemApi::unregisterApplication(this);
   impl.font = Font();
+//  SystemApi::shutdown();
   }
 
 void Application::sleep(unsigned int msec) {
@@ -77,6 +80,14 @@ int Application::exec(){
 
 bool Application::isRunning() {
   return SystemApi::isRunning();
+  }
+
+bool Application::isPaused() {
+  return SystemApi::isPaused();
+  }
+
+bool Application::isResumeRequested() {
+  return SystemApi::isResumeRequested();
   }
 
 void Application::processEvents() {

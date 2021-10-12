@@ -20,7 +20,7 @@ VFramebufferLayout::VFramebufferLayout(VDevice& dev, VSwapchain** sw, const VkFo
   impl = VRenderPass::createLayoutInstance(dev.device.impl,sw,attach,attCount);
   }
 
-VFramebufferLayout::VFramebufferLayout(VFramebufferLayout &&other)
+VFramebufferLayout::VFramebufferLayout(VFramebufferLayout &&other) noexcept
   :impl(other.impl), frm(std::move(other.frm)), swapchain(std::move(other.swapchain)), attCount(other.attCount), device(other.device) {
   other.impl = VK_NULL_HANDLE;
   }
@@ -32,12 +32,13 @@ VFramebufferLayout::~VFramebufferLayout() {
     vkDestroyRenderPass(device,impl,nullptr);
   }
 
-void VFramebufferLayout::operator=(VFramebufferLayout &&other) {
+VFramebufferLayout& VFramebufferLayout::operator=(VFramebufferLayout &&other) noexcept {
   std::swap(impl,other.impl);
   std::swap(frm,other.frm);
   std::swap(attCount,other.attCount);
   std::swap(swapchain,other.swapchain);
   std::swap(device,other.device);
+  return *this;
   }
 
 bool VFramebufferLayout::isCompatible(const VFramebufferLayout &other) const {

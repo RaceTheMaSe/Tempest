@@ -11,7 +11,7 @@ class ScrollWidget : public Tempest::Widget {
   public:
     ScrollWidget();
     ScrollWidget(Tempest::Orientation ori);
-    ~ScrollWidget();
+    ~ScrollWidget() override;
 
     enum ScrollViewMode : uint8_t {
       AlwaysOff,
@@ -47,8 +47,8 @@ class ScrollWidget : public Tempest::Widget {
     int     scrollV() const;
 
   protected:
-    void    mouseWheelEvent(Tempest::MouseEvent &e);
-    void    mouseMoveEvent(Tempest::MouseEvent &e);
+    void    mouseWheelEvent(Tempest::MouseEvent &e) override;
+    void    mouseMoveEvent(Tempest::MouseEvent &e) override;
 
     virtual Size contentAreaSize();
 

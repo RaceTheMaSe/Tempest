@@ -11,7 +11,7 @@ namespace Tempest {
 class DirectX12Api : public AbstractGraphicsApi {
   public:
     explicit DirectX12Api(ApiFlags f=ApiFlags::NoFlags);
-    virtual ~DirectX12Api();
+     ~DirectX12Api() override;
 
     std::vector<Props> devices() const override;
 

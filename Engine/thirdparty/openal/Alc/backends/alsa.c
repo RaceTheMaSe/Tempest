@@ -432,6 +432,7 @@ static int verify_state(snd_pcm_t *handle)
         case SND_PCM_STATE_RUNNING:
         case SND_PCM_STATE_DRAINING:
         case SND_PCM_STATE_PAUSED:
+        case SND_PCM_STATE_PRIVATE1:
             /* All Okay */
             break;
 

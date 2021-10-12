@@ -88,6 +88,52 @@ AL_API ALvoid AL_APIENTRY alGenAuxiliaryEffectSlots(ALsizei n, ALuint *effectslo
     ALCcontext_DecRef(Context);
 }
 
+AL_API ALvoid AL_APIENTRY alGenAuxiliaryEffectSlotsCt(ALCcontext* Context, ALsizei n, ALuint *effectslots)
+{
+    ALsizei    cur = 0;
+
+    al_try
+    {
+        ALenum err;
+
+        CHECK_VALUE(Context, n >= 0);
+        for(cur = 0;cur < n;cur++)
+        {
+            ALeffectslot *slot = al_calloc(16, sizeof(ALeffectslot));
+            err = AL_OUT_OF_MEMORY;
+            if(!slot || (err=InitEffectSlot(slot)) != AL_NO_ERROR)
+            {
+                al_free(slot);
+                al_throwerr(Context, err);
+                break;
+            }
+
+            err = NewThunkEntry(&slot->id);
+            if(err == AL_NO_ERROR)
+                err = InsertUIntMapEntry(&Context->EffectSlotMap, slot->id, slot);
+            if(err != AL_NO_ERROR)
+            {
+                FreeThunkEntry(slot->id);
+                ALeffectState_Destroy(slot->EffectState);
+                al_free(slot);
+
+                al_throwerr(Context, err);
+            }
+
+            effectslots[cur] = slot->id;
+        }
+        err = AddEffectSlotArray(Context, n, effectslots);
+        if(err != AL_NO_ERROR)
+            al_throwerr(Context, err);
+    }
+    al_catchany()
+    {
+        if(cur > 0)
+            alDeleteAuxiliaryEffectSlots(cur, effectslots);
+    }
+    al_endtry;
+}
+
 AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlots(ALsizei n, const ALuint *effectslots)
 {
     ALCcontext *Context;
@@ -125,6 +171,39 @@ AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlots(ALsizei n, const ALuint *
     al_endtry;
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlotsCt(ALCcontext* Context, ALsizei n, const ALuint *effectslots)
+{
+    ALeffectslot *slot;
+    ALsizei i;
+
+    al_try
+    {
+        CHECK_VALUE(Context, n >= 0);
+        for(i = 0;i < n;i++)
+        {
+            if((slot=LookupEffectSlot(Context, effectslots[i])) == NULL)
+                al_throwerr(Context, AL_INVALID_NAME);
+            if(slot->ref != 0)
+                al_throwerr(Context, AL_INVALID_OPERATION);
+        }
+
+        // All effectslots are valid
+        for(i = 0;i < n;i++)
+        {
+            if((slot=RemoveEffectSlot(Context, effectslots[i])) == NULL)
+                continue;
+            FreeThunkEntry(slot->id);
+
+            RemoveEffectSlotArray(Context, slot);
+            ALeffectState_Destroy(slot->EffectState);
+
+            memset(slot, 0, sizeof(*slot));
+            al_free(slot);
+        }
+    }
+    al_endtry;
 }
 
 AL_API ALboolean AL_APIENTRY alIsAuxiliaryEffectSlot(ALuint effectslot)
@@ -182,6 +261,42 @@ AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSloti(ALuint effectslot, ALenum param
     al_endtry;
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotiCt(ALCcontext* Context, ALuint effectslot, ALenum param, ALint value)
+{
+    ALeffectslot *Slot;
+    ALeffect *effect = NULL;
+    ALenum err;
+
+    al_try
+    {
+        ALCdevice *device = Context->Device;
+        if((Slot=LookupEffectSlot(Context, effectslot)) == NULL)
+            al_throwerr(Context, AL_INVALID_NAME);
+        switch(param)
+        {
+        case AL_EFFECTSLOT_EFFECT:
+            CHECK_VALUE(Context, value == 0 || (effect=LookupEffect(device, value)) != NULL);
+
+            err = InitializeEffect(device, Slot, effect);
+            if(err != AL_NO_ERROR)
+                al_throwerr(Context, err);
+            Context->UpdateSources = AL_TRUE;
+            break;
+
+        case AL_EFFECTSLOT_AUXILIARY_SEND_AUTO:
+            CHECK_VALUE(Context, value == AL_TRUE || value == AL_FALSE);
+
+            Slot->AuxSendAuto = value;
+            Context->UpdateSources = AL_TRUE;
+            break;
+
+        default:
+            al_throwerr(Context, AL_INVALID_ENUM);
+        }
+    }
+    al_endtry;
 }
 
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, const ALint *values)
@@ -242,6 +357,30 @@ AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotf(ALuint effectslot, ALenum param
     al_endtry;
 
     ALCcontext_DecRef(Context);
+}
+
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotfCt(ALCcontext* Context, ALuint effectslot, ALenum param, ALfloat value)
+{
+    ALeffectslot *Slot;
+
+    al_try
+    {
+        if((Slot=LookupEffectSlot(Context, effectslot)) == NULL)
+            al_throwerr(Context, AL_INVALID_NAME);
+        switch(param)
+        {
+        case AL_EFFECTSLOT_GAIN:
+            CHECK_VALUE(Context, value >= 0.0f && value <= 1.0f);
+
+            Slot->Gain = value;
+            Slot->NeedsUpdate = AL_TRUE;
+            break;
+
+        default:
+            al_throwerr(Context, AL_INVALID_ENUM);
+        }
+    }
+    al_endtry;
 }
 
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, const ALfloat *values)

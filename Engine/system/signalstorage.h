@@ -30,7 +30,7 @@ class SgStorage {
       };
 
   public:
-    SgStorage(){}
+    SgStorage()= default;
     ~SgStorage(){
       if(data!=nullptr)
         data->decRef();
@@ -39,11 +39,11 @@ class SgStorage {
       if(data!=nullptr)
         data->addRef();
       }
-    SgStorage(SgStorage&& other):data(other.data){
+    SgStorage(SgStorage&& other) noexcept:data(other.data){
       other.data=nullptr;
       }
     SgStorage& operator=(const SgStorage&)=delete;
-    SgStorage& operator=(SgStorage&& other){
+    SgStorage& operator=(SgStorage&& other) noexcept{
       std::swap(other.data,data);
       return *this;
       }
@@ -108,7 +108,7 @@ class SgStorage {
     Data* data=nullptr;
 
     Data* implRealloc(Data* d,size_t nsize){
-      Data* ndata;
+      Data* ndata = nullptr;
       if(d->refcount>1){
         d->refcount--;
         ndata=reinterpret_cast<Data*>(std::malloc(sizeOfData+nsize));
@@ -124,6 +124,5 @@ class SgStorage {
       return ndata;
       }
   };
-
 }
 }

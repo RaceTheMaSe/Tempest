@@ -4,7 +4,7 @@
 #include <thread>
 
 namespace Tempest {
-namespace Detail {
+  namespace Detail {
 
 class SpinLock final {
   public:

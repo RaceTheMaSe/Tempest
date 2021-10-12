@@ -18,7 +18,7 @@ class ComputePipeline final {
     ComputePipeline()=default;
     ComputePipeline(ComputePipeline&& f)=default;
     ~ComputePipeline()=default;
-    ComputePipeline& operator = (ComputePipeline&& other);
+    ComputePipeline& operator = (ComputePipeline&& other) noexcept;
 
     bool isEmpty() const { return impl.handler==nullptr; }
     const PipelineLayout& layout() const { return ulay; }

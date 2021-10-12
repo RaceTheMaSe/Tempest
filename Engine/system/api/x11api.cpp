@@ -1,4 +1,5 @@
 #include "x11api.h"
+#include "ui/event.h"
 
 #ifdef __LINUX__
 #include <X11/X.h>
@@ -22,7 +23,7 @@
 
 
 struct HWND final {
-  ::Window wnd;
+  ::Window wnd{};
   HWND()=default;
   HWND(::Window w):wnd(w) {
     }
@@ -47,8 +48,9 @@ using namespace Tempest;
 static const char*      wndClassName="Tempest.Window";
 static Display*         dpy  = nullptr;
 static ::Window         root = {};
-static std::atomic_bool isExit{0};
+static std::atomic_bool isExit{false};
 static int              activeCursorChange = 0;
+static uint64_t         pressedKeys[1024] = {0};
 
 static std::unordered_map<SystemApi::Window*,Tempest::Window*> windows;
 
@@ -102,7 +104,7 @@ static void maximizeWindow(HWND& w) {
   a[1] = _NET_WM_STATE_MAXIMIZED_VERT();
 
   XChangeProperty ( dpy, w, _NET_WM_STATE(),
-    XA_ATOM, 32, PropModeReplace, (unsigned char*)a, 2);
+    XA_ATOM, 32, PropModeReplace, reinterpret_cast<const unsigned char*>(a), 2);
   XSync(dpy,False);
   }
 
@@ -116,40 +118,81 @@ X11Api::X11Api() {
   root = DefaultRootWindow(dpy);
 
   static const TranslateKeyPair k[] = {
-    { XK_Control_L, Event::K_LControl },
-    { XK_Control_R, Event::K_RControl },
+    { XK_Control_L,       Event::K_LControl  },
+    { XK_Control_R,       Event::K_RControl  },
 
-    { XK_Shift_L,   Event::K_LShift   },
-    { XK_Shift_R,   Event::K_RShift   },
+    { XK_Shift_L,         Event::K_LShift    },
+    { XK_Shift_R,         Event::K_RShift    },
 
-    { XK_Alt_L,     Event::K_LAlt     },
-    { XK_Alt_R,     Event::K_RAlt     },
+    { XK_Alt_L,           Event::K_LAlt      },
+    { XK_Alt_R,           Event::K_RAlt      },
 
-    { XK_Left,      Event::K_Left     },
-    { XK_Right,     Event::K_Right    },
-    { XK_Up,        Event::K_Up       },
-    { XK_Down,      Event::K_Down     },
+    { XK_Left,            Event::K_Left      },
+    { XK_Right,           Event::K_Right     },
+    { XK_Up,              Event::K_Up        },
+    { XK_Down,            Event::K_Down      },
 
-    { XK_Escape,    Event::K_ESCAPE   },
-    { XK_Tab,       Event::K_Tab      },
-    { XK_BackSpace, Event::K_Back     },
-    { XK_Delete,    Event::K_Delete   },
-    { XK_Insert,    Event::K_Insert   },
-    { XK_Home,      Event::K_Home     },
-    { XK_End,       Event::K_End      },
-    { XK_Pause,     Event::K_Pause    },
-    { XK_Return,    Event::K_Return   },
-    { XK_space,     Event::K_Space    },
-    { XK_Caps_Lock, Event::K_CapsLock },
+    { XK_Escape,          Event::K_ESCAPE    },
+    { XK_Tab,             Event::K_Tab       },
+    { XK_BackSpace,       Event::K_Back      },
+    { XK_Delete,          Event::K_Delete    },
+    { XK_Insert,          Event::K_Insert    },
+    { XK_Home,            Event::K_Home      },
+    { XK_End,             Event::K_End       },
+    { XK_Page_Up,         Event::K_PageUp    },
+    { XK_Page_Down,       Event::K_PageDown  },
+    { XK_Pause,           Event::K_Pause     },
+    { XK_Return,          Event::K_Return    },
+    { XK_space,           Event::K_Space     },
+    { XK_Caps_Lock,       Event::K_CapsLock  },
 
-    { XK_F1,        Event::K_F1       },
-    {   48,         Event::K_0        },
-    {   97,         Event::K_A        },
+    { XK_KP_Enter,        Event::K_KP_Return },
+    { XK_KP_Space,        Event::K_Space     },
+    { XK_KP_Tab,          Event::K_Tab       },
+    { XK_KP_F1,           Event::K_F1        },
+    { XK_KP_F2,           Event::K_F2        },
+    { XK_KP_F3,           Event::K_F3        },
+    { XK_KP_F4,           Event::K_F4        },
+    { XK_KP_Home,         Event::K_Home      },
+    { XK_KP_Left,         Event::K_Left      },
+    { XK_KP_Up,           Event::K_Up        },
+    { XK_KP_Right,        Event::K_Right     },
+    { XK_KP_Down,         Event::K_Down      },
+    { XK_KP_Page_Up,      Event::K_PageUp    },
+    { XK_KP_Page_Down,    Event::K_PageDown  },
+    { XK_KP_Prior,        Event::K_PageUp    },
+    { XK_KP_Next,         Event::K_PageDown  },
+    { XK_KP_End,          Event::K_End       },
+    { XK_KP_Insert,       Event::K_Insert    },
+    { XK_KP_Delete,       Event::K_Delete    },
+    { XK_KP_Equal,        Event::K_Equal     },
+    { XK_KP_Multiply,     Event::K_Multiply  },
+    { XK_KP_Add,          Event::K_Add       },
+    { XK_KP_Separator,    Event::K_Separator },
+    { XK_KP_Subtract,     Event::K_Subtract  },
+    { XK_KP_Decimal,      Event::K_Decimal   },
+    { XK_KP_Divide,       Event::K_Divide    },
+    { XK_Num_Lock,        Event::K_NumLock   },
+    { XK_KP_0,            Event::K_KP_0      },
+    { XK_KP_1,            Event::K_KP_1      },
+    { XK_KP_2,            Event::K_KP_2      },
+    { XK_KP_3,            Event::K_KP_3      },
+    { XK_KP_4,            Event::K_KP_4      },
+    { XK_KP_5,            Event::K_KP_5      },
+    { XK_KP_6,            Event::K_KP_6      },
+    { XK_KP_7,            Event::K_KP_7      },
+    { XK_KP_8,            Event::K_KP_8      },
+    { XK_KP_9,            Event::K_KP_9      },
+    { XK_dead_circumflex, Event::K_OpenQuote }, // NOTE: key left to numkey row
 
-    { 0,            Event::K_NoKey    }
+    { XK_F1,              Event::K_F1        },
+    {   48,               Event::K_0         },
+    {   97,               Event::K_A         },
+
+    { 0,                  Event::K_NoKey     }
     };
 
-  setupKeyTranslate(k,24);
+  setupKeyTranslate((const TranslateKeyPair*)k,24);
   }
 
 void *X11Api::display() {
@@ -165,44 +208,59 @@ void X11Api::alignGeometry(SystemApi::Window *w, Tempest::Window& owner) {
     }
   }
 
-SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, uint32_t w, uint32_t h) {
+SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, uint32_t w, uint32_t h, const char* title) {
   //GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
   //XVisualInfo * vi = glXChooseVisual(dpy, 0, att);
 
   long visualMask = VisualScreenMask;
-  int numberOfVisuals;
+  int numberOfVisuals = 0;
   XVisualInfo vInfoTemplate = {};
   vInfoTemplate.screen = DefaultScreen(dpy);
   XVisualInfo * vi = XGetVisualInfo(dpy, visualMask, &vInfoTemplate, &numberOfVisuals);
 
-  Colormap cmap;
+  Colormap cmap = 0;
   cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
 
   XSetWindowAttributes swa={};
   swa.colormap   = cmap;
   swa.event_mask = PointerMotionMask | ExposureMask |
                    ButtonPressMask | ButtonReleaseMask |
-                   KeyPressMask | KeyReleaseMask;
+                   KeyPressMask | KeyReleaseMask | FocusChangeMask;
 
   HWND win = XCreateWindow( dpy, root, 0, 0, w, h,
                             0, vi->depth, InputOutput, vi->visual,
                             CWColormap | CWEventMask, &swa );
   XSetWMProtocols(dpy, win, &wmDeleteMessage(), 1);
+  if(title) wndClassName=title;
   XStoreName(dpy, win, wndClassName);
+  XTextProperty tp;
+  char *props[1];
+  props[0] = strdup(wndClassName);
+  if(0!=props[0] && XStringListToTextProperty(props,1,&tp)) {
+    XSetWMName(dpy,win, &tp);
+    XSetWMIconName(dpy,win,&tp);
+    XFree(tp.value);
+    }
+
+  XClassHint ch;
+  ch.res_name  = props[0];
+  ch.res_class = props[0];
+  XSetClassHint(dpy,win,&ch);
+  free(props[0]);
 
   XFreeColormap( dpy, cmap );
   XFree(vi);
 
   auto ret = reinterpret_cast<SystemApi::Window*>(win.ptr());
   windows[ret] = owner;
-  XMapWindow(dpy, win);
+  if(w!=1 && h!=1) XMapWindow(dpy, win);
   XSync(dpy,False);
   if(owner!=nullptr)
     alignGeometry(win.ptr(),*owner);
   return ret;
   }
 
-SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, SystemApi::ShowMode sm) {
+SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, SystemApi::ShowMode sm, const char* title) {
   Screen* s = DefaultScreenOfDisplay(dpy);
   int width = s->width;
   int height = s->height;
@@ -211,19 +269,18 @@ SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, SystemApi::S
 
   switch(sm) {
     case Hidden:
-      hwnd = implCreateWindow(owner,1, 1);
-      // TODO: make window invisible
+      hwnd = implCreateWindow(owner,1, 1,nullptr);
       break;
     case Normal:
-      hwnd = implCreateWindow(owner,800, 600);
+      hwnd = implCreateWindow(owner,800, 600,title);
       break;
     case Minimized:
     case Maximized:
       // TODO
-      hwnd = implCreateWindow(owner,width, height);
+      hwnd = implCreateWindow(owner,width, height,title);
       break;
     case FullScreen:
-      hwnd = implCreateWindow(owner,width, height);
+      hwnd = implCreateWindow(owner,width, height,title);
       implSetAsFullscreen(hwnd,true);
       break;
     }
@@ -232,7 +289,7 @@ SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, SystemApi::S
   }
 
 void X11Api::implDestroyWindow(SystemApi::Window *w) {
-  windows.erase(w); //NOTE: X11 can send events to ded window
+  windows.erase(w); //NOTE: X11 can send events to dead window
   XDestroyWindow(dpy, HWND(w));
   }
 
@@ -243,7 +300,7 @@ bool X11Api::implSetAsFullscreen(SystemApi::Window *w, bool fullScreen) {
   e.xclient.message_type = _NET_WM_STATE();
   e.xclient.format       = 32;
   e.xclient.data.l[0]    = 2;    // _NET_WM_STATE_TOGGLE
-  e.xclient.data.l[1]    = _NET_WM_STATE_FULLSCREEN();
+  e.xclient.data.l[1]    = (long)_NET_WM_STATE_FULLSCREEN();
   e.xclient.data.l[2]    = 0;    // no second property to toggle
   
   if(fullScreen)
@@ -335,7 +392,7 @@ Rect X11Api::implWindowClientRect(SystemApi::Window *w) {
   XWindowAttributes xwa;
   XGetWindowAttributes(dpy, HWND(w), &xwa);
 
-  return Rect( xwa.x, xwa.y, xwa.width, xwa.height );
+  return { xwa.x, xwa.y, xwa.width, xwa.height };
   }
 
 void X11Api::implExit() {
@@ -357,7 +414,8 @@ int X11Api::implExec(SystemApi::AppCallBack &cb) {
 void X11Api::implProcessEvents(SystemApi::AppCallBack &cb) {
   // main message loop
   if(XPending(dpy)>0) {
-    XEvent xev={};
+    XEvent xev={},nev={};
+    bool physical=false;
     XNextEvent(dpy, &xev);
 
     HWND hWnd = xev.xclient.window;
@@ -367,9 +425,8 @@ void X11Api::implProcessEvents(SystemApi::AppCallBack &cb) {
     Tempest::Window& cb = *it->second; //TODO: validation
     switch( xev.type ) {
       case ClientMessage: {
-        if( xev.xclient.data.l[0] == long(wmDeleteMessage()) ){
+        if( xev.xclient.data.l[0] == long(wmDeleteMessage()) )
           SystemApi::exit();
-          }
         break;
         }
       case ButtonPress:
@@ -417,7 +474,7 @@ void X11Api::implProcessEvents(SystemApi::AppCallBack &cb) {
           // FIXME: mouse behave crazy in OpenGothic
           activeCursorChange = 0;
           break;
-        }
+          }
         MouseEvent e( xev.xmotion.x,
                       xev.xmotion.y,
                       Event::ButtonNone,
@@ -436,18 +493,43 @@ void X11Api::implProcessEvents(SystemApi::AppCallBack &cb) {
                                             &keysyms_per_keycode_return );
 
         char txt[10]={};
-        XLookupString(&xev.xkey, txt, sizeof(txt)-1, ksym, nullptr );
+        XLookupString(&xev.xkey, (char*)txt, sizeof(txt)-1, ksym, nullptr );
 
-        auto u16 = TextCodec::toUtf16(txt); // TODO: remove dynamic allocation
+        auto u16 = TextCodec::toUtf16((char*)txt); // TODO: remove dynamic allocation
         auto key = SystemApi::translateKey(XLookupKeysym(&xev.xkey,0));
 
         uint32_t scan = xev.xkey.keycode;
-
         Tempest::KeyEvent e(Event::KeyType(key),uint32_t(u16.size()>0 ? u16[0] : 0),Event::M_NoModifier,(xev.type==KeyPress) ? Event::KeyDown : Event::KeyUp);
-        if(xev.type==KeyPress)
-          SystemApi::dispatchKeyDown(cb,e,scan); else
-          SystemApi::dispatchKeyUp  (cb,e,scan);
+        // auto-repeat off - https://stackoverflow.com/a/21716691
+        if(xev.type==KeyPress) {
+          physical = (pressedKeys[xev.xkey.keycode] == 0);
+          if(physical ||
+            pressedKeys[xev.xkey.keycode]+SystemApi::getKeyRepeatDelay()>=SystemApi::getTickCount()) {
+            pressedKeys[xev.xkey.keycode] = SystemApi::getTickCount();
+            SystemApi::dispatchKeyDown(cb,e,scan);
+            }
+          break;
+          }
+        else if(xev.type==KeyRelease) {
+          physical = true;
+          if(XPending(dpy)) {
+            XPeekEvent(dpy, &nev);
+            if (nev.type == KeyPress && nev.xkey.time == xev.xkey.time 
+            && nev.xkey.keycode == xev.xkey.keycode) physical = false;
+            }
+          if(physical) {
+            pressedKeys[xev.xkey.keycode] = 0;
+            SystemApi::dispatchKeyUp(cb,e,scan);
+            }
+          break;
+          }
         break;
+        }
+        case FocusIn:
+        case FocusOut: {
+          Tempest::FocusEvent fe(xev.type==FocusIn,FocusEvent::FocusReason::WindowManager);
+          SystemApi::dispatchFocus(cb,fe);
+          break;
         }
       }
 

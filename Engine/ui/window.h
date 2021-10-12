@@ -14,12 +14,14 @@ class Window : public Widget {
       Minimized,
       Normal,
       Maximized,
-      FullScreen,
+      FullScreen
       };
 
-    Window();
-    Window( ShowMode sm );
+    Window(const char* title);
+    Window(ShowMode sm , const char* title);
     ~Window() override;
+
+    void updateHandle(SystemApi::Window* handle) { id = handle; }
 
   protected:
     virtual void render();

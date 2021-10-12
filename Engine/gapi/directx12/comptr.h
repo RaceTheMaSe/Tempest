@@ -11,11 +11,11 @@ class ComPtr final {
     ComPtr()=default;
     explicit ComPtr(T* t) :p(t){}
     ComPtr(const ComPtr& t) = delete;
-    ComPtr(ComPtr&& other):p(other.p){ other.p=nullptr; }
+    ComPtr(ComPtr&& other) noexcept :p(other.p){ other.p=nullptr; }
     ~ComPtr(){ if(p!=nullptr) p->Release(); }
 
     ComPtr& operator = (const ComPtr&)=delete;
-    ComPtr& operator = (ComPtr&& other) { std::swap(other.p,p); return *this; }
+    ComPtr& operator = (ComPtr&& other)  noexcept { std::swap(other.p,p); return *this; }
     ComPtr& operator = (std::nullptr_t) { if(p!=nullptr) p->Release(); p = nullptr; return *this; }
 
     T* operator -> () { return  p; }

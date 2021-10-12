@@ -16,15 +16,15 @@ class Panel : public Tempest::Widget {
     bool isDragable();
 
   protected:
-    void mouseDownEvent(Tempest::MouseEvent &e);
-    void mouseDragEvent(Tempest::MouseEvent &e);
-    void mouseMoveEvent(Tempest::MouseEvent &e);
-    void mouseUpEvent(Tempest::MouseEvent &e);
+    void mouseDownEvent(Tempest::MouseEvent &e) override;
+    void mouseDragEvent(Tempest::MouseEvent &e) override;
+    void mouseMoveEvent(Tempest::MouseEvent &e) override;
+    void mouseUpEvent(Tempest::MouseEvent &e) override;
 
-    void mouseWheelEvent(Tempest::MouseEvent &e);
+    void mouseWheelEvent(Tempest::MouseEvent &e) override;
     //void gestureEvent   (Tempest::AbstractGestureEvent &e);
 
-    void paintEvent(Tempest::PaintEvent &p);
+    void paintEvent(Tempest::PaintEvent &p) override;
 
   private:
     bool           mouseTracking=false;

@@ -3,12 +3,15 @@
 #include <Tempest/TextCodec>
 #include <Tempest/Except>
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef __WINDOWS__
 #include <windows.h>
+//#include <unistd.h>
+#define stat _stat
 #else
 #include <cstdio>
 #endif
-
 #include <stdexcept>
 
 using namespace Tempest;
@@ -22,8 +25,13 @@ RFile::RFile(const char *name) {
     MultiByteToWideChar(CP_UTF8,0,name,-1,&path[0],int(path.size()));
     }
   handle=implOpen(path.c_str());
+  fn=path;
 #else
   handle=implOpen(name);
+  fn=name;
+  struct stat result;
+  if(stat(fn.c_str(),&result)==0)
+    lastModification = result.st_mtime;
 #endif
   }
 
@@ -34,8 +42,16 @@ RFile::RFile(const std::string &path)
 RFile::RFile(const char16_t *path) {
 #ifdef __WINDOWS__
   handle = implOpen(reinterpret_cast<const wchar_t*>(path));
+  struct stat result;
+  if(stat(TextCodec::toUtf8(path).c_str(), &result) == 0)
+    lastModification = result.st_mtime;
+  fn = reinterpret_cast<const wchar_t*>(path);
 #else
   handle = implOpen(TextCodec::toUtf8(path).c_str());
+  struct stat result;
+  if (stat(TextCodec::toUtf8(path).c_str(), &result) == 0)
+    lastModification = result.st_mtime;
+  fn = TextCodec::toUtf8(path);
 #endif
   }
 
@@ -43,7 +59,7 @@ RFile::RFile(const std::u16string &path)
   :RFile(path.c_str()){
   }
 
-RFile::RFile(RFile &&other)
+RFile::RFile(RFile &&other) noexcept
   :handle(other.handle) {
   other.handle = nullptr;
   }
@@ -74,7 +90,7 @@ RFile::~RFile() {
 #endif
   }
 
-RFile &RFile::operator =(RFile &&other) {
+RFile &RFile::operator =(RFile &&other) noexcept {
   std::swap(handle,other.handle);
   return *this;
   }
@@ -167,5 +183,24 @@ size_t RFile::unget(size_t advance) {
   if(fseek(f,-long(advance),SEEK_CUR)==0)
     return advance;
   return 0;
+#endif
+  }
+
+#ifdef __WINDOWS__
+__time64_t RFile::lastModificationTime() const {
+  struct stat result = {};
+  std::string path;
+  path.resize(fn.size());
+  bool lol = false;
+  WideCharToMultiByte(CP_UTF8, 0, fn.c_str(), -1, &path[0], int(path.size()),"",(LPBOOL)&lol);
+  if(stat(path.c_str(), &result) == 0)
+    return result.st_mtime;
+  return __time64_t(-1);
+#else
+__time_t   RFile::lastModificationTime() const {
+  struct stat result = {};
+  if (stat(fn.c_str(), &result) == 0)
+    return result.st_mtime;
+  return __time_t(-1);
 #endif
   }

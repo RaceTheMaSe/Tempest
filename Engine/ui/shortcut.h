@@ -15,11 +15,11 @@ class Shortcut final {
              Event::Modifier md,
              KeyEvent::KeyType key);
     Shortcut(const Shortcut& sc) = delete;
-    Shortcut(Shortcut&& sc );
+    Shortcut(Shortcut&& sc ) noexcept;
     ~Shortcut();
 
     Shortcut& operator = (const Shortcut& sc ) = delete;
-    Shortcut& operator = (Shortcut&& sc );
+    Shortcut& operator = (Shortcut&& sc ) noexcept;
 
     void setKey     (KeyEvent::KeyType key);
     void setKey     (uint32_t          key);

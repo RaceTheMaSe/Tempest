@@ -38,8 +38,8 @@ void Transform::translate(const Point& p) {
 
 void Transform::rotate(float angle) {
   double dangle = double(angle)*(3.14159265359/180.0);
-  const float s = float(std::sin(dangle));
-  const float c = float(std::cos(dangle));
+  const auto s = float(std::sin(dangle));
+  const auto c = float(std::cos(dangle));
 
   float r[2][2];
   r[0][0] = v[0][0] * c + v[1][0] * s;
@@ -48,13 +48,13 @@ void Transform::rotate(float angle) {
   r[1][0] = v[0][0] * -s + v[1][0] * c;
   r[1][1] = v[0][1] * -s + v[1][1] * c;
 
-  for(int i=0;i<2;++i)
-    for(int j=0;j<2;++j)
-      if(std::fabs(r[i][j])<KD_FLT_EPSILON)
-        r[i][j]=0.f;
+  for(auto & i:r)
+    for(float & j:i)
+      if(std::fabs(j)<KD_FLT_EPSILON)
+        j=0.f;
 
-  memcpy(v[0],r[0],2*sizeof(float));
-  memcpy(v[1],r[1],2*sizeof(float));
+  memcpy((float*)v[0],(float*)r[0],2*sizeof(float));
+  memcpy((float*)v[1],(float*)r[1],2*sizeof(float));
 
   invalidateType();
   }

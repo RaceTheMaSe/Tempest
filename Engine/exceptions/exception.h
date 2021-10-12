@@ -8,6 +8,10 @@ class DeviceLostException : std::exception {
   const char* what() const noexcept override { return "device is lost"; }
   };
 
+class SurfaceLostException : DeviceLostException {
+  const char* what() const noexcept override { return "surface is lost"; }
+  };
+
 class DeviceHangException : DeviceLostException {
   const char* what() const noexcept override { return "hit gpu timeout"; }
   };
@@ -29,7 +33,7 @@ enum class SystemErrc {
   UnableToCreateWindow = 1,
   UnableToOpenFile     = 2,
   UnableToLoadAsset    = 3,
-  UnableToSaveAsset    = 4,
+  UnableToSaveAsset    = 4
   };
 
 struct SystemErrCategory : std::error_category {
@@ -56,7 +60,7 @@ enum class GraphicsErrc {
   TooLargeUbo               = 8,
   InvalidStorageBuffer      = 9,
   DrawCallWithoutFbo        = 10,
-  ComputeCallInRenderPass   = 11,
+  ComputeCallInRenderPass   = 11
   };
 
 struct GraphicsErrCategory : std::error_category {

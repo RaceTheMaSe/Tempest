@@ -34,6 +34,7 @@ struct Margin final {
 
   int xMargin() const { return left+right;  }
   int yMargin() const { return top +bottom; }
+  bool  isSet() const { return left!=0 || top!=0 || right!=0 || bottom!=0; }
 
   bool operator == (const Margin& other) const {
     return left  ==other.left  &&

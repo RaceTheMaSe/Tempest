@@ -28,6 +28,8 @@ extern "C" {
 #define AL_DIRECT_FILTER_GAINHF_AUTO             0x2000A
 #define AL_AUXILIARY_SEND_FILTER_GAIN_AUTO       0x2000B
 #define AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO     0x2000C
+#define AL_AUXILIARY_SEND_FILTER_GAIN            0x2000D // custom-defined
+#define AL_AUXILIARY_SEND_FILTER_GAINHF          0x2000E // custom-defined
 
 
 /* Effect properties. */
@@ -243,23 +245,34 @@ typedef void (AL_APIENTRY *LPALGETAUXILIARYEFFECTSLOTFV)(ALuint, ALenum, ALfloat
 
 #ifdef AL_ALEXT_PROTOTYPES
 AL_API ALvoid AL_APIENTRY alGenEffects(ALsizei n, ALuint *effects);
+AL_API ALvoid AL_APIENTRY alGenEffectsCt(ALCcontext* Context, ALsizei n, ALuint *effects);
 AL_API ALvoid AL_APIENTRY alDeleteEffects(ALsizei n, const ALuint *effects);
+AL_API ALvoid AL_APIENTRY alDeleteEffectsCt(ALCcontext* Context, ALsizei n, const ALuint *effects);
 AL_API ALboolean AL_APIENTRY alIsEffect(ALuint effect);
+AL_API ALboolean AL_APIENTRY alIsEffectCt(ALCcontext* Context, ALuint effect);
 AL_API ALvoid AL_APIENTRY alEffecti(ALuint effect, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alEffectiCt(ALCcontext* Context, ALuint effect, ALenum param, ALint iValue);
 AL_API ALvoid AL_APIENTRY alEffectiv(ALuint effect, ALenum param, const ALint *piValues);
 AL_API ALvoid AL_APIENTRY alEffectf(ALuint effect, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alEffectfCt(ALCcontext* Context, ALuint effect, ALenum param, ALfloat flValue);
 AL_API ALvoid AL_APIENTRY alEffectfv(ALuint effect, ALenum param, const ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alEffectfvCt(ALCcontext* Context, ALuint effect, ALenum param, const ALfloat *pflValues);
 AL_API ALvoid AL_APIENTRY alGetEffecti(ALuint effect, ALenum param, ALint *piValue);
 AL_API ALvoid AL_APIENTRY alGetEffectiv(ALuint effect, ALenum param, ALint *piValues);
 AL_API ALvoid AL_APIENTRY alGetEffectf(ALuint effect, ALenum param, ALfloat *pflValue);
+AL_API ALvoid AL_APIENTRY alGetEffectfCt(ALCcontext* Context, ALuint effect, ALenum param, ALfloat *pflValue);
 AL_API ALvoid AL_APIENTRY alGetEffectfv(ALuint effect, ALenum param, ALfloat *pflValues);
 
 AL_API ALvoid AL_APIENTRY alGenFilters(ALsizei n, ALuint *filters);
+AL_API ALvoid AL_APIENTRY alGenFiltersCt(ALCcontext* Context, ALsizei n, ALuint *filters);
 AL_API ALvoid AL_APIENTRY alDeleteFilters(ALsizei n, const ALuint *filters);
 AL_API ALboolean AL_APIENTRY alIsFilter(ALuint filter);
+AL_API ALboolean AL_APIENTRY alIsFilterCt(ALCcontext* Context, ALuint filter);
 AL_API ALvoid AL_APIENTRY alFilteri(ALuint filter, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alFilteriCt(ALCcontext* Context, ALuint filter, ALenum param, ALint iValue);
 AL_API ALvoid AL_APIENTRY alFilteriv(ALuint filter, ALenum param, const ALint *piValues);
 AL_API ALvoid AL_APIENTRY alFilterf(ALuint filter, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alFilterfCt(ALCcontext* Context, ALuint filter, ALenum param, ALfloat flValue);
 AL_API ALvoid AL_APIENTRY alFilterfv(ALuint filter, ALenum param, const ALfloat *pflValues);
 AL_API ALvoid AL_APIENTRY alGetFilteri(ALuint filter, ALenum param, ALint *piValue);
 AL_API ALvoid AL_APIENTRY alGetFilteriv(ALuint filter, ALenum param, ALint *piValues);
@@ -267,11 +280,15 @@ AL_API ALvoid AL_APIENTRY alGetFilterf(ALuint filter, ALenum param, ALfloat *pfl
 AL_API ALvoid AL_APIENTRY alGetFilterfv(ALuint filter, ALenum param, ALfloat *pflValues);
 
 AL_API ALvoid AL_APIENTRY alGenAuxiliaryEffectSlots(ALsizei n, ALuint *effectslots);
+AL_API ALvoid AL_APIENTRY alGenAuxiliaryEffectSlotsCt(ALCcontext* context, ALsizei n, ALuint *effectslots);
 AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlots(ALsizei n, const ALuint *effectslots);
+AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlotsCt(ALCcontext* context, ALsizei n, const ALuint *effectslots);
 AL_API ALboolean AL_APIENTRY alIsAuxiliaryEffectSlot(ALuint effectslot);
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotiCt(ALCcontext* context, ALuint effectslot, ALenum param, ALint iValue);
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, const ALint *piValues);
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotf(ALuint effectslot, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotfCt(ALCcontext* Context, ALuint effectslot, ALenum param, ALfloat value);
 AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, const ALfloat *pflValues);
 AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint *piValue);
 AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, ALint *piValues);

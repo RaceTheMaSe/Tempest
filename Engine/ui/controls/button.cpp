@@ -16,8 +16,7 @@ Button::Button() {
   setFocusPolicy(ClickFocus);
   }
 
-Button::~Button() {
-  }
+Button::~Button() = default;
 
 void Button::polishEvent(PolishEvent&) {
   invalidateSizeHint();

@@ -33,7 +33,7 @@ VFramebuffer::VFramebuffer(VDevice& device, VFramebufferLayout& lay,
     }
   if(zbuf!=nullptr)
     att[outCnt] = zbuf->view;
-  impl = allocFbo(w,h,att,attach.size());
+  impl = allocFbo(w,h,(VkImageView*)att,attach.size());
   }
 
 VFramebuffer::~VFramebuffer() {

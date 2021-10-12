@@ -87,9 +87,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" OR
       arm/palette_neon_intrinsics.c)
 
     if(${PNG_ARM_NEON} STREQUAL "on")
-      add_definitions(-DPNG_ARM_NEON_OPT=2)
-    elseif(${PNG_ARM_NEON} STREQUAL "check")
-      add_definitions(-DPNG_ARM_NEON_CHECK_SUPPORTED)
+    #   add_definitions(-DPNG_ARM_NEON_OPT=2)
+    # elseif(${PNG_ARM_NEON} STREQUAL "check")
+    #   add_definitions(-DPNG_ARM_NEON_CHECK_SUPPORTED)
     endif()
   else()
     add_definitions(-DPNG_ARM_NEON_OPT=0)

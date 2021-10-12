@@ -13,7 +13,7 @@ DxBuffer::DxBuffer(DxDevice* dev, ComPtr<ID3D12Resource>&& b, UINT sizeInBytes)
   :dev(dev), impl(std::move(b)), sizeInBytes(sizeInBytes) {
   }
 
-DxBuffer::DxBuffer(Tempest::Detail::DxBuffer&& other)
+DxBuffer::DxBuffer(Tempest::Detail::DxBuffer&& other) noexcept
   :dev(other.dev), impl(std::move(other.impl)),sizeInBytes(other.sizeInBytes) {
   other.sizeInBytes=0;
   }

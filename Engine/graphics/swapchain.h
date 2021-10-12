@@ -14,7 +14,7 @@ class Swapchain final {
     Swapchain(Swapchain&&)=default;
     ~Swapchain();
 
-    Swapchain& operator = (Swapchain&& s);
+    Swapchain& operator = (Swapchain&& s) noexcept;
 
     uint32_t             w() const;
     uint32_t             h() const;

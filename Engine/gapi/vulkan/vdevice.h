@@ -214,7 +214,7 @@ class VDevice : public AbstractGraphicsApi::Device {
     DataMgr&                dataMgr() const { return *data; }
 
   private:
-    VkPhysicalDeviceMemoryProperties memoryProperties;
+    VkPhysicalDeviceMemoryProperties memoryProperties={};
     std::unique_ptr<DataMgr>         data;
     void                    waitIdleSync(Queue* q, size_t n);
 

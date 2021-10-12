@@ -21,15 +21,15 @@ class RectAllocator {
   public:
     using Memory=typename MemoryProvider::DeviceMemory;
 
-    explicit RectAllocator(MemoryProvider& device):device(device){}
+    explicit RectAllocator(MemoryProvider& deviceIn):device(deviceIn){}
 
     RectAllocator(const RectAllocator&)=delete;
-    ~RectAllocator(){}
+    ~RectAllocator()= default;
 
     struct Allocation {
       Allocation()=default;
 
-      Allocation(Allocation&& a)
+      Allocation(Allocation&& a) noexcept
         :owner(a.owner),node(a.node),pId(a.pId){
         a.owner=nullptr;
         a.node =nullptr;
@@ -47,6 +47,8 @@ class RectAllocator {
         }
 
       Allocation& operator=(const Allocation& a){
+        if(this==&a)
+          return *this;
         if(a.node!=nullptr)
           a.node->addref();
         if(node!=nullptr)
@@ -57,7 +59,7 @@ class RectAllocator {
         return *this;
         }
 
-      Allocation& operator=(Allocation&& a){
+      Allocation& operator=(Allocation&& a) noexcept {
         std::swap(owner,a.owner);
         std::swap(node ,a.node);
         std::swap(pId  ,a.pId);
@@ -74,7 +76,7 @@ class RectAllocator {
 
       Rect pageRect() const {
         auto& p=owner->pages[pId];
-        return Rect(int(node->x),int(node->y),int(p.root->w),int(p.root->h));
+        return {int(node->x),int(node->y),int(p.root->w),int(p.root->h)};
         }
 
       Point pos() const {
@@ -117,7 +119,7 @@ class RectAllocator {
 
     struct Node {
       Node()=default;
-      Node(uint32_t x,uint32_t y,uint32_t w,uint32_t h,Node* owner):x(x),y(y),w(w),h(h),owner(owner){}
+      Node(uint32_t xIn,uint32_t yIn,uint32_t wIn,uint32_t hIn,Node* ownerIn):x(xIn),y(yIn),w(wIn),h(hIn),owner(ownerIn){}
 
       std::atomic<uint32_t> refcount{};
 
@@ -180,16 +182,16 @@ class RectAllocator {
         delete this;
         }
 
-      Point pos() const { return Point(x,y); }
+      Point pos() const { return {x,y}; }
       };
 
     struct Page {
-      Page(RectAllocator& owner,uint32_t w,uint32_t h)
-        :owner(owner),root(new Node(0,0,w,h,nullptr)) {
+      Page(RectAllocator& ownerIn,uint32_t w,uint32_t h)
+        :owner(ownerIn),root(new Node(0,0,w,h,nullptr)) {
         memory = owner.device.alloc(w,h);// std::bad_alloc, if error
         }
 
-      Page(Page&&)=default;
+      Page(Page&&) noexcept =default;
 
       ~Page(){
         // memory!=null; 100%!!

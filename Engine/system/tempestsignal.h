@@ -16,8 +16,8 @@ class Signal<void(Args...args)> {
   public:
     Signal()=default;
     Signal(const Signal&)=delete;
-    Signal(Signal&& other)=default;
-    Signal& operator=(Signal&& other)=default;
+    Signal(Signal&& other) noexcept =default;
+    Signal& operator=(Signal&& other) noexcept =default;
 
     template<class T,class Base,class Ret,class ... TArgs>
     void bind(T* obj,Ret (Base::*fn)(TArgs...a)) {
@@ -108,7 +108,7 @@ class Signal<void(Args...args)> {
       T*  obj;
       Ret (Base::*fn)(TArgs...a);
 
-      TImpl(T* obj,Ret (Base::*fn)(TArgs...a)):obj(obj),fn(fn){
+      TImpl(T* objIn,Ret (Base::*fnIn)(TArgs...a)):obj(objIn),fn(fnIn){
         this->vtbl = getVtbl();
         }
 
@@ -142,7 +142,7 @@ class Signal<void(Args...args)> {
       T* obj;
       Ret (Base::*fn)(TArgs...a) const;
 
-      TImplConst(T* obj,Ret (Base::*fn)(TArgs...a) const):obj(obj),fn(fn){
+      TImplConst(T* objIn,Ret (Base::*fnIn)(TArgs...a) const):obj(objIn),fn(fnIn){
         this->vtbl = getVtbl();
         }
 

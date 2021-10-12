@@ -35,7 +35,7 @@ size_t VectorImage::pushState() {
 
 void VectorImage::popState(size_t id) {
   State& s = stateStk[id];
-  State& b = reinterpret_cast<State&>(blocks.back());
+  auto&  b = reinterpret_cast<State&>(blocks.back());
   if(b==s)
     return;
   if(blocks.back().size==0) {
@@ -111,7 +111,7 @@ void VectorImage::commitPoints() {
   }
 
 const RenderPipeline& VectorImage::pipelineOf(Device& dev, const VectorImage::Block& b) const {
-  const RenderPipeline* p;
+  const RenderPipeline* p = nullptr;
   if(b.hasImg) {
     if(b.tp==Triangles){
       if(b.blend==NoBlend)
@@ -157,7 +157,7 @@ bool VectorImage::load(const char *file) {
     for(NSVGshape* shape=image->shapes; shape!=nullptr; shape=shape->next) {
       for(NSVGpath* path=shape->paths; path!=nullptr; path=path->next) {
         for(int i=0; i<path->npts-1; i+=3) {
-          const float* p = &path->pts[i*2];
+          //const float* p = &path->pts[i*2];
           //drawCubicBez(p[0],p[1], p[2],p[3], p[4],p[5], p[6],p[7]);
           }
         }
@@ -220,9 +220,8 @@ void VectorImage::Mesh::update(Device& dev, const VectorImage& src, BufferHeap h
   }
 
 void VectorImage::Mesh::draw(Encoder<CommandBuffer>& cmd) {
-  for(size_t i=0;i<blocks.size();++i){
-    auto& b = blocks[i];
-    if(b.size==0)
+  for(auto & b:blocks){
+     if(b.size==0)
       continue;
     cmd.setUniforms(*b.pipeline,b.desc);
     cmd.draw(vbo,b.begin,b.size);

@@ -36,7 +36,7 @@ namespace Tempest{
 
       //! Получить 4х элементный массив,
       //! элементы которого являются значениями каналов.
-      const float * data() const { return cdata; }
+      const float * data() const { return (const float*)cdata; }
 
       //! Сложение. Результат не будет обрубаться по диапозону.
       friend Color operator + ( Color l,const Color & r ){ l+=r; return l; }

@@ -20,7 +20,7 @@ class Label : public Widget {
     void          setText(const std::string& t);
 
   protected:
-    void          paintEvent(Tempest::PaintEvent &e);
+    void          paintEvent(Tempest::PaintEvent &e) override;
 
   private:
     void          invalidateSizeHint();

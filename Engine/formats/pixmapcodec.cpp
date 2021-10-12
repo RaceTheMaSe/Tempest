@@ -17,7 +17,7 @@ using namespace Tempest;
 
 PixmapCodec::Context::Context(IDevice &dev)
   :device(dev) {
-  bufSiz = dev.read(buf,sizeof(buf));
+  bufSiz = dev.read((uint8_t*)buf,sizeof(buf));
   if(dev.unget(bufSiz)!=bufSiz)
     throw std::system_error(Tempest::SystemErrc::UnableToLoadAsset);
   }
@@ -25,7 +25,7 @@ PixmapCodec::Context::Context(IDevice &dev)
 size_t PixmapCodec::Context::peek(void* out,size_t n) const {
   if(n>bufSiz)
     n = bufSiz;
-  std::memcpy(out,buf,n);
+  std::memcpy(out,(const uint8_t*)buf,n);
   return n;
   }
 
@@ -55,7 +55,7 @@ struct PixmapCodec::Impl {
     if(ext!=nullptr) {
       for(size_t i=0;ext[i];++i)
         if('A'<=ext[i] && ext[i]<='Z')
-          ext[i] = ext[i]+'a'-'A';
+          ext[i] = char(ext[i]+'a'-'A');
 
       for(auto& i:codec) {
         if(i->save(f,ext,data,dataSz,w,h,frm))
@@ -79,9 +79,9 @@ struct PixmapCodec::Impl {
 
     size_t extL = std::strlen(ext);
     if(extL<32) {
-      char e[33]={};
-      std::memcpy(e,ext,extL);
-      implSave(f,e,data,dataSz,w,h,frm);
+      char e[34]={};
+      strcpy((char*)e,ext);
+      implSave(f,(char*)e,data,dataSz,w,h,frm);
       } else {
       std::unique_ptr<char[]> e(new char[extL+1]);
       std::memcpy(e.get(),ext,extL);

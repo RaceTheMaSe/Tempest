@@ -37,7 +37,7 @@ DxDescriptorArray::DxDescriptorArray(DxPipelineLay& vlay)
   heapCnt = UINT(vlay.heaps.size());
   }
 
-DxDescriptorArray::DxDescriptorArray(DxDescriptorArray&& other)
+DxDescriptorArray::DxDescriptorArray(DxDescriptorArray&& other) noexcept
   : lay(other.lay) {
   val       = other.val;
   heapCnt   = other.heapCnt;

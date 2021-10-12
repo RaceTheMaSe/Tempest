@@ -1,9 +1,11 @@
 #include "log.h"
 
 #include <Tempest/Platform>
+#include "utility/utility.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
+const char* logCategory("Tempest");
 #endif
 
 #if defined(__WINDOWS_PHONE__) || defined(_MSC_VER)
@@ -35,14 +37,14 @@ void Log::flush(Context& ctx, char *&out, size_t &count) {
 #ifdef __ANDROID__
     switch(ctx.mode) {
       case Error:
-        __android_log_print(ANDROID_LOG_ERROR, "app", "%s", ctx.buffer);
+        __android_log_print(ANDROID_LOG_ERROR, logCategory, "%s", ctx.buffer);
         break;
       case Debug:
-        __android_log_print(ANDROID_LOG_DEBUG, "app", "%s", ctx.buffer);
+        __android_log_print(ANDROID_LOG_DEBUG, logCategory, "%s", ctx.buffer);
         break;
       case Info:
       default:
-        __android_log_print(ANDROID_LOG_INFO,  "app", "%s", ctx.buffer);
+        __android_log_print(ANDROID_LOG_INFO,  logCategory, "%s", ctx.buffer);
         break;
       }
 #elif defined(__WINDOWS_PHONE__)
@@ -59,8 +61,7 @@ void Log::flush(Context& ctx, char *&out, size_t &count) {
   if(ctx.mode==Error){
     std::cerr << ctx.buffer << std::endl;
     std::cerr.flush();
-    }
-    else
+    } else
     std::cout << ctx.buffer << std::endl;
 #endif
 #endif
@@ -82,8 +83,54 @@ void Log::printImpl(Context& ctx, char* out, size_t count) {
   flush(ctx,out,count);
   }
 
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Rect& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%i,%i,%i,%i)",msg.x,msg.y,msg.w,msg.h);
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Size& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%i,%i)",msg.w,msg.h);
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Point& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%f,%f)",double(msg.x),double(msg.y));
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Vec4& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%f,%f,%f,%f)",double(msg.x),double(msg.y),double(msg.z),double(msg.w));
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Vec3& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%f,%f,%f)",double(msg.x),double(msg.y),double(msg.z));
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Vec2& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%f,%f)",double(msg.x),double(msg.y));
+  write(ctx,out,count,(char*)sym);
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const Tempest::Vec1& msg) {
+  char sym[48];
+  snprintf((char*)sym,sizeof(sym),"(%f)",double(msg.x));
+  write(ctx,out,count,(char*)sym);
+  }
+
 void Log::write(Context& ctx, char *&out, size_t &count, const std::string &msg) {
   write(ctx,out,count,msg.c_str());
+  }
+
+void Log::write(Context& ctx, char *&out, size_t &count, const std::string_view msg) {
+  write(ctx,out,count,msg.data());
   }
 
 void Log::write(Context& ctx, char *&out, size_t &count, float msg) {
@@ -103,7 +150,7 @@ void Log::write(Context& ctx, char *&out, size_t &count, const void *msg) {
   sym[sizeof(sym)-1] = '\0';
   int pos = sizeof(sym)-2;
 
-  uintptr_t ptr = uintptr_t(msg);
+  auto ptr = uintptr_t(msg);
   for(size_t i=0; i<sizeof(void*)*2; ++i){
     auto num = ptr%16;
     sym[pos] = num<=9 ? char(num+'0') : char(num-10+'a');

@@ -4,8 +4,7 @@
 
 using namespace Tempest;
 
-Timer::Timer() {
-  }
+Timer::Timer() = default;
 
 Timer::~Timer() {
   setRunning(false);
@@ -27,13 +26,14 @@ void Timer::setRunning(bool b) {
     Application::implAddTimer(*this);
     m.lastEmit = Application::tickCount();
     } else {
+    m.interval=0;
     Application::implDelTimer(*this);
     }
   m.running = b;
   }
 
 bool Timer::process(uint64_t now) {
-  if(now>=m.lastEmit && now-m.lastEmit>=m.interval){
+  if(now>=m.lastEmit && now-m.lastEmit>=m.interval && m.interval>0){
     m.lastEmit += m.interval;
     timeout();
     return true;

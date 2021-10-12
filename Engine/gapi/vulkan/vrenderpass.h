@@ -25,10 +25,10 @@ class VRenderPass : public AbstractGraphicsApi::Pass {
 
     VRenderPass()=default;
     VRenderPass(VDevice& device, const FboMode** attach, uint8_t attCount);
-    VRenderPass(VRenderPass&& other);
-    ~VRenderPass();
+    VRenderPass(VRenderPass&& other) noexcept ;
+    ~VRenderPass() override;
 
-    void operator=(VRenderPass&& other);
+    VRenderPass& operator=(VRenderPass&& other) noexcept ;
 
     struct Impl {
       Impl(VFramebufferLayout &lay,VkRenderPass impl,std::unique_ptr<VkClearValue[]>&& clr)

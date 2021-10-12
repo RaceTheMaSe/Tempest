@@ -37,6 +37,8 @@ class Style {
   public:
     Style();
     virtual ~Style();
+    Style(const Style&)=delete;
+    Style& operator=(const Style&)=delete;
 
     struct UiMetrics final {
       UiMetrics();
@@ -89,7 +91,7 @@ class Style {
       E_ArrowRight         = 0x40,
       E_CentralButton      = 0x80,
       //
-      E_All                = 0xFFFF,
+      E_All                = 0xFFFF
       };
 
     enum TextElement {
@@ -166,9 +168,6 @@ class Style {
 
     void implAddRef() const { refCnt++; }
     void implDecRef() const ;
-
-    Style(const Style& )=delete;
-    Style& operator=(const Style&)=delete;
 
   friend class Widget;
   friend class Application;

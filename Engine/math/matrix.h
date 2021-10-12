@@ -17,6 +17,7 @@ class Matrix4x4 final {
     ~Matrix4x4()=default;
 
     void identity();
+    static Matrix4x4 identityMatrix();
 
     inline void translate(const float v[/*3*/]) {
       translate(v[0], v[1], v[2]);
@@ -85,11 +86,15 @@ class Matrix4x4 final {
                  float &ox, float &oy, float &oz, float &ow ) const;
     void project(float & x, float & y, float & z, float & w ) const;
     void project(float & x, float & y, float & z ) const;
+    void projectChecked(float & x, float & y, float & z) const; 
     void project(Vec4& v) const;
     void project(Vec3& v) const;
 
     void perspective( float angle, float aspect, float zNear, float zFar);
     void ortho(int width, int height, float zNear, float zFar);
+
+    Vec3 position() const;
+    Vec3 yawPitchRoll() const;
 
     Matrix4x4& operator = ( const Matrix4x4& other )=default;
 

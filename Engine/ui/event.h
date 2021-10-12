@@ -12,7 +12,7 @@ class Painter;
 class Event {
   public:
     Event()=default;
-    virtual ~Event(){}
+    virtual ~Event()= default;
 
     void accept(){ accepted = true;  }
     void ignore(){ accepted = false; }
@@ -30,9 +30,18 @@ class Event {
       MouseWheel,
       MouseEnter,
       MouseLeave,
+      PointerDown,
+      PointerUp,
+      PointerMove,
+      PointerEnter,
+      PointerLeave,
       KeyDown,
       KeyRepeat,
       KeyUp,
+      GamepadKeyDown,
+      GamepadKeyRepeat,
+      GamepadKeyUp,
+      GamepadAxis,
       Focus,
       Resize,
       Shortcut,
@@ -40,6 +49,7 @@ class Event {
       Close,
       Polish,
       Gesture,
+      AppStateChange,
 
       Custom = 512
       };
@@ -79,11 +89,24 @@ class Event {
       K_Delete,
       K_Insert,
       K_Return,
+      K_PageUp,
+      K_PageDown,
       K_Home,
       K_End,
       K_Pause,
       K_Space,
       K_CapsLock,
+      K_NumLock,
+
+      K_Multiply,
+      K_Add,
+      K_Separator,
+      K_Subtract,
+      K_Decimal,
+      K_Divide,
+      K_Equal,
+      K_KP_Return,
+      K_OpenQuote, // left to numkey row
 
       K_F1,
       K_F2,
@@ -148,22 +171,85 @@ class Event {
       K_8,
       K_9,
 
+      K_KP_0,
+      K_KP_1,
+      K_KP_2,
+      K_KP_3,
+      K_KP_4,
+      K_KP_5,
+      K_KP_6,
+      K_KP_7,
+      K_KP_8,
+      K_KP_9,
+
       K_Last
       };
+
+    enum GamepadKeyType : uint8_t {
+        // based on Android input.h
+        G_NoKey = 0,
+        G_Left,
+        G_Right,
+        G_Up,
+        G_Down,
+
+        G_A,
+        G_B,
+        G_C,
+        G_L1,
+        G_L2,
+        G_R1,
+        G_R2,
+        G_X,
+        G_Y,
+        G_Z,
+        G_ThumbStickLeft,
+        G_ThumbStickRight,
+        G_Start,
+        G_Select,
+        G_Mode,
+
+        G_Last
+    };
+
+    enum GamepadAxisType : uint8_t {
+        AxisNone = 0,
+        AxisLeftStickX,
+        AxisLeftStickY,
+        AxisRightStickX,
+        AxisRightStickY,
+        AxisLeftTrigger,
+        AxisRightTrigger,
+
+        Axis2D,
+        AxisLast
+    };
 
     enum Modifier : uint8_t {
       M_NoModifier = 0,
       M_Shift      = 1<<0,
       M_Alt        = 1<<1,
       M_Ctrl       = 1<<2,
-      M_Command    = 1<<3, // APPLE command key
+      M_Command    = 1<<3 // APPLE command key
       };
 
     enum FocusReason : uint8_t {
       TabReason,
       ClickReason,
       WheelReason,
+      HoverReason,
+      WindowManager,
       UnknownReason
+      };
+
+    enum AppState : uint8_t {
+      Running,
+      Paused,
+      Stopped,
+      Resumed,
+      SaveState,
+      LoadState,
+      UnknownState
       };
 
     Type type () const{ return etype; }
@@ -178,12 +264,12 @@ class Event {
 
 class PaintEvent: public Event {
   public:
-    PaintEvent(PaintDevice & p,TextureAtlas& ta,uint32_t w,uint32_t h)
-      : PaintEvent(p,ta,int(w),int(h)) {
+    PaintEvent(PaintDevice & p,TextureAtlas& taIn,uint32_t w,uint32_t h)
+      : PaintEvent(p,taIn,int(w),int(h)) {
       }
-    PaintEvent(PaintDevice & p,TextureAtlas& ta,int32_t w,int32_t h)
-      : dev(p),ta(ta),outW(uint32_t(w)),outH(uint32_t(h)),
-        vp(0,0,w,h) {
+    PaintEvent(PaintDevice & p,TextureAtlas& taIn,int32_t wIn,int32_t hIn)
+      : dev(p),ta(taIn),outW(uint32_t(wIn)),outH(uint32_t(hIn)),
+        vp(0,0,wIn,hIn) {
       setType( Paint );
       }
 
@@ -219,16 +305,16 @@ class PaintEvent: public Event {
  */
 class SizeEvent : public Event {
   public:
-    SizeEvent(int w,int h): w(uint32_t(std::max(w,0))), h(uint32_t(std::max(h,0))) {
+    SizeEvent(int wIn,int hIn): w(uint32_t(std::max(wIn,0))), h(uint32_t(std::max(hIn,0))) {
       setType( Resize );
       }
-    SizeEvent(uint32_t w,uint32_t h): w(w), h(h) {
+    SizeEvent(uint32_t wIn,uint32_t hIn): w(wIn), h(hIn) {
       setType( Resize );
       }
 
     const uint32_t w, h;
 
-    Tempest::Size size() const { return Size(int(w),int(h)); }
+    Tempest::Size size() const { return {int(w),int(h)}; }
   };
 
 /*!
@@ -240,9 +326,9 @@ class MouseEvent : public Event {
                 MouseButton b = ButtonNone,
                 Modifier m = M_NoModifier,
                 int mdelta = 0,
-                int mouseID = 0,
+                int mouseIDIn = 0,
                 Type t = MouseMove )
-      :x(mx), y(my), delta(mdelta), button(b), modifier(m), mouseID(mouseID){
+      :x(mx), y(my), delta(mdelta), button(b), modifier(m), mouseID(mouseIDIn){
       setType( t );
       }
 
@@ -252,7 +338,7 @@ class MouseEvent : public Event {
 
     const int mouseID;
 
-    Point pos() const { return Point(x,y); }
+    Point pos() const { return {x,y}; }
   };
 
 class KeyEvent: public Event {
@@ -260,7 +346,7 @@ class KeyEvent: public Event {
     KeyEvent(KeyType  k = K_NoKey, Modifier m = M_NoModifier, Type t = KeyDown):key(k),modifier(m){
       setType( t );
       }
-    KeyEvent(uint32_t k, Modifier m = M_NoModifier, Type t = KeyDown ):key(K_NoKey), code(k), modifier(m){
+    KeyEvent(uint32_t k, Modifier m = M_NoModifier, Type t = KeyDown ):code(k), modifier(m){
       setType( t );
       }
     KeyEvent(KeyType k, uint32_t k1, Modifier m = M_NoModifier, Type t = KeyDown):key(k), code(k1), modifier(m){
@@ -272,14 +358,81 @@ class KeyEvent: public Event {
     const Modifier modifier = M_NoModifier;
   };
 
+class GamepadKeyEvent : public Event {
+public:
+  GamepadKeyEvent(GamepadKeyType  k = G_NoKey, uint32_t /*code*/ = 0, uint32_t sc = 0, Type t = GamepadKeyDown) : key(k), code(k), scanCode(sc) {
+    setType(t
+    );
+  }
+
+  const GamepadKeyType  key = G_NoKey;
+  const uint32_t        code = 0;
+  const uint32_t        scanCode = 0;
+};
+
+/*!
+* \brief The PointerEvent class contains event parameters for touch events
+*/
+class PointerEvent : public Event {
+public:
+    PointerEvent(size_t pId = 0,
+                float xIn = 0.0f,
+                float yIn = 0.0f,
+                Type t = NoEvent,
+                size_t tp = 0 )
+            : x(xIn), y(yIn), type(t), pointerId(pId), totalPointers(tp) { }
+
+    const float x;
+    const float y;
+    const Type type;
+
+    const size_t pointerId;
+    const size_t totalPointers;
+
+    Point pos() const { return {(int)x,(int)y}; }
+};
+
+/*!
+* \brief The AnalogEvent class contains event parameters for any type of events that don't fit other categories
+*/
+class AnalogEvent : public Event {
+public:
+    AnalogEvent(GamepadAxisType b = AxisNone,
+                float xIn = 0.0f,
+                float yIn = 0.0f, // optional - select Axis2D
+                int controllerIDIn = 0,
+                Type t = GamepadAxis )
+            : x(xIn), y(yIn), axis(b), controllerID(controllerIDIn){
+      setType( t );
+    }
+
+    const float x;
+    const float y;
+    const GamepadAxisType axis;
+
+    const int controllerID;
+
+    // might only have x value used, check GamepadAxisType
+    Point pos() const { return {(int)x,(int)y}; }
+};
+
 class FocusEvent: public Event {
   public:
-    FocusEvent( bool in, FocusReason reason ): in(in), reason(reason) {
+    FocusEvent( bool focusIn, FocusReason reasonIn ): in(focusIn), reason(reasonIn) {
       setType( Focus );
       }
 
     const bool        in;
     const FocusReason reason;
+  };
+
+class AppStateEvent: public Event {
+  public:
+    AppStateEvent( AppState appStateIn ): appState(appStateIn) {
+      setType( AppStateChange );
+      }
+
+    const AppState appState;
   };
 
 class CloseEvent: public Event {

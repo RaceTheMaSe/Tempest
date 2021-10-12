@@ -7,7 +7,7 @@ namespace Tempest {
 class MetalApi : public AbstractGraphicsApi {
   public:
     explicit MetalApi(ApiFlags f=ApiFlags::NoFlags);
-    ~MetalApi();
+    ~MetalApi() override;
 
     std::vector<Props> devices() const override;
 

@@ -51,7 +51,7 @@ DxPipelineLay::DescriptorPool::DescriptorPool(DxPipelineLay& vlay) {
     }
   }
 
-DxPipelineLay::DescriptorPool::DescriptorPool(DxPipelineLay::DescriptorPool&& oth)
+DxPipelineLay::DescriptorPool::DescriptorPool(DxPipelineLay::DescriptorPool&& oth) noexcept
   :allocated(oth.allocated) {
   for(size_t i=0;i<MAX_BINDS;++i) {
     heap[i] = oth.heap[i];

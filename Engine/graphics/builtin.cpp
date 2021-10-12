@@ -19,11 +19,11 @@ Builtin::Builtin(Device& owner)
 
   static bool internalShaders = true;
   if(internalShaders) {
-    vsE  = owner.shader(empty_vert_sprv,sizeof(empty_vert_sprv));
-    fsE  = owner.shader(empty_frag_sprv,sizeof(empty_frag_sprv));
+    vsE  = owner.shader((const uint8_t*)empty_vert_sprv,sizeof(empty_vert_sprv));
+    fsE  = owner.shader((const uint8_t*)empty_frag_sprv,sizeof(empty_frag_sprv));
 
-    vsT2 = owner.shader(tex_brush_vert_sprv,sizeof(tex_brush_vert_sprv));
-    fsT2 = owner.shader(tex_brush_frag_sprv,sizeof(tex_brush_frag_sprv));
+    vsT2 = owner.shader((const uint8_t*)tex_brush_vert_sprv,sizeof(tex_brush_vert_sprv));
+    fsT2 = owner.shader((const uint8_t*)tex_brush_frag_sprv,sizeof(tex_brush_frag_sprv));
     }
   }
 

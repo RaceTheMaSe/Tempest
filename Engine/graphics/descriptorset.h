@@ -20,9 +20,9 @@ class Encoder;
 class DescriptorSet final {
   public:
     DescriptorSet()=default;
-    DescriptorSet(DescriptorSet&&);
+    DescriptorSet(DescriptorSet&&) noexcept;
     ~DescriptorSet();
-    DescriptorSet& operator=(DescriptorSet&&);
+    DescriptorSet& operator=(DescriptorSet&&) noexcept;
 
     bool isEmpty() const { return impl.handler==nullptr; }
 
@@ -41,11 +41,11 @@ class DescriptorSet final {
 
   private:
     struct EmptyDesc : AbstractGraphicsApi::Desc {
-      void set    (size_t,AbstractGraphicsApi::Texture*, const Sampler2d&){}
-      void setSsbo(size_t,AbstractGraphicsApi::Texture*, uint32_t){}
-      void setUbo (size_t,AbstractGraphicsApi::Buffer*,  size_t){}
-      void setSsbo(size_t,AbstractGraphicsApi::Buffer*,  size_t){}
-      void ssboBarriers(Detail::ResourceState&){}
+      void set    (size_t,AbstractGraphicsApi::Texture*, const Sampler2d&) override {}
+      void setSsbo(size_t,AbstractGraphicsApi::Texture*, uint32_t) override {}
+      void setUbo (size_t,AbstractGraphicsApi::Buffer*,  size_t) override {}
+      void setSsbo(size_t,AbstractGraphicsApi::Buffer*,  size_t) override {}
+      void ssboBarriers(Detail::ResourceState&) override {}
       };
     DescriptorSet(AbstractGraphicsApi::Desc* desc);
     void implBindUbo (size_t layoutBind, const VideoBuffer& vbuf, size_t offsetBytes);

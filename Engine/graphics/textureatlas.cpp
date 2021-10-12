@@ -11,8 +11,7 @@ TextureAtlas::TextureAtlas(Device& device)
   :device(device),alloc(provider) {
   }
 
-TextureAtlas::~TextureAtlas() {
-  }
+TextureAtlas::~TextureAtlas() = default;
 
 Sprite TextureAtlas::load(const Pixmap &pm) {
   return load(pm.data(),pm.w(),pm.h(),pm.format());
@@ -36,7 +35,7 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
   uint32_t dw   = cpu.w()*4;
 
   auto     src  = reinterpret_cast<const uint8_t*>(img);
-  uint32_t sbpp = uint32_t(Pixmap::bppForFormat(format));
+  auto     sbpp = uint32_t(Pixmap::bppForFormat(format));
   uint32_t sw   = pw*sbpp;
   uint32_t sh   = ph;
 
@@ -143,6 +142,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
         }
       break;
       }
+    case Pixmap::Format::R32F:
+    case Pixmap::Format::RG32F:
+    case Pixmap::Format::RGB32F:
+    case Pixmap::Format::RGBA32F:
+      break;
     }
 
   //cpu.save("dbg.png");

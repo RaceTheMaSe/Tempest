@@ -114,7 +114,7 @@ class Menu {
     virtual Widget* createItem    (const Item& decl);
 
     struct MenuPanel:Tempest::Panel {
-      void paintEvent(Tempest::PaintEvent& e);
+      void paintEvent(Tempest::PaintEvent& e) override;
 
       void setSize(const Size& s);
       };
@@ -123,8 +123,8 @@ class Menu {
       public:
         ItemButton(const Declarator& item);
 
-        void mouseEnterEvent(MouseEvent& e);
-        void paintEvent(Tempest::PaintEvent& e);
+        void mouseEnterEvent(MouseEvent& e) override;
+        void paintEvent(Tempest::PaintEvent& e) override;
 
         void setExtraText(const char*        text);
         void setExtraText(const std::string& text);
@@ -144,10 +144,10 @@ class Menu {
   private:
     struct Overlay:Tempest::UiOverlay {
       Overlay(Menu* menu, Widget* owner);
-      ~Overlay();
-      void mouseDownEvent(Tempest::MouseEvent& e);
-      void mouseMoveEvent(Tempest::MouseEvent& e);
-      void resizeEvent   (Tempest::SizeEvent&  e);
+      ~Overlay() override;
+      void mouseDownEvent(Tempest::MouseEvent& e) override;
+      void mouseMoveEvent(Tempest::MouseEvent& e) override;
+      void resizeEvent   (Tempest::SizeEvent&  e) override;
 
       void invalidatePos();
 

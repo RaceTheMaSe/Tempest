@@ -11,7 +11,7 @@ class ListDelegate;
 class ComboBox : public Widget {
   public:
     ComboBox();
-    ~ComboBox();
+    ~ComboBox() override;
 
     Tempest::Signal<void(size_t)> onItemSelected;
     Tempest::Signal<void(size_t)> onSelectionChanged;

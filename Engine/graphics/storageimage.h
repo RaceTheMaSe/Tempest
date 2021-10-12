@@ -8,13 +8,13 @@ namespace Tempest {
 class StorageImage final {
   public:
     StorageImage()=default;
-    StorageImage(StorageImage&&);
-    ~StorageImage();
-    StorageImage& operator=(StorageImage&&);
+    StorageImage(StorageImage&&) noexcept;
+    ~StorageImage()=default;
+    StorageImage& operator=(StorageImage&&) noexcept;
 
     int           w() const { return texW; }
     int           h() const { return texH; }
-    Size          size() const { return Size(texW,texH); }
+    Size          size() const { return {texW,texH}; }
     bool          isEmpty() const { return texW<=0 || texH<=0; }
     TextureFormat format() const { return frm; }
 

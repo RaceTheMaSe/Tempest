@@ -10,7 +10,7 @@ using namespace Tempest;
 struct Dialog::LayShadow : Tempest::Layout {
   bool hasLay = false;
 
-  void applyLayout(){
+  void applyLayout() override {
     Widget& ow    = *owner();
     size_t  count = ow.widgetsCount();
 
@@ -90,6 +90,16 @@ struct Dialog::Overlay : public Tempest::UiOverlay {
     e.accept();
     }
 
+  void keyDownEvent(Tempest::GamepadKeyEvent& e) override {
+    dlg.keyDownEvent(e);
+    e.accept();
+  }
+
+  void keyUpEvent(Tempest::GamepadKeyEvent& e) override {
+    dlg.keyUpEvent(e);
+    e.accept();
+  }
+
   void closeEvent(Tempest::CloseEvent& e) override {
     dlg.closeEvent(e);
     }
@@ -167,6 +177,15 @@ void Dialog::keyDownEvent(KeyEvent &e) {
 void Dialog::keyUpEvent(KeyEvent& e) {
   e.ignore();
   }
+
+void Dialog::keyDownEvent(GamepadKeyEvent &e) {
+  if(e.key==GamepadKeyEvent::G_B || GamepadKeyEvent::G_Start) // and other cancel keys
+    close();
+}
+
+void Dialog::keyUpEvent(GamepadKeyEvent& e) {
+  e.ignore();
+}
 
 void Dialog::paintEvent(PaintEvent& e) {
   Tempest::Painter p(e);

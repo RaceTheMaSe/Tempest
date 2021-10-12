@@ -55,8 +55,8 @@ class VSwapchain : public AbstractGraphicsApi::Swapchain {
     struct FenceList {
       FenceList() = default;
       FenceList(VkDevice dev, uint32_t cnt);
-      FenceList(FenceList&& oth);
-      FenceList& operator = (FenceList&& oth);
+      FenceList(FenceList&& oth) noexcept;
+      FenceList& operator = (FenceList&& oth) noexcept;
       ~FenceList();
 
       VkDevice                   dev = VK_NULL_HANDLE;

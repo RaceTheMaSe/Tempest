@@ -43,8 +43,7 @@ inline int getType<false>(const SizePolicy& w){
   }
 
 
-Layout::Layout() {
-  }
+Layout::Layout() = default;
 
 size_t Layout::count() const {
   return w ? w->wx.size() : 0;

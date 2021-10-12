@@ -202,12 +202,12 @@ void AbstractTextInput::keyEventImpl(KeyEvent& e) {
       TextCodec::toUtf8(e.code,t);
       }
     if(selS==selE) {
-      stk.push(textM, new TextModel::CommandInsert(t,selS));
+      stk.push(textM, new TextModel::CommandInsert((char*)t,selS));
       selS = textM.advance(selS,1);
       } else {
       if(selE<selS)
         std::swap(selE,selS);
-      stk.push(textM, new TextModel::CommandReplace(t,selS,selE));
+      stk.push(textM, new TextModel::CommandReplace((char*)t,selS,selE));
       selS = textM.advance(selS,1);
       }
     selE = selS;
@@ -221,7 +221,7 @@ void AbstractTextInput::paintEvent(PaintEvent &e) {
   Painter p(e);
   style().draw(p, this,  Style::E_Background,       state(), Rect(0,0,w(),h()), Style::Extra(*this));
   style().draw(p, textM, Style::TE_TextEditContent, state(), Rect(0,0,w(),h()), Style::Extra(*this));
-  if(cursorState)
+  //if(cursorState)
     ;//style().draw(p, textM, Style::TE_Cursor,          state(), Rect(0,0,w(),h()), Style::Extra(*this));
   }
 

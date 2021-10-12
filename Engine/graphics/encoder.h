@@ -28,8 +28,8 @@ class Encoder;
 template<>
 class Encoder<Tempest::CommandBuffer> {
   public:
-    Encoder(Encoder&& e);
-    Encoder& operator = (Encoder&& e);
+    Encoder(Encoder&& e) noexcept;
+    Encoder& operator = (Encoder&& e) noexcept;
     virtual ~Encoder() noexcept(false);
 
     void setFramebuffer(const FrameBuffer& fbo, const RenderPass& p);

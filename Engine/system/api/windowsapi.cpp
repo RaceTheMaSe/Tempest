@@ -7,6 +7,7 @@
 #include <Tempest/Except>
 
 #include "system/eventdispatcher.h"
+#include <utility/textcodec.h>
 
 #include <atomic>
 #include <unordered_set>
@@ -18,6 +19,7 @@
 using namespace Tempest;
 
 static const wchar_t*                         wndClassName=L"Tempest.Window";
+static const wchar_t*                         wndAppName  =L"Tempest.Application";
 static std::unordered_set<SystemApi::Window*> windows;
 static std::atomic_bool                       isExit{0};
 
@@ -91,8 +93,28 @@ WindowsApi::WindowsApi() {
     { VK_END,      Event::K_End      },
     { VK_PAUSE,    Event::K_Pause    },
     { VK_RETURN,   Event::K_Return   },
+    { VK_PRIOR,    Event::K_PageUp   },
+    { VK_NEXT,     Event::K_PageDown },
     { VK_SPACE,    Event::K_Space    },
     { VK_CAPITAL,  Event::K_CapsLock },
+
+    { VK_NUMPAD0,  Event::K_KP_0     },
+    { VK_NUMPAD1,  Event::K_KP_1     },
+    { VK_NUMPAD2,  Event::K_KP_2     },
+    { VK_NUMPAD3,  Event::K_KP_3     },
+    { VK_NUMPAD4,  Event::K_KP_4     },
+    { VK_NUMPAD5,  Event::K_KP_5     },
+    { VK_NUMPAD6,  Event::K_KP_6     },
+    { VK_NUMPAD7,  Event::K_KP_7     },
+    { VK_NUMPAD8,  Event::K_KP_8     },
+    { VK_NUMPAD9,  Event::K_KP_9     },
+    { VK_MULTIPLY, Event::K_Multiply },
+    { VK_ADD,      Event::K_Add      },
+    { VK_SEPARATOR,Event::K_Separator},
+    { VK_SUBTRACT, Event::K_Subtract },
+    { VK_DECIMAL,  Event::K_Decimal  },
+    { VK_DIVIDE,   Event::K_Divide   },
+    { VK_OEM_5,    Event::K_OpenQuote}, // NOTE: key left to numkey row
 
     { VK_F1,       Event::K_F1       },
     { 0x30,        Event::K_0        },
@@ -128,7 +150,7 @@ WindowsApi::WindowsApi() {
     throw std::system_error(Tempest::SystemErrc::InvalidWindowClass);
   }
 
-SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height, ShowMode sm) {
+SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height, ShowMode sm, const char* title) {
   RECT wr = {0, 0, static_cast<LONG>(width), static_cast<LONG>(height)};
   AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 
@@ -136,9 +158,14 @@ SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t
   DWORD     style  = 0;
   if(sm!=Hidden)
     style = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_SYSMENU;
+  if (title && sm!=ShowMode::Hidden) {
+    wndAppName= new wchar_t[strlen(title)+1];
+    std::u16string titleWc= TextCodec::toUtf16(title);
+    memcpy((void*)wndAppName, titleWc.c_str(),(titleWc.size()+1)*sizeof(wchar_t));
+    }
   HWND window = CreateWindowExW(0,
                                 wndClassName,          // class name
-                                nullptr,               // app name
+                                wndAppName,            // app name
                                 style,                 // window style
                                 0, 0,                  // x/y coords
                                 wr.right  - wr.left,   // width
@@ -163,27 +190,27 @@ SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t
   return wx;
   }
 
-SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height) {
-  return implCreateWindow(owner,width,height,Normal);
+SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, uint32_t width, uint32_t height, const char* title) {
+  return implCreateWindow(owner,width,height,Normal,title);
   }
 
-SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, ShowMode sm) {
+SystemApi::Window *WindowsApi::implCreateWindow(Tempest::Window *owner, ShowMode sm, const char* title) {
   SystemApi::Window* hwnd = nullptr;
   if(sm==Hidden) {
-    hwnd = implCreateWindow(owner,uint32_t(1),uint32_t(1),Hidden);
+    hwnd = implCreateWindow(owner,uint32_t(1),uint32_t(1),Hidden,nullptr);
     }
   else if(sm==Minimized) {
-    hwnd =  implCreateWindow(owner,800,600);
+    hwnd =  implCreateWindow(owner,800,600,title);
     ShowWindow(HWND(hwnd),SW_MINIMIZE);
     }
   else if(sm==Normal) {
-    hwnd =  implCreateWindow(owner,800,600);
+    hwnd =  implCreateWindow(owner,800,600,title);
     ShowWindow(HWND(hwnd),SW_NORMAL);
     }
   else {
     int w = GetSystemMetrics(SM_CXFULLSCREEN),
         h = GetSystemMetrics(SM_CYFULLSCREEN);
-    hwnd = implCreateWindow(owner,uint32_t(w),uint32_t(h));
+    hwnd = implCreateWindow(owner,uint32_t(w),uint32_t(h),title);
     ShowWindow(HWND(hwnd),SW_MAXIMIZE);
     }
   if(sm==FullScreen)

@@ -8,7 +8,7 @@ namespace Tempest {
 class UiOverlay : public Tempest::Widget {
   public:
     UiOverlay();
-    virtual ~UiOverlay();
+    ~UiOverlay() override;
 
     void updateWindow();
 

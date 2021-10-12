@@ -8,18 +8,19 @@
 
 #include <Tempest/RenderPass>
 #include <cassert>
+#include <memory>
 
 using namespace Tempest;
 using namespace Tempest::Detail;
 
 VRenderPass::VRenderPass(VDevice& device, const FboMode **attach, uint8_t attCount)
   : attCount(attCount), device(device.device.impl) {
-  input.reset(new FboMode[attCount]);
+  input = std::make_unique<FboMode[]>(attCount);
   for(size_t i=0;i<attCount;++i)
     input[i] = *attach[i];
   }
 
-VRenderPass::VRenderPass(VRenderPass &&other) {
+VRenderPass::VRenderPass(VRenderPass &&other)  noexcept {
   std::swap(attCount,other.attCount);
   std::swap(device,other.device);
   std::swap(impl,other.impl);
@@ -34,11 +35,12 @@ VRenderPass::~VRenderPass(){
       vkDestroyRenderPass(device,i.impl,nullptr);
   }
 
-void VRenderPass::operator=(VRenderPass &&other) {
+VRenderPass& VRenderPass::operator=(VRenderPass &&other)  noexcept {
   std::swap(attCount,other.attCount);
   std::swap(device,other.device);
   std::swap(impl,other.impl);
   std::swap(input,other.input);
+  return *this;
   }
 
 VRenderPass::Impl &VRenderPass::instance(VFramebufferLayout &lay) {
@@ -85,7 +87,7 @@ VkRenderPass VRenderPass::createInstance(VkDevice &device, VSwapchain** sw,
 
   VkSubpassDescription subpass    = {};
   subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.pColorAttachments       = ref;
+  subpass.pColorAttachments       = (VkAttachmentReference*)ref;
   subpass.pDepthStencilAttachment = nullptr;
 
   for(uint8_t i=0; i<attCount; ++i){
@@ -134,7 +136,7 @@ VkRenderPass VRenderPass::createInstance(VkDevice &device, VSwapchain** sw,
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = attCount;
-  renderPassInfo.pAttachments    = attach;
+  renderPassInfo.pAttachments    = (VkAttachmentDescription*)attach;
   renderPassInfo.subpassCount    = 1;
   renderPassInfo.pSubpasses      = &subpass;
   renderPassInfo.dependencyCount = 0;
@@ -153,7 +155,7 @@ VkRenderPass VRenderPass::createLayoutInstance(VkDevice& device,VSwapchain** sw,
 
   VkSubpassDescription subpass    = {};
   subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.pColorAttachments       = ref;
+  subpass.pColorAttachments       = (VkAttachmentReference*)ref;
   subpass.pDepthStencilAttachment = nullptr;
 
   for(uint8_t i=0;i<attCount;++i){
@@ -196,7 +198,7 @@ VkRenderPass VRenderPass::createLayoutInstance(VkDevice& device,VSwapchain** sw,
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = attCount;
-  renderPassInfo.pAttachments    = attach;
+  renderPassInfo.pAttachments    = (VkAttachmentDescription*)attach;
   renderPassInfo.subpassCount    = 1;
   renderPassInfo.pSubpasses      = &subpass;
   renderPassInfo.dependencyCount = 1;

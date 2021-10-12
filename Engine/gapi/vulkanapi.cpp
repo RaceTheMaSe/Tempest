@@ -26,6 +26,7 @@
 #include <Tempest/Log>
 #include <Tempest/PipelineLayout>
 #include <Tempest/Application>
+#include <memory>
 
 using namespace Tempest;
 using namespace Tempest::Detail;
@@ -35,11 +36,10 @@ struct Tempest::VulkanApi::Impl : public VulkanInstance {
   };
 
 VulkanApi::VulkanApi(ApiFlags f) {
-  impl.reset(new Impl(bool(f&ApiFlags::Validation)));
+  impl = std::make_unique<Impl>(bool(f&ApiFlags::Validation));
   }
 
-VulkanApi::~VulkanApi(){
-  }
+VulkanApi::~VulkanApi()= default;
 
 std::vector<AbstractGraphicsApi::Props> VulkanApi::devices() const {
   return impl->devices();
@@ -50,19 +50,19 @@ AbstractGraphicsApi::Device *VulkanApi::createDevice(const char* gpuName) {
   }
 
 void VulkanApi::destroy(AbstractGraphicsApi::Device *d) {
-  Detail::VDevice* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
   delete dx;
   }
 
 AbstractGraphicsApi::Swapchain *VulkanApi::createSwapchain(SystemApi::Window *w,AbstractGraphicsApi::Device *d) {
-  Detail::VDevice* dx   = reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx   = reinterpret_cast<Detail::VDevice*>(d);
   return new Detail::VSwapchain(*dx,w);
   }
 
 AbstractGraphicsApi::PPass VulkanApi::createPass(AbstractGraphicsApi::Device *d,
                                                  const FboMode** att,
                                                  size_t acount) {
-  Detail::VDevice* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
   return PPass(new Detail::VRenderPass(*dx,att,uint8_t(acount)));
   }
 
@@ -70,9 +70,9 @@ AbstractGraphicsApi::PFbo VulkanApi::createFbo(AbstractGraphicsApi::Device *d, F
                                                uint32_t w, uint32_t h, uint8_t clCount,
                                                Swapchain** s, Texture** cl, const uint32_t* imgId,
                                                AbstractGraphicsApi::Texture *zbuf) {
-  Detail::VDevice*            dx=reinterpret_cast<Detail::VDevice*>(d);
-  Detail::VFramebufferLayout* l =reinterpret_cast<Detail::VFramebufferLayout*>(lay);
-  Detail::VTexture*           zb=reinterpret_cast<Detail::VTexture*>(zbuf);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* l =reinterpret_cast<Detail::VFramebufferLayout*>(lay);
+  auto* zb=reinterpret_cast<Detail::VTexture*>(zbuf);
 
   Detail::VTexture*   att[256] = {};
   Detail::VSwapchain* sw[256] = {};
@@ -80,7 +80,7 @@ AbstractGraphicsApi::PFbo VulkanApi::createFbo(AbstractGraphicsApi::Device *d, F
     att[i] = reinterpret_cast<Detail::VTexture*>  (cl[i]);
     sw [i] = reinterpret_cast<Detail::VSwapchain*>(s[i]);
     }
-  return PFbo(new Detail::VFramebuffer(*dx,*l, w,h,clCount, sw,att,imgId, zb));
+  return PFbo(new Detail::VFramebuffer(*dx,*l, w,h,clCount,(Detail::VSwapchain**)sw,(Detail::VTexture**)att,imgId, zb));
   }
 
 AbstractGraphicsApi::PFboLayout VulkanApi::createFboLayout(AbstractGraphicsApi::Device *d,
@@ -97,7 +97,7 @@ AbstractGraphicsApi::PFboLayout VulkanApi::createFboLayout(AbstractGraphicsApi::
     }
 
   Detail::DSharedPtr<AbstractGraphicsApi::FboLayout*> impl{
-    new Detail::VFramebufferLayout(dx,sx,frm,uint8_t(attCount))
+    new Detail::VFramebufferLayout(dx,(Detail::VSwapchain**)sx,(VkFormat*)frm,uint8_t(attCount))
     };
 
   return impl;
@@ -129,12 +129,12 @@ AbstractGraphicsApi::PCompPipeline VulkanApi::createComputePipeline(AbstractGrap
   }
 
 AbstractGraphicsApi::PShader VulkanApi::createShader(AbstractGraphicsApi::Device *d, const void* source, size_t src_size) {
-  Detail::VDevice* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
   return PShader(new Detail::VShader(*dx,source,src_size));
   }
 
 AbstractGraphicsApi::Fence *VulkanApi::createFence(AbstractGraphicsApi::Device *d) {
-  Detail::VDevice* dx =reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx =reinterpret_cast<Detail::VDevice*>(d);
   return new Detail::VFence(*dx);
   }
 
@@ -185,7 +185,7 @@ AbstractGraphicsApi::PTexture VulkanApi::createTexture(AbstractGraphicsApi::Devi
     size_t blockSize  = Pixmap::blockSizeForFormat(pfrm);
     size_t bufferSize = 0;
 
-    uint32_t w = uint32_t(p.w()), h = uint32_t(p.h());
+    auto w = uint32_t(p.w()), h = uint32_t(p.h());
     for(uint32_t i=0; i<mipCnt; i++){
       cmd->copy(*pbuf.handler,w,h,i,*pstage.handler,bufferSize);
 
@@ -211,7 +211,7 @@ AbstractGraphicsApi::PTexture VulkanApi::createTexture(AbstractGraphicsApi::Devi
 AbstractGraphicsApi::PTexture VulkanApi::createTexture(AbstractGraphicsApi::Device *d,
                                                        const uint32_t w, const uint32_t h, uint32_t mipCnt,
                                                        TextureFormat frm) {
-  Detail::VDevice* dx = reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx = reinterpret_cast<Detail::VDevice*>(d);
   
   Detail::VTexture buf=dx->allocator.alloc(w,h,mipCnt,frm,false);
   Detail::DSharedPtr<Detail::VTexture*> pbuf(new Detail::VTexture(std::move(buf)));
@@ -289,23 +289,23 @@ AbstractGraphicsApi::PPipelineLay VulkanApi::createPipelineLayout(Device *d,
     auto* s = reinterpret_cast<const Detail::VShader*>(sh[i]);
     lay[i] = &s->lay;
     }
-  return PPipelineLay(new Detail::VPipelineLay(*dx,lay,5));
+  return PPipelineLay(new Detail::VPipelineLay(*dx,(const std::vector<Detail::ShaderReflection::Binding>**)lay,5));
   }
 
 AbstractGraphicsApi::CommandBuffer* VulkanApi::createCommandBuffer(AbstractGraphicsApi::Device* d) {
-  Detail::VDevice* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
   return new Detail::VCommandBuffer(*dx);
   }
 
 void VulkanApi::present(Device *d, Swapchain *sw) {
-  Detail::VDevice*    dx=reinterpret_cast<Detail::VDevice*>(d);
-  Detail::VSwapchain* sx=reinterpret_cast<Detail::VSwapchain*>(sw);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* sx=reinterpret_cast<Detail::VSwapchain*>(sw);
   sx->present(*dx);
   }
 
 void VulkanApi::submit(Device *d, CommandBuffer* cmd, Fence *doneCpu) {
-  Detail::VDevice*        dx=reinterpret_cast<Detail::VDevice*>(d);
-  Detail::VCommandBuffer* cx=reinterpret_cast<Detail::VCommandBuffer*>(cmd);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* cx=reinterpret_cast<Detail::VCommandBuffer*>(cmd);
   auto*                   rc=reinterpret_cast<Detail::VFence*>(doneCpu);
 
   impl->submit(dx,&cx,1,rc);
@@ -318,7 +318,7 @@ void VulkanApi::submit(AbstractGraphicsApi::Device *d, AbstractGraphicsApi::Comm
   }
 
 void VulkanApi::getCaps(Device *d, Props& props) {
-  Detail::VDevice* dx=reinterpret_cast<Detail::VDevice*>(d);
+  auto* dx=reinterpret_cast<Detail::VDevice*>(d);
   props=dx->props;
   }
 

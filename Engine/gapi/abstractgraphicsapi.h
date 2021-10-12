@@ -214,17 +214,17 @@ namespace Tempest {
 
   class AbstractGraphicsApi {
     protected:
-      AbstractGraphicsApi() =default;
+      AbstractGraphicsApi() = default;
 
     public:
-      virtual ~AbstractGraphicsApi()=default;
+      virtual ~AbstractGraphicsApi() = default;
 
       enum DeviceType : uint8_t {
         Unknown   = 0,
         Virtual   = 1,
         Cpu       = 2,
         Integrated= 3,
-        Discrete  = 4,
+        Discrete  = 4
         };
 
       class Props {
@@ -295,7 +295,7 @@ namespace Tempest {
         };
 
       struct NoCopy {
-        NoCopy()=default;
+        NoCopy() = default;
         virtual ~NoCopy() = default;
         NoCopy(const NoCopy&) = delete;
         NoCopy(NoCopy&&) = delete;
@@ -308,17 +308,17 @@ namespace Tempest {
         };
 
       struct Device:NoCopy {
-        virtual ~Device()=default;
+        ~Device() override = default;
         virtual void        waitIdle() = 0;
         };
       struct Fence:NoCopy {
-        virtual ~Fence()=default;
+        ~Fence() override = default;
         virtual void wait() = 0;
         virtual bool wait(uint64_t time) = 0;
         virtual void reset() = 0;
         };
       struct Swapchain:NoCopy {
-        virtual ~Swapchain()=default;
+        ~Swapchain() override = default;
         virtual void          reset()=0;
         virtual uint32_t      currentBackBufferIndex()=0;
         virtual uint32_t      imageCount() const=0;
@@ -329,35 +329,36 @@ namespace Tempest {
         virtual uint32_t      mipCount() const = 0;
         };
       struct Attach {
+        virtual ~Attach() = default;
         virtual TextureLayout defaultLayout() = 0;
         virtual TextureLayout renderLayout()  = 0;
         virtual void*         nativeHandle()  = 0;
         };
       struct Fbo:Shared      {
-        virtual ~Fbo(){}
+        ~Fbo() override = default;
         };
       struct FboLayout:Shared      {
-        virtual ~FboLayout()=default;
+        ~FboLayout() override = default;
         virtual bool equals(const FboLayout&) const = 0;
         };
       struct Pass:Shared     {
-        virtual ~Pass()=default;
+        ~Pass() override = default;
         };
       struct Pipeline:Shared {};
       struct CompPipeline:Shared {};
       struct Shader:Shared   {};
       struct Uniforms        {};
       struct PipelineLay:Shared {
-        virtual ~PipelineLay()=default;
+        ~PipelineLay() override = default;
         virtual size_t descriptorsCount() = 0;
         };
       struct Buffer:Shared   {
-        virtual ~Buffer()=default;
+        ~Buffer() override = default;
         virtual void  update  (const void* data,size_t off,size_t count,size_t sz,size_t alignedSz)=0;
         virtual void  read    (      void* data,size_t off,size_t size)=0;
         };
       struct Desc:NoCopy   {
-        virtual ~Desc()=default;
+        ~Desc() override = default;
         virtual void set    (size_t id,AbstractGraphicsApi::Texture *tex, const Sampler2d& smp)=0;
         virtual void setSsbo(size_t id,AbstractGraphicsApi::Texture *tex, uint32_t mipLevel)=0;
         virtual void setUbo (size_t id,AbstractGraphicsApi::Buffer* buf,size_t offset)=0;
@@ -365,7 +366,7 @@ namespace Tempest {
         virtual void ssboBarriers(Detail::ResourceState& res) = 0;
         };
       struct CommandBuffer:NoCopy {
-        virtual ~CommandBuffer()=default;
+        ~CommandBuffer() override = default;
         virtual void beginRenderPass(AbstractGraphicsApi::Fbo* f,
                                      AbstractGraphicsApi::Pass*  p,
                                      uint32_t width,uint32_t height) = 0;

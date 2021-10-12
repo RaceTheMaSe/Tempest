@@ -13,7 +13,7 @@ class Sprite final {
     int  h() const { return texH; }
     bool isEmpty() const { return alloc.owner==nullptr; }
 
-    Size size() const { return Size(int(texW),int(texH)); }
+    Size size() const { return {int(texW),int(texH)}; }
 
     const Tempest::Texture2d& pageRawData(Device &dev) const;
     const Rect                pageRect() const;

@@ -2,6 +2,7 @@
 
 #include "api/windowsapi.h"
 #include "api/x11api.h"
+#include "api/androidapi.h"
 #include "api/macosapi.h"
 #include "eventdispatcher.h"
 
@@ -17,6 +18,9 @@
 using namespace Tempest;
 
 static EventDispatcher dispatcher;
+#if defined(__ANDROID__)
+static AndroidApi* api = nullptr;
+#endif
 
 struct SystemApi::Data {
   std::vector<WindowsApi::TranslateKeyPair> keys;
@@ -25,8 +29,7 @@ struct SystemApi::Data {
   };
 SystemApi::Data SystemApi::m;
 
-SystemApi::SystemApi() {
-  }
+SystemApi::SystemApi() = default;
 
 void SystemApi::setupKeyTranslate(const TranslateKeyPair k[], uint16_t funcCount ) {
   m.keys.clear();
@@ -45,12 +48,10 @@ void SystemApi::setupKeyTranslate(const TranslateKeyPair k[], uint16_t funcCount
       m.keys.push_back( k[i] );
     }
 
-#ifndef __ANDROID__
   m.keys.shrink_to_fit();
   m.a. shrink_to_fit();
   m.k0.shrink_to_fit();
   m.f1.shrink_to_fit();
-#endif
   }
 
 void SystemApi::addOverlay(UiOverlay* ui) {
@@ -61,24 +62,48 @@ void SystemApi::takeOverlay(UiOverlay* ui) {
   dispatcher.takeOverlay(ui);
   }
 
-uint16_t SystemApi::translateKey(uint64_t scancode) {
-  for(size_t i=0; i<m.keys.size(); ++i)
-    if( m.keys[i].src==scancode )
-      return m.keys[i].result;
+void SystemApi::setKeyRepeatDelay(uint64_t delay) {
+  dispatcher.setKeyRepeatDelay(delay);
+  }
 
-  for(size_t i=0; i<m.k0.size(); ++i)
-    if( m.k0[i].src<=scancode &&
-                     scancode<=m.k0[i].src+9 ){
-      auto dx = (scancode-m.k0[i].src);
-      return Event::KeyType(m.k0[i].result + dx);
+uint64_t SystemApi::getKeyRepeatDelay() {
+  return dispatcher.getKeyRepeatDelay();
+  }
+
+void SystemApi::setKeyFirstRepeatDelay(uint64_t delay) {
+  dispatcher.setKeyFirstRepeatDelay(delay);
+  }
+
+uint64_t SystemApi::getKeyFirstRepeatDelay() {
+  return dispatcher.getKeyFirstRepeatDelay();
+  }
+
+void SystemApi::setTickCount(uint64_t t) {
+  dispatcher.setTickCount(t);
+  }
+
+uint64_t SystemApi::getTickCount() {
+  return dispatcher.getTickCount();
+  }
+
+uint16_t SystemApi::translateKey(uint64_t scancode) {
+  for(auto & key:m.keys)
+    if( key.src==scancode )
+      return key.result;
+
+  for(auto & i:m.k0)
+    if( i.src<=scancode &&
+                     scancode<=i.src+9 ){
+      auto dx = (scancode-i.src);
+      return Event::KeyType(i.result + dx);
       }
 
   uint16_t literalsCount = (Event::K_Z - Event::K_A);
-  for(size_t i=0; i<m.a.size(); ++i)
-    if(m.a[i].src<=scancode &&
-                   scancode<=m.a[i].src+literalsCount ){
-      auto dx = (scancode-m.a[i].src);
-      return Event::KeyType(m.a[i].result + dx);
+  for(auto & i:m.a)
+    if(i.src<=scancode &&
+                   scancode<=i.src+literalsCount ){
+      auto dx = (scancode-i.src);
+      return Event::KeyType(i.result + dx);
       }
 
   for(size_t i=0; i<m.f1.size(); ++i)
@@ -92,7 +117,14 @@ uint16_t SystemApi::translateKey(uint64_t scancode) {
   }
 
 SystemApi& SystemApi::inst() {
- #ifdef __WINDOWS__
+#if defined(ANDROID)
+  if (api) return *api;
+  else {
+    api = new AndroidApi;
+    return *api;
+  }
+#else // Desktop
+#ifdef __WINDOWS__
   static WindowsApi api;
 #elif defined(__LINUX__)
   static X11Api api;
@@ -100,6 +132,7 @@ SystemApi& SystemApi::inst() {
   static MacOSApi api;
 #endif
   return api;
+#endif // ANDROID
   }
 
 void SystemApi::dispatchOverlayRender(Tempest::Window &w, PaintEvent& e) {
@@ -134,6 +167,30 @@ void SystemApi::dispatchKeyUp(Tempest::Window &cb, KeyEvent &e, uint32_t scancod
   dispatcher.dispatchKeyUp(cb,e,scancode);
   }
 
+void SystemApi::dispatchKeyDown(Tempest::Window &cb, GamepadKeyEvent &e, uint32_t scancode) {
+  dispatcher.dispatchKeyDown(cb,e,scancode);
+}
+
+void SystemApi::dispatchKeyUp(Tempest::Window &cb, GamepadKeyEvent &e, uint32_t scancode) {
+  dispatcher.dispatchKeyUp(cb,e,scancode);
+}
+
+void SystemApi::dispatchGamepadMove(Tempest::Window &cb, AnalogEvent &e) {
+dispatcher.dispatchGamepadMove(cb,e);
+}
+
+void SystemApi::dispatchPointerDown(Tempest::Window &cb, PointerEvent &e) {
+dispatcher.dispatchPointerDown(cb,e);
+}
+
+void SystemApi::dispatchPointerUp(Tempest::Window &cb, PointerEvent &e) {
+dispatcher.dispatchPointerUp(cb,e);
+}
+
+void SystemApi::dispatchPointerMove(Tempest::Window &cb, PointerEvent &e) {
+dispatcher.dispatchPointerMove(cb,e);
+}
+
 void SystemApi::dispatchResize(Tempest::Window& cb, SizeEvent& e) {
   dispatcher.dispatchResize(cb,e);
   }
@@ -142,16 +199,32 @@ void SystemApi::dispatchClose(Tempest::Window& cb, CloseEvent& e) {
   dispatcher.dispatchClose(cb,e);
   }
 
+void SystemApi::dispatchAppState(Tempest::Window& cb, AppStateEvent& e) {
+  dispatcher.dispatchAppState(cb,e);
+  }
+
+void SystemApi::dispatchFocus(Tempest::Window& cb, FocusEvent& e) {
+  dispatcher.dispatchFocus(cb,e);
+  }
+
 bool SystemApi::isRunning() {
   return inst().implIsRunning();
   }
 
-SystemApi::Window *SystemApi::createWindow(Tempest::Window *owner, uint32_t width, uint32_t height) {
-  return inst().implCreateWindow(owner,width,height);
+bool SystemApi::isPaused() {
+  return inst().implIsPaused();
   }
 
-SystemApi::Window *SystemApi::createWindow(Tempest::Window *owner, ShowMode sm) {
-  return inst().implCreateWindow(owner,sm);
+bool SystemApi::isResumeRequested() {
+  return inst().implIsResumeRequested();
+  }
+
+SystemApi::Window *SystemApi::createWindow(Tempest::Window *owner, uint32_t width, uint32_t height, const char* title) {
+  return inst().implCreateWindow(owner,width,height,title);
+  }
+
+SystemApi::Window *SystemApi::createWindow(Tempest::Window *owner, ShowMode sm, const char* title) {
+  return inst().implCreateWindow(owner,sm,title);
   }
 
 void SystemApi::destroyWindow(SystemApi::Window *w) {
@@ -191,3 +264,26 @@ void SystemApi::showCursor(SystemApi::Window *w, CursorShape show) {
   return inst().implShowCursor(w,show);
   }
 
+void SystemApi::clearInput() {
+  return dispatcher.clearModKeys();
+  }
+
+void SystemApi::shutdown() {
+#if defined(ANDROID)
+  inst().implShutdown();
+  // if (api)
+  //   delete api; api = nullptr;
+#endif
+}
+
+void SystemApi::registerApplication(Application *p) {
+#if defined(ANDROID)
+  inst().implRegisterApplication(p);
+#endif
+}
+
+void SystemApi::unregisterApplication(Application *p) {
+#if defined(ANDROID)
+  inst().implUnregisterApplication(p);
+#endif
+}

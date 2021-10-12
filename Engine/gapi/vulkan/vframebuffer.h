@@ -31,7 +31,7 @@ class VFramebuffer : public AbstractGraphicsApi::Fbo {
 
     VFramebuffer(VDevice &device, VFramebufferLayout& lay,
                  uint32_t w, uint32_t h, uint32_t outCnt, VSwapchain** swapchain, VTexture** color, const uint32_t* imgId, VTexture* zbuf);
-    ~VFramebuffer();
+    ~VFramebuffer() override;
 
     VkFramebuffer                           impl=VK_NULL_HANDLE;
     Detail::DSharedPtr<VFramebufferLayout*> rp;

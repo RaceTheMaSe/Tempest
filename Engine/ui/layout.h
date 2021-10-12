@@ -34,7 +34,7 @@ class Layout {
 
 class LinearLayout : public Layout {
   public:
-    LinearLayout(Orientation ori):ori(ori){}
+    LinearLayout(Orientation orientation):ori(orientation){}
 
     void applyLayout() override { applyLayout(*owner(),ori); }
     Orientation orientation() const { return ori; }

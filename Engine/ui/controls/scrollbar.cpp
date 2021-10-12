@@ -169,7 +169,7 @@ void ScrollBar::mouseDragEvent(MouseEvent& e) {
     if(cen.y+cen.h>sp.y+sp.h)
       cen.y = sp.y+sp.h-cen.h;
     float k = float(cen.y-sp.y)/float(sp.h-cen.h);
-    setValue(rmin+int((rmax-rmin)*k));
+    setValue(rmin+int((float)(rmax-rmin)*k));
     } else {
     if(sp.w==cen.w)
       return;
@@ -180,7 +180,7 @@ void ScrollBar::mouseDragEvent(MouseEvent& e) {
     if(cen.x+cen.w>sp.x+sp.w)
       cen.x = sp.x+sp.w-cen.w;
     float k = float(cen.x-sp.x)/float(sp.w-cen.w);
-    setValue(rmin+int((rmax-rmin)*k));
+    setValue(rmin+int((float)(rmax-rmin)*k));
     }
   }
 
@@ -234,24 +234,24 @@ Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
 
   switch(e) {
     case Elt_None:
-      return Rect();
+      return {};
     case Elt_Dec: {
       if((elements&Elt_Dec)==0)
-        return Rect();
-      return Rect(0,0,wx,wx);
+        return {};
+      return {0,0,wx,wx};
       }
     case Elt_Inc: {
       if((elements&Elt_Inc)==0)
-        return Rect();
+        return {};
       if(orient==Orientation::Vertical)
-        return Rect(0,sz-wx,wx,wx); else
-        return Rect(sz-wx,0,wx,wx);
+        return {0,sz-wx,wx,wx}; else
+        return {sz-wx,0,wx,wx};
       }
     case Elt_Space: {
       int x     = 0;
       int space = sz;
       if((elements&Elt_Cen)==0)
-        return Rect();
+        return {};
       if((elements&Elt_Inc)!=0) {
         space -= wx;
         x+=wx;
@@ -260,33 +260,33 @@ Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
         space -= wx;
 
       if(orient==Orientation::Vertical)
-        return Rect(0,x,w(),space); else
-        return Rect(x,0,space,h());
+        return {0,x,w(),space}; else
+        return {x,0,space,h()};
       }
     case Elt_Cen: {
       int space = sz;
       if((elements&Elt_Cen)==0)
-        return Rect();
+        return {};
       if((elements&Elt_Inc)!=0)
         space -= wx;
       if((elements&Elt_Dec)!=0)
         space -= wx;
 
       int cen   = std::min(cenBtnSize,space);
-      float k = mValue/float(rmax-rmin);
+      float k = (float)mValue/float(rmax-rmin);
       int   x = int(float(space-cen)*k);
       if((elements&Elt_Inc)!=0)
         x+=wx;
 
       if(orient==Orientation::Vertical)
-        return Rect(0,x,w(),cen); else
-        return Rect(x,0,cen,h());
+        return {0,x,w(),cen}; else
+        return {x,0,cen,h()};
       }
     case Elt_IncL:
     case Elt_DecL:
-      return Rect();
+      return {};
     }
-  return Rect();
+  return {};
   }
 
 ScrollBar::Elements ScrollBar::tracePoint(const Point& p) const {

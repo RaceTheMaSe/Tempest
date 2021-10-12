@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <thread>
 #include <type_traits>
+#include <string_view>
+#include <Tempest/Vec>
 #include <functional>
 
 namespace Tempest{
@@ -56,21 +58,29 @@ class Log final {
     static Globals& globals();
 
     static void flush(Context& ctx, char*& msg, size_t& count);
-    static void write(Context& ctx, char*& out, size_t& count, const std::string& msg);
-    static void write(Context& ctx, char*& out, size_t& count, const char*        msg);
-    static void write(Context& ctx, char*& out, size_t& count, char               msg);
-    static void write(Context& ctx, char*& out, size_t& count, int8_t             msg);
-    static void write(Context& ctx, char*& out, size_t& count, uint8_t            msg);
-    static void write(Context& ctx, char*& out, size_t& count, int16_t            msg);
-    static void write(Context& ctx, char*& out, size_t& count, uint16_t           msg);
-    static void write(Context& ctx, char*& out, size_t& count, const int32_t&     msg);
-    static void write(Context& ctx, char*& out, size_t& count, const uint32_t&    msg);
-    static void write(Context& ctx, char*& out, size_t& count, const int64_t&     msg);
-    static void write(Context& ctx, char*& out, size_t& count, const uint64_t&    msg);
-    static void write(Context& ctx, char*& out, size_t& count, float              msg);
-    static void write(Context& ctx, char*& out, size_t& count, double             msg);
-    static void write(Context& ctx, char*& out, size_t& count, const void*        msg);
-    static void write(Context& ctx, char*& out, size_t& count, std::thread::id    msg);
+    static void write(Context& ctx, char*& out, size_t& count, const std::string&   msg);
+    static void write(Context& ctx, char*& out, size_t& count, std::string_view     msg);
+    static void write(Context& ctx, char*& out, size_t& count, const char*          msg);
+    static void write(Context& ctx, char*& out, size_t& count, char                 msg);
+    static void write(Context& ctx, char*& out, size_t& count, int8_t               msg);
+    static void write(Context& ctx, char*& out, size_t& count, uint8_t              msg);
+    static void write(Context& ctx, char*& out, size_t& count, int16_t              msg);
+    static void write(Context& ctx, char*& out, size_t& count, uint16_t             msg);
+    static void write(Context& ctx, char*& out, size_t& count, const int32_t&       msg);
+    static void write(Context& ctx, char*& out, size_t& count, const uint32_t&      msg);
+    static void write(Context& ctx, char*& out, size_t& count, const int64_t&       msg);
+    static void write(Context& ctx, char*& out, size_t& count, const uint64_t&      msg);
+    static void write(Context& ctx, char*& out, size_t& count, float                msg);
+    static void write(Context& ctx, char*& out, size_t& count, double               msg);
+    static void write(Context& ctx, char*& out, size_t& count, const void*          msg);
+    static void write(Context& ctx, char*& out, size_t& count, std::thread::id      msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Rect&  msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Size&  msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Point& msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Vec1&  msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Vec2&  msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Vec3&  msg);
+    static void write(Context& ctx, char*& out, size_t& count, const Tempest::Vec4&  msg);
 
     template<class T, std::enable_if_t<!std::is_same<T,uint32_t>::value && !std::is_same<T,uint64_t>::value && std::is_same<T,size_t>::value,bool> = true>
     static void write(Context& ctx, char*& out, size_t& count, T         msg) {

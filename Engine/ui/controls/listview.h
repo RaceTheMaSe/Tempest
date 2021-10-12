@@ -10,7 +10,7 @@ namespace Tempest {
 class ListView : public Widget {
   public:
     ListView(Orientation ori=Vertical);
-    ~ListView();
+    ~ListView() override;
 
     Tempest::Signal<void(size_t)> onItemSelected;
     Tempest::Signal<void()>       onItemListChanged;

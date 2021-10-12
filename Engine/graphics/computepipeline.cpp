@@ -9,7 +9,7 @@ ComputePipeline::ComputePipeline(Detail::DSharedPtr<AbstractGraphicsApi::CompPip
   : ulay(std::move(ulay)),impl(std::move(p)) {
   }
 
-ComputePipeline& ComputePipeline::operator = (ComputePipeline&& other) {
+ComputePipeline& ComputePipeline::operator = (ComputePipeline&& other) noexcept {
   ulay = std::move(other.ulay);
   impl = std::move(other.impl);
   return *this;

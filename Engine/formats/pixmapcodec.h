@@ -24,7 +24,7 @@ class PixmapCodec {
 
       private:
         size_t  bufSiz=0;
-        uint8_t buf[128];
+        uint8_t buf[128]={};
       };
 
     static uint8_t*  loadImg (IDevice& f, uint32_t& w, uint32_t& h, Pixmap::Format& frm, uint32_t& mipCnt, uint32_t &bpp, size_t& dataSz);

@@ -14,9 +14,9 @@ class Encoder;
 class VideoBuffer {
   public:
     VideoBuffer()=default;
-    VideoBuffer(VideoBuffer&&);
+    VideoBuffer(VideoBuffer&&) noexcept;
     ~VideoBuffer();
-    VideoBuffer& operator=(VideoBuffer&&);
+    VideoBuffer& operator=(VideoBuffer&&) noexcept;
 
     void   update(const void* data, size_t offset, size_t count, size_t size, size_t alignedSz);
     size_t size() const { return sz; }

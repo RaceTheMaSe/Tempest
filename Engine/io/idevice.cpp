@@ -2,5 +2,4 @@
 
 using namespace Tempest;
 
-IDevice::~IDevice() {
-  }
+IDevice::~IDevice() = default;

@@ -295,10 +295,10 @@ static ALCboolean opensl_reset_playback(ALCdevice *Device)
     format_pcm.containerSize = format_pcm.bitsPerSample;
     format_pcm.channelMask   = GetChannelMask(Device->FmtChans);
 
-    #ifdef __arm__
+    #if defined(__arm__) || defined(__arm64__)
     format_pcm.endianness    = SL_BYTEORDER_LITTLEENDIAN;
     #else
-    format_pcm.endianness    = SL_BYTEORDER_NATIVE;
+    format_pcm.endianness    = SL_BYTEORDER_LITTLEENDIAN; //SL_BYTEORDER_NATIVE; workaround to build armv8_64 android
     #endif
 
     audioSrc.pLocator = &loc_bufq;

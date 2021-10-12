@@ -11,7 +11,7 @@ namespace Tempest {
 class VulkanApi : public AbstractGraphicsApi {
   public:
     explicit VulkanApi(ApiFlags f=ApiFlags::NoFlags);
-    virtual ~VulkanApi();
+    ~VulkanApi() override;
 
     std::vector<Props> devices() const override;
 

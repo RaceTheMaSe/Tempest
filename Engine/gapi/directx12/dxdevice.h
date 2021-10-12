@@ -138,6 +138,8 @@ inline DXGI_FORMAT nativeFormat(Decl::ComponentType t) {
       return DXGI_FORMAT_R32G32B32_UINT;
     case Decl::uint4:
       return DXGI_FORMAT_R32G32B32A32_UINT;
+    default:
+      return DXGI_FORMAT_UNKNOWN;
     }
   return DXGI_FORMAT_UNKNOWN;
   }

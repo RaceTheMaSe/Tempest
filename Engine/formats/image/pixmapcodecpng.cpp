@@ -22,7 +22,13 @@ struct PixmapCodecPng::Impl {
 
   bool readPng(png_structp png_ptr, png_infop info_ptr,
                Pixmap::Format& frm, uint32_t& outW, uint32_t& outH, uint32_t& outBpp) {
+#if defined(_MSC_VER)
+    if(setjmp((_JBTYPE*)png_jmpbuf(png_ptr))) {
+#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__ANDROID__)
+    if(setjmp((struct __jmp_buf_tag*)png_jmpbuf(png_ptr))) {
+#else
     if(setjmp(png_jmpbuf(png_ptr))) {
+#endif
       // png exception
       return false;
       }
@@ -110,28 +116,27 @@ struct PixmapCodecPng::Impl {
   };
 
 static void png_write_data(png_structp png_ptr, png_bytep data, png_size_t length){
-  ODevice* f = reinterpret_cast<ODevice*>(png_get_io_ptr(png_ptr));
+  auto* f = reinterpret_cast<ODevice*>(png_get_io_ptr(png_ptr));
   f->write(data, length);
   }
 
 static void png_flush(png_structp png_ptr){
-  ODevice* f = reinterpret_cast<ODevice*>(png_get_io_ptr(png_ptr));
+  auto* f = reinterpret_cast<ODevice*>(png_get_io_ptr(png_ptr));
   f->flush();
   }
 
-PixmapCodecPng::PixmapCodecPng() {
-  }
+PixmapCodecPng::PixmapCodecPng() = default;
 
 bool PixmapCodecPng::testFormat(const PixmapCodec::Context& c) const {
   png_byte head[8];
-  return c.peek(head,8)==8 && png_sig_cmp(head, 0, 8)==0;
+  return c.peek((png_byte*)head,8)==8 && png_sig_cmp((png_byte*)head, 0, 8)==0;
   }
 
 uint8_t* PixmapCodecPng::load(PixmapCodec::Context& c, uint32_t& w, uint32_t& h,
                               Pixmap::Format& frm, uint32_t& mipCnt, size_t& dataSz, uint32_t& bpp) const {
   auto& f = c.device;
   png_byte head[8];
-  if(f.read(head,8)!=8 || png_sig_cmp(head, 0, 8)!=0)
+  if(f.read((png_byte*)head,8)!=8 || png_sig_cmp((png_byte*)head, 0, 8)!=0)
     return nullptr;
 
   // initialize stuff
@@ -147,18 +152,18 @@ uint8_t* PixmapCodecPng::load(PixmapCodec::Context& c, uint32_t& w, uint32_t& h,
 
   // work
   Impl r(&f);
-  bool readed = r.readPng(png_ptr,info_ptr,frm,w,h,bpp);
+  bool read = r.readPng(png_ptr,info_ptr,frm,w,h,bpp);
 
   // cleanup
   png_destroy_info_struct(png_ptr, &info_ptr);
   png_destroy_read_struct(&png_ptr, nullptr, nullptr);
 
   uint8_t* out = nullptr;
-  if(readed) {
+  if(read) {
     out    = r.out;
     mipCnt = 1;
     dataSz = w*h*bpp;
-    r.out = nullptr;
+    r.out  = nullptr;
     }
   return out;
   }
@@ -203,20 +208,20 @@ bool PixmapCodecPng::save(ODevice& f, const char* ext, const uint8_t* data,
       break;
       }
     case Pixmap::Format::RGBA:{
-      bpp      = 4;
-      bitDepth = 8;
+      bpp       = 4;
+      bitDepth  = 8;
       colorType = PNG_COLOR_TYPE_RGBA;
       break;
       }
     case Pixmap::Format::RGB16:{
-      bpp      = 6;
-      bitDepth = 16;
+      bpp       = 6;
+      bitDepth  = 16;
       colorType = PNG_COLOR_TYPE_RGB;
       break;
       }
     case Pixmap::Format::RGBA16:{
-      bpp      = 8;
-      bitDepth = 16;
+      bpp       = 8;
+      bitDepth  = 16;
       colorType = PNG_COLOR_TYPE_RGBA;
       break;
       }
@@ -234,7 +239,13 @@ bool PixmapCodecPng::save(ODevice& f, const char* ext, const uint8_t* data,
     return false;
     }
 
+#if defined(_MSC_VER)
+  if(setjmp((_JBTYPE*)png_jmpbuf(png_ptr))) {
+#elif (defined(__GNUC__) || defined (__clang__)) && !defined(__ANDROID__)
+  if(setjmp((struct __jmp_buf_tag*)png_jmpbuf(png_ptr))) {
+#else
   if(setjmp(png_jmpbuf(png_ptr))) {
+#endif
     png_destroy_info_struct(png_ptr, &info_ptr);
     png_destroy_write_struct(&png_ptr,nullptr);
     return false;
@@ -244,7 +255,7 @@ bool PixmapCodecPng::save(ODevice& f, const char* ext, const uint8_t* data,
 
   // write header
   png_set_IHDR( png_ptr, info_ptr, w, h,
-                bitDepth,
+                (int)bitDepth,
                 colorType,
                 PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);

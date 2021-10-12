@@ -45,8 +45,7 @@ Style::Extra::Extra(const AbstractTextInput& owner)
     selectionStart(owner.selectionStart()), selectionEnd(owner.selectionEnd()){
   }
 
-Style::Style() {
-  }
+Style::Style() = default;
 
 Style::~Style() {
   assert(polished==0);
@@ -56,7 +55,7 @@ Style::UIIntefaceIdiom Style::idiom() const {
 #ifdef __MOBILE_PLATFORM__
   return UIIntefaceIdiom(UIIntefacePhone);
 #else
-  return UIIntefaceIdiom(UIIntefaceUnspecified);
+  return {UIIntefaceUnspecified};
 #endif
   }
 

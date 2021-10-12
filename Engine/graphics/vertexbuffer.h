@@ -18,8 +18,8 @@ template<class T>
 class VertexBuffer final {
   public:
     VertexBuffer()=default;
-    VertexBuffer(VertexBuffer&&)=default;
-    VertexBuffer& operator=(VertexBuffer&&)=default;
+    VertexBuffer(VertexBuffer&&) noexcept =default;
+    VertexBuffer& operator=(VertexBuffer&&) noexcept =default;
 
     size_t size() const { return sz; }
 
@@ -27,8 +27,8 @@ class VertexBuffer final {
     void   update(const T* data,size_t offset,size_t size) { return this->impl.update(data,offset,size,sizeof(T),sizeof(T)); }
 
   private:
-    VertexBuffer(Tempest::VideoBuffer&& impl,size_t size)
-      :impl(std::move(impl)),sz(size) {
+    VertexBuffer(Tempest::VideoBuffer&& implIn,size_t size)
+      :impl(std::move(implIn)),sz(size) {
       }
 
     Tempest::VideoBuffer impl;

@@ -7,8 +7,7 @@
 using namespace Tempest;
 using namespace Tempest::Detail;
 
-VSamplerCache::VSamplerCache(){
-  }
+VSamplerCache::VSamplerCache()= default;
 
 VSamplerCache::~VSamplerCache() {
   if(smpDefault!=VK_NULL_HANDLE)
@@ -62,7 +61,7 @@ VkSampler VSamplerCache::alloc(const Sampler2d &s) {
     samplerInfo.mipmapMode            = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   samplerInfo.addressModeU            = nativeFormat(s.uClamp);
   samplerInfo.addressModeV            = nativeFormat(s.vClamp);
-  samplerInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeW            = nativeFormat(s.uClamp); // warning that clamp modes dont match so take one of the configured also for W
   if(s.anisotropic && anisotropy) {
     samplerInfo.anisotropyEnable      = VK_TRUE;
     samplerInfo.maxAnisotropy         = maxAnisotropy;
@@ -70,7 +69,7 @@ VkSampler VSamplerCache::alloc(const Sampler2d &s) {
     samplerInfo.anisotropyEnable      = VK_FALSE;
     samplerInfo.maxAnisotropy         = 1.f;
     }
-  samplerInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+  samplerInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
   samplerInfo.unnormalizedCoordinates = VK_FALSE;
   samplerInfo.compareEnable           = VK_FALSE;
   samplerInfo.compareOp               = VK_COMPARE_OP_ALWAYS;

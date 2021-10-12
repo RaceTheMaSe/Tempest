@@ -99,15 +99,17 @@ class VectorImage : public Tempest::PaintDevice {
       Block(Block&&)=default;
       Block(const Block&)=default;
       Block(const State& s):State(s){}
+      ~Block()=default;
 
       Block& operator=(const Block&)=default;
+      Block& operator=(Block&&)=default;
 
       size_t         begin  = 0;
       size_t         size   = 0;
       bool           hasImg = false;
       };
 
-    Topology                    topology=Triangles;
+    //Topology                    topology=Triangles;
 
     std::vector<State>          stateStk;
     std::vector<Block>          blocks;
