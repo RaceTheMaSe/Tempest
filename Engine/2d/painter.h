@@ -14,7 +14,7 @@ class Painter {
   public:
     enum Mode : uint8_t {
       Clear,
-      Preserve
+      PreserveIt
       };
     using Blend=PaintDevice::Blend;
     constexpr static auto NoBlend=Blend::NoBlend;
@@ -22,7 +22,7 @@ class Painter {
     constexpr static auto Add    =Blend::Add;
 
     Painter()=delete;
-    Painter(PaintEvent& ev, Mode m=Preserve);
+    Painter(PaintEvent& ev, Mode m=PreserveIt);
     Painter(const Painter&)=delete;
     Painter(Painter&&)=delete;
     ~Painter();

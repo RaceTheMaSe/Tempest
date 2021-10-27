@@ -1,5 +1,4 @@
 #include "device.h"
-#include "graphics/framebuffer.h"
 
 #include <Tempest/Fence>
 #include <Tempest/PipelineLayout>
