@@ -37,7 +37,7 @@ class Style {
   public:
     Style();
     virtual ~Style();
-    Style(const Style&)=delete;
+    Style(const Style& )=delete;
     Style& operator=(const Style&)=delete;
 
     struct UiMetrics final {

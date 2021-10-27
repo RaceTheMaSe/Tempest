@@ -49,7 +49,11 @@ uint32_t Swapchain::imageCount() const {
   return impl.handler->imageCount();
   }
 
-Attachment& Swapchain::image(size_t id) {
+Attachment& Swapchain::operator[](size_t id) {
+  return img[id];
+  }
+
+const Attachment& Swapchain::operator[](size_t id) const {
   return img[id];
   }
 

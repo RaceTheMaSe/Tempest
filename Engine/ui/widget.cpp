@@ -626,6 +626,10 @@ void Widget::resizeEvent(SizeEvent &e) {
   e.accept();
   }
 
+void Widget::mouseDoubleClickEvent(MouseEvent& event) {
+  mouseDownEvent(event);
+  }
+
 void Widget::mouseDownEvent(MouseEvent &e) {
   e.ignore();
   }

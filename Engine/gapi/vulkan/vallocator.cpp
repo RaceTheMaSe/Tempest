@@ -249,7 +249,7 @@ void VAllocator::free(VBuffer &buf) {
   }
 
 void VAllocator::free(VTexture &buf) {
-  if(buf.view!=VK_NULL_HANDLE) {
+  if(buf.imgView!=VK_NULL_HANDLE) {
     buf.destroyViews(dev);
     vkDestroyImage  (dev,buf.impl,nullptr);
     }

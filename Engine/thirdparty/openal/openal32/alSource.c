@@ -539,7 +539,7 @@ static ALenum SetSourcefv(ALsource *Source, ALCcontext *Context, SrcFloatProp pr
         case sfDistanceModel:
         case sfDirectFilterGainHFAuto:
         case sfAuxSendFilterGainAuto:
-        case sfAuxSendFilterGainHFAuto:
+        case sfAuxSendFilterGainHFAuto:            
         case sfDirectChannelsSOFT:
             ival = (ALint)values[0];
             return SetSourceiv(Source, Context, (SrcIntProp)prop, &ival);
@@ -1029,7 +1029,7 @@ static ALenum GetSourcedv(const ALsource *Source, ALCcontext *Context, SrcFloatP
             values[2] = Source->Orientation[2];
             UnlockContext(Context);
             return AL_NO_ERROR;
-
+        
         case AL_AUXILIARY_SEND_FILTER_GAIN:
             LockContext(Context);
             values[0] = Source->Send[0].Gain; // FIXME: make a float / double vector to retrieve all slots

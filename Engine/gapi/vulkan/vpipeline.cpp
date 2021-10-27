@@ -3,9 +3,6 @@
 #include "vpipeline.h"
 
 #include "vdevice.h"
-#include "vframebuffer.h"
-#include "vframebufferlayout.h"
-#include "vrenderpass.h"
 #include "vshader.h"
 #include "vpipelinelay.h"
 
@@ -36,7 +33,7 @@ VPipeline::VPipeline(VDevice& device,
       decl.reset(new Decl::ComponentType[declSize]);
       std::memcpy(decl.get(),vert->vdecl.data(),declSize*sizeof(Decl::ComponentType));
       }
-    pipelineLayout = initLayout(device.device.impl,ulay,pushStageFlags);
+    pipelineLayout = initLayout(device.device.impl,ulay,pushStageFlags,pushSize);
     ssboBarriers   = ulay.hasSSBO;
     }
   catch(...) {
@@ -56,18 +53,18 @@ VPipeline::~VPipeline() {
   cleanup();
   }
 
-VPipeline::Inst &VPipeline::instance(VFramebufferLayout &lay) {
+VPipeline::Inst& VPipeline::instance(const std::shared_ptr<VFramebufferMap::RenderPass>& pass) {
   std::lock_guard<SpinLock> guard(sync);
 
   for(auto& i:inst)
-    if(i.lay.handler->isCompatible(lay))
+    if(i.lay->isCompatible(*pass))
       return i;
   VkPipeline val=VK_NULL_HANDLE;
   try {
-    val = initGraphicsPipeline(device,pipelineLayout,lay,st,
+    val = initGraphicsPipeline(device,pipelineLayout,*pass,st,
                                decl.get(),declSize,stride,
-                               tp,(DSharedPtr<const Tempest::Detail::VShader*>*)modules);
-    inst.emplace_back(&lay,val);
+                               tp,modules);
+    inst.emplace_back(pass,val);
     }
   catch(...) {
     if(val!=VK_NULL_HANDLE)
@@ -83,10 +80,10 @@ void VPipeline::cleanup() {
   for(auto& i:inst)
     vkDestroyPipeline(device,i.val,nullptr);
   if(pipelineLayout!=VK_NULL_HANDLE)
-    vkDestroyPipelineLayout(device,pipelineLayout,nullptr);
+    vkDestroyPipelineLayout(device,pipelineLayout,nullptr); // example 06 does this after vkDestroyPipeline
   }
 
-VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboLay, VkShaderStageFlags& pushStageFlags) {
+VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboLay, VkShaderStageFlags& pushStageFlags, uint32_t& pushSize) {
   VkPushConstantRange push = {};
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -112,6 +109,8 @@ VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboL
     push.offset     = 0;
     push.size       = uint32_t(uboLay.pb.size);
 
+    pushSize        = push.size;
+
     pipelineLayoutInfo.pPushConstantRanges    = &push;
     pipelineLayoutInfo.pushConstantRangeCount = 1;
     }
@@ -122,7 +121,7 @@ VkPipelineLayout VPipeline::initLayout(VkDevice device, const VPipelineLay& uboL
   }
 
 VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout layout,
-                                           const VFramebufferLayout &lay, const RenderState &st,
+                                           const VFramebufferMap::RenderPass& lay, const RenderState &st,
                                            const Decl::ComponentType *decl, size_t declSize,
                                            size_t stride, Topology tp,
                                            const DSharedPtr<const VShader*>* shaders) {
@@ -246,8 +245,11 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
     VK_BLEND_OP_MAX,
     };
 
-  VkPipelineColorBlendAttachmentState blendAtt[256] = {};
-  for(size_t i=0; i<lay.colorCount; ++i) {
+  VkPipelineColorBlendAttachmentState blendAtt[MaxFramebufferAttachments] = {};
+  uint32_t                            blendAttCount = 0;
+  for(size_t i=0; i<lay.descSize; ++i) {
+    if(nativeIsDepthFormat(lay.desc[i].frm))
+      continue;
     auto& a = blendAtt[i];
     a.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     a.blendEnable         = st.hasBlend() ? VK_TRUE : VK_FALSE;
@@ -257,14 +259,15 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
     a.dstAlphaBlendFactor = a.dstColorBlendFactor;
     a.srcAlphaBlendFactor = a.srcColorBlendFactor;
     a.alphaBlendOp        = a.colorBlendOp;
+    ++blendAttCount;
     }
 
   VkPipelineColorBlendStateCreateInfo colorBlending = {};
   colorBlending.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlending.logicOpEnable     = VK_FALSE;
   colorBlending.logicOp           = VK_LOGIC_OP_COPY;
-  colorBlending.attachmentCount   = lay.colorCount;
-  colorBlending.pAttachments      = (VkPipelineColorBlendAttachmentState*)blendAtt;
+  colorBlending.attachmentCount   = blendAttCount;
+  colorBlending.pAttachments      = blendAtt;
   colorBlending.blendConstants[0] = 0.0f;
   colorBlending.blendConstants[1] = 0.0f;
   colorBlending.blendConstants[2] = 0.0f;
@@ -319,7 +322,7 @@ VkPipeline VPipeline::initGraphicsPipeline(VkDevice device, VkPipelineLayout lay
   pipelineInfo.pColorBlendState    = &colorBlending;
   pipelineInfo.pDynamicState       = &dynamic;
   pipelineInfo.layout              = layout;
-  pipelineInfo.renderPass          = lay.impl;
+  pipelineInfo.renderPass          = lay.pass;
   pipelineInfo.subpass             = 0;
   pipelineInfo.basePipelineHandle  = VK_NULL_HANDLE;
 
@@ -339,7 +342,7 @@ VCompPipeline::VCompPipeline() = default;
 VCompPipeline::VCompPipeline(VDevice& dev, const VPipelineLay& ulay, VShader& comp)
   :device(dev.device.impl) {
   VkShaderStageFlags pushStageFlags = 0;
-  pipelineLayout = VPipeline::initLayout(device,ulay,pushStageFlags);
+  pipelineLayout = VPipeline::initLayout(device,ulay,pushStageFlags,pushSize);
   ssboBarriers   = ulay.hasSSBO;
 
   try {

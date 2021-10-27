@@ -29,8 +29,8 @@ class RectAllocator {
     struct Allocation {
       Allocation()=default;
 
-      Allocation(Allocation&& a) noexcept
-        :owner(a.owner),node(a.node),pId(a.pId){
+      Allocation(Allocation&& a)
+ noexcept         :owner(a.owner),node(a.node),pId(a.pId){
         a.owner=nullptr;
         a.node =nullptr;
         a.pId  =0;

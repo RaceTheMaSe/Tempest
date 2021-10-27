@@ -10,9 +10,11 @@ endif()
 add_definitions(-DAL_LIBTYPE_STATIC)
 add_definitions(-DAL_BUILD_LIBRARY)
 
+set(ALSA_DIR "/home/max/Project/libraries/alsa-lib-1.2.4/")
 include_directories("."
                     "include"
-                    "openal32/include")
+                    "openal32/include"
+                    "${ALSA_DIR}include")
 
 ### Platforms
 if(WIN32)

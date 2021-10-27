@@ -8,6 +8,7 @@ namespace Tempest {
 namespace Detail {
 
 class VDevice;
+class VFramebufferMap;
 
 class VSwapchain : public AbstractGraphicsApi::Swapchain {
   public:
@@ -32,6 +33,8 @@ class VSwapchain : public AbstractGraphicsApi::Swapchain {
     uint32_t                 currentBackBufferIndex() override;
     void                     present(VDevice& dev);
 
+    VFramebufferMap*         map = nullptr;
+
     VkSwapchainKHR           swapChain=VK_NULL_HANDLE;
     std::vector<VkImageView> views;
     std::vector<VkImage>     images;
@@ -55,8 +58,8 @@ class VSwapchain : public AbstractGraphicsApi::Swapchain {
     struct FenceList {
       FenceList() = default;
       FenceList(VkDevice dev, uint32_t cnt);
-      FenceList(FenceList&& oth) noexcept;
-      FenceList& operator = (FenceList&& oth) noexcept;
+      FenceList(FenceList&& oth) noexcept ;
+      FenceList& operator = (FenceList&& oth) noexcept ;
       ~FenceList();
 
       VkDevice                   dev = VK_NULL_HANDLE;

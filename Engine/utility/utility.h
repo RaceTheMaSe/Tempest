@@ -140,6 +140,8 @@ class BasicPoint<T,3> {
 
     bool operator ==( const BasicPoint & other ) const { return x==other.x && y==other.y && z==other.z; }
     bool operator !=( const BasicPoint & other ) const { return x!=other.x || y!=other.y || z!=other.z; }
+    bool operator < ( const BasicPoint & other ) const { return x<other.x && y<other.y && z<other.z; }
+    bool operator > ( const BasicPoint & other ) const { return x>other.x && y>other.y && z>other.z; }
 
     T operator[](size_t idx) {
       assert(idx<3);

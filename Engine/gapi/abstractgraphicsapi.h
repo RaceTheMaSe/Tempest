@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Tempest/SystemApi>
+#include <Tempest/Color>
+#include <Tempest/Vec>
 
 #include <initializer_list>
 #include <memory>
@@ -15,7 +17,6 @@ namespace Tempest {
   class Pixmap;
   class Color;
   class RenderState;
-  class FboMode;
   class Device;
 
   namespace Decl {
@@ -77,6 +78,11 @@ namespace Tempest {
   inline ApiFlags operator & (ApiFlags a, ApiFlags b){
     return ApiFlags(uint16_t(a)&uint16_t(b));
     }
+
+  enum  : uint8_t {
+    MaxFramebufferAttachments = 8+1,
+    MaxBarriers = 64,
+    };
 
   enum Topology : uint8_t {
     Lines    =1,
@@ -212,12 +218,59 @@ namespace Tempest {
     class ResourceState;
     }
 
+  class Attachment;
+  class ZBuffer;
+
+  enum class AccessOp : uint8_t {
+    Discard,
+    Preserve,
+    Clear,
+    };
+
+  template<AccessOp l>
+  struct AccessOpT{};
+
+  static const auto Discard  = AccessOpT<AccessOp::Discard>();
+  static const auto Preserve = AccessOpT<AccessOp::Preserve>();
+
+  class AttachmentDesc final {
+    public:
+      AttachmentDesc() = default;
+
+      AttachmentDesc(Attachment& a, AccessOpT<AccessOp::Discard>  l, AccessOpT<AccessOp::Discard>  s):attachment(&a),load(AccessOp::Discard),store(AccessOp::Discard) {(void)l; (void)s;}
+      AttachmentDesc(Attachment& a, AccessOpT<AccessOp::Discard>  l, AccessOpT<AccessOp::Preserve> s):attachment(&a),load(AccessOp::Discard),store(AccessOp::Preserve){(void)l; (void)s;}
+
+      AttachmentDesc(Attachment& a, AccessOpT<AccessOp::Preserve> l, AccessOpT<AccessOp::Discard>  s):attachment(&a),load(AccessOp::Preserve),store(AccessOp::Discard) {(void)l; (void)s;}
+      AttachmentDesc(Attachment& a, AccessOpT<AccessOp::Preserve> l, AccessOpT<AccessOp::Preserve> s):attachment(&a),load(AccessOp::Preserve),store(AccessOp::Preserve){(void)l; (void)s;}
+
+      AttachmentDesc(Attachment& a, Tempest::Vec4                 l, AccessOpT<AccessOp::Discard>  s):clear(l),attachment(&a),load(AccessOp::Clear),store(AccessOp::Discard) {(void)l; (void)s;}
+      AttachmentDesc(Attachment& a, Tempest::Vec4                 l, AccessOpT<AccessOp::Preserve> s):clear(l),attachment(&a),load(AccessOp::Clear),store(AccessOp::Preserve){(void)l; (void)s;}
+
+      AttachmentDesc(Attachment& a, Tempest::Color                l, AccessOpT<AccessOp::Discard>  s):clear(l.r(),l.g(),l.b(),l.a()),attachment(&a),load(AccessOp::Clear),store(AccessOp::Discard)  {(void)l; (void)s;}
+      AttachmentDesc(Attachment& a, Tempest::Color                l, AccessOpT<AccessOp::Preserve> s):clear(l.r(),l.g(),l.b(),l.a()),attachment(&a),load(AccessOp::Clear),store(AccessOp::Preserve) {(void)l; (void)s;}
+
+      AttachmentDesc(ZBuffer&    a, AccessOpT<AccessOp::Discard>  l, AccessOpT<AccessOp::Discard>  s):zbuffer(&a),load(AccessOp::Discard),store(AccessOp::Discard)  {(void)l; (void)s;}
+      AttachmentDesc(ZBuffer&    a, AccessOpT<AccessOp::Discard>  l, AccessOpT<AccessOp::Preserve> s):zbuffer(&a),load(AccessOp::Discard),store(AccessOp::Preserve) {(void)l; (void)s;}
+
+      AttachmentDesc(ZBuffer&    a, AccessOpT<AccessOp::Preserve> l, AccessOpT<AccessOp::Discard>  s):zbuffer(&a),load(AccessOp::Preserve),store(AccessOp::Discard)  {(void)l; (void)s;}
+      AttachmentDesc(ZBuffer&    a, AccessOpT<AccessOp::Preserve> l, AccessOpT<AccessOp::Preserve> s):zbuffer(&a),load(AccessOp::Preserve),store(AccessOp::Preserve) {(void)l; (void)s;}
+
+      AttachmentDesc(ZBuffer&    a, float                         l, AccessOpT<AccessOp::Discard>  s):clear(l,l,l,l),zbuffer(&a),load(AccessOp::Clear),store(AccessOp::Discard) {(void)l; (void)s;}
+      AttachmentDesc(ZBuffer&    a, float                         l, AccessOpT<AccessOp::Preserve> s):clear(l,l,l,l),zbuffer(&a),load(AccessOp::Clear),store(AccessOp::Preserve){(void)l; (void)s;}
+
+      Tempest::Vec4 clear      = {};
+      Attachment*   attachment = nullptr;
+      ZBuffer*      zbuffer    = nullptr;
+      AccessOp      load       = AccessOp::Discard;
+      AccessOp      store      = AccessOp::Discard;
+    };
+
   class AbstractGraphicsApi {
     protected:
-      AbstractGraphicsApi() = default;
+      AbstractGraphicsApi() =default;
 
     public:
-      virtual ~AbstractGraphicsApi() = default;
+      virtual ~AbstractGraphicsApi()=default;
 
       enum DeviceType : uint8_t {
         Unknown   = 0,
@@ -295,7 +348,7 @@ namespace Tempest {
         };
 
       struct NoCopy {
-        NoCopy() = default;
+        NoCopy()=default;
         virtual ~NoCopy() = default;
         NoCopy(const NoCopy&) = delete;
         NoCopy(NoCopy&&) = delete;
@@ -308,17 +361,17 @@ namespace Tempest {
         };
 
       struct Device:NoCopy {
-        ~Device() override = default;
+        ~Device() override=default;
         virtual void        waitIdle() = 0;
         };
       struct Fence:NoCopy {
-        ~Fence() override = default;
+        ~Fence() override=default;
         virtual void wait() = 0;
         virtual bool wait(uint64_t time) = 0;
         virtual void reset() = 0;
         };
       struct Swapchain:NoCopy {
-        ~Swapchain() override = default;
+        ~Swapchain() override=default;
         virtual void          reset()=0;
         virtual uint32_t      currentBackBufferIndex()=0;
         virtual uint32_t      imageCount() const=0;
@@ -328,55 +381,51 @@ namespace Tempest {
       struct Texture:Shared  {
         virtual uint32_t      mipCount() const = 0;
         };
-      struct Attach {
-        virtual ~Attach() = default;
-        virtual TextureLayout defaultLayout() = 0;
-        virtual TextureLayout renderLayout()  = 0;
-        virtual void*         nativeHandle()  = 0;
-        };
-      struct Fbo:Shared      {
-        ~Fbo() override = default;
-        };
-      struct FboLayout:Shared      {
-        ~FboLayout() override = default;
-        virtual bool equals(const FboLayout&) const = 0;
-        };
-      struct Pass:Shared     {
-        ~Pass() override = default;
-        };
       struct Pipeline:Shared {};
       struct CompPipeline:Shared {};
       struct Shader:Shared   {};
       struct Uniforms        {};
       struct PipelineLay:Shared {
-        ~PipelineLay() override = default;
+        ~PipelineLay() override=default;
         virtual size_t descriptorsCount() = 0;
         };
       struct Buffer:Shared   {
-        ~Buffer() override = default;
+        ~Buffer() override=default;
         virtual void  update  (const void* data,size_t off,size_t count,size_t sz,size_t alignedSz)=0;
         virtual void  read    (      void* data,size_t off,size_t size)=0;
         };
       struct Desc:NoCopy   {
-        ~Desc() override = default;
+        ~Desc() override=default;
         virtual void set    (size_t id,AbstractGraphicsApi::Texture *tex, const Sampler2d& smp)=0;
         virtual void setSsbo(size_t id,AbstractGraphicsApi::Texture *tex, uint32_t mipLevel)=0;
         virtual void setUbo (size_t id,AbstractGraphicsApi::Buffer* buf,size_t offset)=0;
         virtual void setSsbo(size_t id,AbstractGraphicsApi::Buffer* buf,size_t offset)=0;
         virtual void ssboBarriers(Detail::ResourceState& res) = 0;
         };
+      struct BarrierDesc {
+        Buffer*        buffer    = nullptr;
+        Texture*       texture   = nullptr;
+        Swapchain*     swapchain = nullptr;
+        uint32_t       swId      = 0;
+
+        ResourceLayout prev      = ResourceLayout::Undefined;
+        ResourceLayout next      = ResourceLayout::Undefined;
+        bool           preserve  = false;
+        };
       struct CommandBuffer:NoCopy {
-        ~CommandBuffer() override = default;
-        virtual void beginRenderPass(AbstractGraphicsApi::Fbo* f,
-                                     AbstractGraphicsApi::Pass*  p,
-                                     uint32_t width,uint32_t height) = 0;
-        virtual void endRenderPass() = 0;
+        virtual ~CommandBuffer()=default;
 
-        virtual void changeLayout  (Buffer& buf, BufferLayout prev, BufferLayout next)=0;
-        virtual void changeLayout  (Attach& img, TextureLayout prev, TextureLayout next, bool byRegion)=0;
+        virtual void beginRendering(const AttachmentDesc* desc, size_t descSize,
+                                    uint32_t w, uint32_t h,
+                                    const TextureFormat* frm,
+                                    AbstractGraphicsApi::Texture** att,
+                                    AbstractGraphicsApi::Swapchain** sw, const uint32_t* imgId) = 0;
+        virtual void endRendering() = 0;
 
-        virtual void generateMipmap(Texture& image, TextureLayout defLayout, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels)=0;
-        virtual void copy(Buffer& dest, TextureLayout defLayout, uint32_t width, uint32_t height, uint32_t mip, Texture& src, size_t offset)=0;
+        virtual void barrier(const BarrierDesc* desc, size_t cnt) = 0;
+
+        virtual void generateMipmap(Texture& image, ResourceLayout defLayout, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels)=0;
+        virtual void copy(Buffer& dest, ResourceLayout defLayout, uint32_t width, uint32_t height, uint32_t mip, Texture& src, size_t offset)=0;
 
         virtual bool isRecording() const = 0;
         virtual void begin()=0;
@@ -404,10 +453,7 @@ namespace Tempest {
       using PTexture      = Detail::DSharedPtr<Texture*>;
       using PPipeline     = Detail::DSharedPtr<Pipeline*>;
       using PCompPipeline = Detail::DSharedPtr<CompPipeline*>;
-      using PPass         = Detail::DSharedPtr<Pass*>;
       using PShader       = Detail::DSharedPtr<Shader*>;
-      using PFbo          = Detail::DSharedPtr<Fbo*>;
-      using PFboLayout    = Detail::DSharedPtr<FboLayout*>;
       using PPipelineLay  = Detail::DSharedPtr<PipelineLay*>;
 
       virtual std::vector<Props> devices() const = 0;
@@ -417,12 +463,6 @@ namespace Tempest {
       virtual void       destroy(Device* d)=0;
 
       virtual Swapchain* createSwapchain(SystemApi::Window* w,AbstractGraphicsApi::Device *d)=0;
-
-      virtual PPass      createPass(Device *d, const FboMode** att, size_t acount)=0;
-      virtual PFbo       createFbo(Device *d, FboLayout* lay, uint32_t w, uint32_t h, uint8_t clCount,
-                                   Swapchain** sw, Texture** cl, const uint32_t* imageId, Texture* zbuf)=0;
-
-      virtual PFboLayout createFboLayout(Device *d, Swapchain** s, TextureFormat *att, uint8_t attCount)=0;
 
       virtual PPipelineLay
                          createPipelineLayout(Device *d,
@@ -451,7 +491,7 @@ namespace Tempest {
       virtual PTexture   createTexture(Device* d,const uint32_t w,const uint32_t h,uint32_t mips, TextureFormat frm)=0;
       virtual PTexture   createStorage(Device* d,const uint32_t w,const uint32_t h,uint32_t mips, TextureFormat frm)=0;
       virtual void       readPixels   (Device* d, Pixmap &out,const PTexture t,
-                                       TextureLayout lay, TextureFormat frm,
+                                       ResourceLayout lay, TextureFormat frm,
                                        const uint32_t w, const uint32_t h, uint32_t mip) = 0;
       virtual void       readBytes    (Device* d, Buffer* buf, void* out, size_t size) = 0;
 

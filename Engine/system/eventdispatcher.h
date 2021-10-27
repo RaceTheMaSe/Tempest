@@ -69,12 +69,14 @@ class EventDispatcher final {
 
     Widget*                      customRoot=nullptr;
     std::weak_ptr<Widget::Ref>   mouseUp;
+    std::weak_ptr<Widget::Ref>   mouseLast;
     std::weak_ptr<Widget::Ref>   mouseOver;
     std::weak_ptr<Widget::Ref>   pointerOver[trackingPoints];
     std::weak_ptr<Widget::Ref>   pointerUp[trackingPoints];
     std::weak_ptr<Widget::Ref>   analogUp;
 
     std::vector<UiOverlay*>      overlays;
+    uint64_t                     mouseLastTime = 0;
 
     uint64_t                     tickCount=0;
     uint64_t                     repeatDelay=150;

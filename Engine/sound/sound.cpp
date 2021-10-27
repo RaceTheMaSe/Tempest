@@ -237,7 +237,7 @@ int Sound::decodeAdPcmBlock(int16_t *outbuf, const uint8_t *inbuf, size_t inbufs
     return 0;
 
   for(int ch=0; ch<channels; ch++) {
-    *outbuf++ = pcmdata[ch] = int16_t(inbuf [0] | (inbuf [1] << 8));
+    pcmdata[ch] = *outbuf++ = int16_t(inbuf [0] | (inbuf [1] << 8));
     index[ch] = (int8_t)inbuf[2];
 
     if(index[ch]<0 || index[ch]>88 || inbuf[3])     // sanitize the input a little...

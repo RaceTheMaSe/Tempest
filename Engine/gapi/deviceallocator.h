@@ -210,8 +210,7 @@ struct DeviceAllocator<MemoryProvider>::Page : Block {
     while(b!=nullptr && (b->offset+b->size)<a.offset)
       b=b->next;
 
-    if(b==nullptr)
-      return;
+    if(b==nullptr) return;
     
     if(b->offset+b->size==a.offset){
       b->size+=uint32_t(a.size);

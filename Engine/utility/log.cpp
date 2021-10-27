@@ -5,7 +5,7 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
-const char* logCategory("Tempest");
+const char* logCategory("LogOpenGothic");
 #endif
 
 #if defined(__WINDOWS_PHONE__) || defined(_MSC_VER)

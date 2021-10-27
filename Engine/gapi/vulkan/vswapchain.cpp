@@ -40,14 +40,14 @@ VSwapchain::FenceList::FenceList(VkDevice dev, uint32_t cnt)
     }
   }
 
-VSwapchain::FenceList::FenceList(VSwapchain::FenceList&& oth) noexcept
-  :dev(oth.dev), size(oth.size) {
+VSwapchain::FenceList::FenceList(VSwapchain::FenceList&& oth)
+ noexcept   :dev(oth.dev), size(oth.size) {
   aquire   = std::move(oth.aquire);
   present  = std::move(oth.present);
   oth.size = 0;
   }
 
-VSwapchain::FenceList& VSwapchain::FenceList::operator =(VSwapchain::FenceList&& oth) noexcept {
+VSwapchain::FenceList& VSwapchain::FenceList::operator =(VSwapchain::FenceList&& oth)  noexcept {
   std::swap(dev,     oth.dev);
   std::swap(aquire,  oth.aquire);
   std::swap(present, oth.present);
@@ -62,8 +62,8 @@ VSwapchain::FenceList::~FenceList() {
     }
   }
 
-VSwapchain::VSwapchain(VDevice &device, SystemApi::Window* handle)
-  :device(device), hwnd(handle) {
+VSwapchain::VSwapchain(VDevice &device, SystemApi::Window* newHwnd)
+  :device(device), hwnd(newHwnd) {
   try {
     surface = device.createSurface(hwnd);
 
@@ -85,6 +85,10 @@ void VSwapchain::cleanupSwapchain() noexcept {
   vkWaitForFences(device.device.impl,fence.size,fence.aquire.get(), VK_TRUE,std::numeric_limits<uint64_t>::max());
   vkWaitForFences(device.device.impl,fence.size,fence.present.get(),VK_TRUE,std::numeric_limits<uint64_t>::max());
   fence = FenceList();
+
+  for(auto imageView : views)
+    if(map!=nullptr && imageView!=VK_NULL_HANDLE)
+      map->notifyDestroy(imageView);
 
   for(auto imageView : views)
     if(imageView!=VK_NULL_HANDLE)
@@ -189,12 +193,12 @@ void VSwapchain::createSwapchain(VDevice& device, const SwapChainSupport& swapCh
   VkSemaphoreCreateInfo info = {};
   info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
   info.flags = 0;
-  sync.resize(imgCount);
+  sync.resize(views.size());
   for(auto& i:sync) {
     vkAssert(vkCreateSemaphore(device.device.impl,&info,nullptr,&i.aquire));
     vkAssert(vkCreateSemaphore(device.device.impl,&info,nullptr,&i.present));
     }
-  fence = FenceList(device.device.impl,imgCount);
+  fence = FenceList(device.device.impl,views.size());
   aquireNextImage();
   }
 
@@ -240,7 +244,6 @@ VkSurfaceFormatKHR VSwapchain::getSwapSurfaceFormat(const std::vector<VkSurfaceF
   return availableFormats[0];
   }
 
-
 VkPresentModeKHR VSwapchain::getSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
   /** intel says mailbox is better option for games
     * https://software.intel.com/content/www/us/en/develop/articles/api-without-secrets-introduction-to-vulkan-part-2.html
@@ -284,7 +287,7 @@ VkExtent2D VSwapchain::getSwapExtent(const VkSurfaceCapabilitiesKHR& capabilitie
 uint32_t VSwapchain::getImageCount(const SwapChainSupport& support) const {
   const uint32_t maxImages=support.capabilities.maxImageCount==0 ? uint32_t(-1) : support.capabilities.maxImageCount;
   uint32_t imageCount=support.capabilities.minImageCount+1;
-  if(support.capabilities.maxImageCount>0 && imageCount>maxImages)
+  if(0<support.capabilities.maxImageCount && imageCount>maxImages)
     imageCount = support.capabilities.maxImageCount;
   return imageCount;
   }
@@ -321,8 +324,15 @@ uint32_t VSwapchain::currentBackBufferIndex() {
   }
 
 void VSwapchain::present(VDevice& dev) {
-  auto&    slot = sync[imgIndex];
-  auto&    f    = fence.present[imgIndex];
+  size_t sId = 0;
+  for(size_t i=0; i<sync.size(); ++i)
+    if(sync[i].imgId==imgIndex) {
+      sId = i;
+      break;
+      }
+
+  auto&    slot = sync[sId];
+  auto&    f    = fence.present[sId];
   vkResetFences(device.device.impl,1,&f);
 
   VkSubmitInfo submitInfo = {};
@@ -338,6 +348,9 @@ void VSwapchain::present(VDevice& dev) {
   presentInfo.swapchainCount     = 1;
   presentInfo.pSwapchains        = &swapChain;
   presentInfo.pImageIndices      = &imgIndex;
+
+  slot.imgId = uint32_t(-1);
+  slot.state = S_Idle;
 
   //auto t = Application::tickCount();
   VkResult code = dev.presentQueue->present(presentInfo);
