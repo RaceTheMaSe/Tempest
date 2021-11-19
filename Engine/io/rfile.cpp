@@ -191,8 +191,7 @@ __time64_t RFile::lastModificationTime() const {
   struct stat result = {};
   std::string path;
   path.resize(fn.size());
-  bool lol = false;
-  WideCharToMultiByte(CP_UTF8, 0, fn.c_str(), -1, &path[0], int(path.size()),"",(LPBOOL)&lol);
+  WideCharToMultiByte(CP_UTF8, 0, fn.c_str(), -1, &path[0], int(path.size()),nullptr,nullptr);
   if(stat(path.c_str(), &result) == 0)
     return result.st_mtime;
   return __time64_t(-1);
