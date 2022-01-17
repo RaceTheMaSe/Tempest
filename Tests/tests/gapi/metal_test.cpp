@@ -21,57 +21,66 @@ TEST(MetalApi,MetalApi) {
 
 TEST(MetalApi,Vbo) {
 #if defined(__OSX__)
-  GapiTestCommon::vbo<MetalApi>();
+  GapiTestCommon::Vbo<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,VboInit) {
 #if defined(__OSX__)
-  GapiTestCommon::vboInit<MetalApi>();
+  GapiTestCommon::VboInit<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,VboDyn) {
 #if defined(__OSX__)
-  GapiTestCommon::vboDyn<MetalApi>();
+  GapiTestCommon::VboDyn<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,SsboCopy) {
 #if defined(__OSX__)
-  GapiTestCommon::bufCopy<MetalApi,TextureFormat::RGBA8,uint8_t>();
+  GapiTestCommon::SsboCopy<MetalApi,TextureFormat::RGBA8,uint8_t>();
 #endif
   }
 
 TEST(MetalApi,Shader) {
 #if defined(__OSX__)
-  GapiTestCommon::shader<MetalApi>();
+  GapiTestCommon::Shader<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,Pso) {
 #if defined(__OSX__)
-  GapiTestCommon::pso<MetalApi>();
+  GapiTestCommon::Pso<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,Fbo) {
 #if defined(__OSX__)
-  GapiTestCommon::fbo<MetalApi>("MetalApi_Fbo.png");
+  GapiTestCommon::Fbo<MetalApi>("MetalApi_Fbo.png");
 #endif
   }
 
 TEST(MetalApi,Draw) {
 #if defined(__OSX__)
-  GapiTestCommon::draw<MetalApi,TextureFormat::RGBA8>  ("MetalApi_Draw_RGBA8.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::RG8>    ("MetalApi_Draw_RG8.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::R8>     ("MetalApi_Draw_R8.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::RGBA16> ("MetalApi_Draw_RGBA16.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::RG16>   ("MetalApi_Draw_RG16.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::R16>    ("MetalApi_Draw_R16.png");
-  GapiTestCommon::draw<MetalApi,TextureFormat::RGBA32F>("MetalApi_Draw_RGBA32F.hdr");
-  GapiTestCommon::draw<MetalApi,TextureFormat::RG32F>  ("MetalApi_Draw_RG32F.hdr");
-  GapiTestCommon::draw<MetalApi,TextureFormat::R32F>   ("MetalApi_Draw_R32F.hdr");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGBA8>  ("MetalApi_Draw_RGBA8.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGB8>   ("MetalApi_Draw_RGB8.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RG8>    ("MetalApi_Draw_RG8.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::R8>     ("MetalApi_Draw_R8.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGBA16> ("MetalApi_Draw_RGBA16.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGB16>  ("MetalApi_Draw_RGB16.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RG16>   ("MetalApi_Draw_RG16.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::R16>    ("MetalApi_Draw_R16.png");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGBA32F>("MetalApi_Draw_RGBA32F.hdr");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RGB32F> ("MetalApi_Draw_RGB32F.hdr");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::RG32F>  ("MetalApi_Draw_RG32F.hdr");
+  GapiTestCommon::Draw<MetalApi,TextureFormat::R32F>   ("MetalApi_Draw_R32F.hdr");
+#endif
+  }
+
+TEST(MetalApi,Viewport) {
+#if defined(__OSX__)
+  GapiTestCommon::Viewport<MetalApi>("MetalApi_Viewport.png");
 #endif
   }
 
@@ -83,21 +92,21 @@ TEST(MetalApi,Ubo) {
 
 TEST(MetalApi,Compute) {
 #if defined(__OSX__)
-  GapiTestCommon::ssboDispath<MetalApi>();
+  GapiTestCommon::Compute<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,ComputeImage) {
 #if defined(__OSX__)
-  GapiTestCommon::imageCompute<MetalApi>("MetalApi_Compute.png");
+  GapiTestCommon::ComputeImage<MetalApi>("MetalApi_ComputeImage.png");
 #endif
   }
 
 TEST(MetalApi,MipMaps) {
 #if defined(__OSX__)
-  GapiTestCommon::mipMaps<MetalApi,TextureFormat::RGBA8>  ("MetalApi_MipMaps_RGBA8.png");
-  GapiTestCommon::mipMaps<MetalApi,TextureFormat::RGBA16> ("MetalApi_MipMaps_RGBA16.png");
-  GapiTestCommon::mipMaps<MetalApi,TextureFormat::RGBA32F>("MetalApi_MipMaps_RGBA32.png");
+  GapiTestCommon::MipMaps<MetalApi,TextureFormat::RGBA8>  ("MetalApi_MipMaps_RGBA8.png");
+  GapiTestCommon::MipMaps<MetalApi,TextureFormat::RGBA16> ("MetalApi_MipMaps_RGBA16.png");
+  GapiTestCommon::MipMaps<MetalApi,TextureFormat::RGBA32F>("MetalApi_MipMaps_RGBA32.png");
 #endif
   }
 
@@ -107,7 +116,7 @@ TEST(MetalApi,S3TC) {
     MetalApi api{ApiFlags::Validation};
     Device       device(api);
 
-    auto tex = device.loadTexture("data/img/tst-dxt5.dds");
+    auto tex = device.texture("data/img/tst-dxt5.dds");
     EXPECT_EQ(tex.format(),TextureFormat::DXT5);
     }
   catch(std::system_error& e) {
@@ -120,18 +129,18 @@ TEST(MetalApi,S3TC) {
 
 TEST(MetalApi,DISABLED_TesselationBasic) {
 #if defined(__OSX__)
-  GapiTestCommon::psoTess<MetalApi>();
+  GapiTestCommon::PsoTess<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,SsboWrite) {
 #if defined(__OSX__)
-  GapiTestCommon::ssboWriteVs<MetalApi>();
+  GapiTestCommon::SsboWrite<MetalApi>();
 #endif
   }
 
 TEST(MetalApi,PushRemapping) {
 #if defined(__OSX__)
-  GapiTestCommon::pushConstant<MetalApi>();
+  GapiTestCommon::PushRemapping<MetalApi>();
 #endif
   }

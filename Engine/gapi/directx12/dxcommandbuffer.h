@@ -30,6 +30,8 @@ class DxCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
     DxCommandBuffer(DxDevice& d);
     ~DxCommandBuffer() override;
 
+    using AbstractGraphicsApi::CommandBuffer::barrier;
+
     void begin() override;
     void end()   override;
     void reset() override;
@@ -44,6 +46,7 @@ class DxCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
     void endRendering() override;
 
     void setViewport (const Rect& r) override;
+    void setScissor  (const Rect& r) override;
 
     void setPipeline (AbstractGraphicsApi::Pipeline& p) override;
     void setBytes    (AbstractGraphicsApi::Pipeline& p, const void* data, size_t size) override;
@@ -60,33 +63,32 @@ class DxCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
     void dispatch    (size_t x, size_t y, size_t z) override;
 
     void barrier     (const AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) override;
-    void changeLayout(AbstractGraphicsApi::Texture& tex, ResourceLayout prev, ResourceLayout next, uint32_t mipId);
 
-    void copy(AbstractGraphicsApi::Buffer& dest, ResourceLayout defLayout, uint32_t width, uint32_t height, uint32_t mip, AbstractGraphicsApi::Texture& src, size_t offset) override;
-    void generateMipmap(AbstractGraphicsApi::Texture& image, ResourceLayout defLayout, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
+    void copy(AbstractGraphicsApi::Buffer& dst, size_t offset, AbstractGraphicsApi::Texture& src, uint32_t width, uint32_t height, uint32_t mip) override;
+    void generateMipmap(AbstractGraphicsApi::Texture& image, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
 
-    void copyRaw(AbstractGraphicsApi::Buffer& dest, uint32_t width, uint32_t height, uint32_t mip, const AbstractGraphicsApi::Texture& src, size_t offset);
+    void copyNative(AbstractGraphicsApi::Buffer& dest, size_t offset, const AbstractGraphicsApi::Texture& src, uint32_t width, uint32_t height, uint32_t mip);
     void copy(AbstractGraphicsApi::Buffer&  dest, size_t offsetDest, const AbstractGraphicsApi::Buffer& src, size_t offsetSrc, size_t size);
     void copy(AbstractGraphicsApi::Texture& dest, size_t width, size_t height, size_t mip, const AbstractGraphicsApi::Buffer&  src, size_t offset);
 
     ID3D12GraphicsCommandList* get() { return impl.get(); }
 
   private:
-    DxDevice&                         dev;
-    ComPtr<ID3D12CommandAllocator>    pool;
-    ComPtr<ID3D12GraphicsCommandList> impl;
-    bool                              resetDone=false;
+    DxDevice&                          dev;
+    ComPtr<ID3D12CommandAllocator>     pool;
+    ComPtr<ID3D12GraphicsCommandList4> impl;
+    bool                               resetDone=false;
 
-    DxFboLayout                       fboLayout;
+    DxFboLayout                        fboLayout;
 
-    ID3D12DescriptorHeap*             currentHeaps[DxPipelineLay::MAX_BINDS]={};
-    DxDescriptorArray*                curUniforms = nullptr;
+    ID3D12DescriptorHeap*              currentHeaps[DxPipelineLay::MAX_BINDS]={};
+    DxDescriptorArray*                 curUniforms = nullptr;
 
-    UINT                              vboStride=0;
+    UINT                               vboStride=0;
 
-    ResourceState                     resState;
-    RpState                           state        = NoRecording;
-    bool                              ssboBarriers = false;
+    ResourceState                      resState;
+    RpState                            state        = NoRecording;
+    bool                               ssboBarriers = false;
 
     struct Stage {
       virtual ~Stage() = default;
@@ -105,9 +107,6 @@ class DxCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
                 AbstractGraphicsApi::Texture& dst, uint32_t dstW, uint32_t dstH, uint32_t dstMip);
 
     void implSetUniforms(AbstractGraphicsApi::Desc& u, bool isCompute);
-    void implChangeLayout(ID3D12Resource* res, D3D12_RESOURCE_STATES prev, D3D12_RESOURCE_STATES lay);
-
-    friend class Tempest::DirectX12Api;
   };
 
 }

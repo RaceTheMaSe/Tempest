@@ -107,7 +107,7 @@ VulkanInstance::VulkanInstance(bool validation)
 
   VkApplicationInfo appInfo = {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = "OpenGothic";
+  appInfo.pApplicationName = "";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "Tempest";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -119,76 +119,14 @@ VulkanInstance::VulkanInstance(bool validation)
   createInfo.pNext = nullptr;
   createInfo.flags = 0;
 
-  extensions = std::vector<const char *>{
-          VK_KHR_SURFACE_EXTENSION_NAME,
-          SURFACE_EXTENSION_NAME,
-          VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-          VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-          VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME
-          //VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME,
-          //VK_EXT_VALIDATION_FLAGS_EXTENSION_NAME,
-          //VK_EXT_VALIDATION_CACHE_EXTENSION_NAME
-  };
-
-  uint32_t instanceExtensionCount = 0;
-  std::vector<const char *> activeInstanceExtensions;
-  VkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount, nullptr));
-  std::vector<VkExtensionProperties> instanceExtensions(instanceExtensionCount);
-  VkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount,
-                                                 instanceExtensions.data()));
-
-  if (validation) {
-    for (const auto &instanceExt : instanceExtensions)
-      Log::e("Instance extension: ", instanceExt.extensionName);
-
-    uint32_t instanceLayerCount = 0;
-    VkCheck(vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr));
-    std::vector<VkLayerProperties> instanceLayers(instanceLayerCount);
-    VkCheck(vkEnumerateInstanceLayerProperties(&instanceLayerCount, instanceLayers.data()));
-
-    // A layer could have VK_EXT_debug_report extension.
-//    for (auto &layer : instanceLayers) {
-//      uint32_t count;
-//      VkCheck(vkEnumerateInstanceExtensionProperties(layer.layerName, &count, nullptr));
-//      std::vector<VkExtensionProperties> extensions(count);
-//      VkCheck(vkEnumerateInstanceExtensionProperties(layer.layerName, &count, extensions.data()));
-//      for (auto &ext : extensions) {
-//        if(std::find_if(instanceExtensions.begin(),instanceExtensions.end(),[&](VkExtensionProperties& ep){
-//            return ep.extensionName == ext.extensionName;
-//        })==instanceExtensions.end())
-//          instanceExtensions.push_back(ext);
-//      }
-//    }
-
-    // On desktop, the LunarG loader exposes a meta-layer that combines all
-    // relevant validation layers.
-    std::vector<const char *> activeLayers;
-#if !defined(ANDROID)
-    addSupportedLayers(activeLayers, instanceLayers, pMetaLayers);
-#endif
-
-    // On Android, add all relevant layers one by one.
-    if (activeLayers.empty()) {
-      addSupportedLayers(activeLayers, instanceLayers, pValidationLayers);
-    }
-
-    if (activeLayers.empty())
-      Log::e("Did not find validation layers.\n");
-    else
-      Log::e("Found validation layers!\n");
-
-    addExternalLayers(activeLayers, instanceLayers);
-    createInfo.enabledLayerCount = (uint32_t)activeLayers.size();
-    createInfo.ppEnabledLayerNames = activeLayers.data(); // FIXME: no stack memory
-  }
-//
-//  std::array<const char*, 20> vlout;
-//  for (size_t idx = 0; idx < activeLayers.size(); idx++) {
-//    vlout[idx] = activeLayers[idx];
-//  }
+  const std::initializer_list<const char*>& extensions = std::initializer_list<const char*>{
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+    VK_KHR_SURFACE_EXTENSION_NAME,
+    SURFACE_EXTENSION_NAME,
+    };
 
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-  createInfo.ppEnabledExtensionNames = extensions.data();
+  createInfo.ppEnabledExtensionNames = extensions.begin();
   if (validation) {
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = activeLayers.data();

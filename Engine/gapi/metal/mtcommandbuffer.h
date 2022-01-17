@@ -31,9 +31,6 @@ class MtCommandBuffer : public AbstractGraphicsApi::CommandBuffer {
                         AbstractGraphicsApi::Swapchain** sw, const uint32_t* imgId) override;
     void endRendering() override;
 
-    void barrier       (const AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) override;
-    void generateMipmap(AbstractGraphicsApi::Texture& image, ResourceLayout defLayout, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
-
     bool isRecording() const override;
     void begin() override;
     void end() override;
@@ -49,13 +46,17 @@ class MtCommandBuffer : public AbstractGraphicsApi::CommandBuffer {
     void setUniforms(AbstractGraphicsApi::CompPipeline& p, AbstractGraphicsApi::Desc& u) override;
 
     void setViewport(const Rect& r) override;
+    void setScissor (const Rect& r) override;
 
     void draw        (const AbstractGraphicsApi::Buffer& vbo, size_t offset,size_t vertexCount, size_t firstInstance, size_t instanceCount) override;
     void drawIndexed (const AbstractGraphicsApi::Buffer& vbo, const AbstractGraphicsApi::Buffer &ibo, Detail::IndexClass cls,
                       size_t ioffset, size_t isize, size_t voffset, size_t firstInstance, size_t instanceCount) override;
     void dispatch    (size_t x, size_t y, size_t z) override;
 
-    void copy        (AbstractGraphicsApi::Buffer& dest, ResourceLayout defLayout, uint32_t width, uint32_t height, uint32_t mip, AbstractGraphicsApi::Texture& src, size_t offset) override;
+    void barrier       (const AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) override;
+    void generateMipmap(AbstractGraphicsApi::Texture& image, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
+    void copy          (AbstractGraphicsApi::Buffer& dst, size_t offset,
+                        AbstractGraphicsApi::Texture& src, uint32_t width, uint32_t height, uint32_t mip) override;
 
   private:
     enum EncType:uint8_t {

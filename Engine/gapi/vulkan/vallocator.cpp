@@ -36,7 +36,7 @@ VAllocator::Provider::~Provider() {
     vkFreeMemory(device->device.impl,lastFree,nullptr);
   }
 
-VAllocator::Provider::DeviceMemory VAllocator::Provider::alloc(size_t size,uint32_t typeId) {
+VAllocator::Provider::DeviceMemory VAllocator::Provider::alloc(size_t size, uint32_t typeId) {
   if(lastFree!=VK_NULL_HANDLE){
     if(lastType==typeId && lastSize==size){
       VkDeviceMemory memory=lastFree;
@@ -64,22 +64,21 @@ void VAllocator::Provider::free(VAllocator::Provider::DeviceMemory m, size_t siz
   if(lastFree!=VK_NULL_HANDLE)
     vkFreeMemory(device->device.impl,lastFree,nullptr);
 
-  lastFree=m;
-  lastSize=size;
-  lastType=typeId;
+  lastFree = m;
+  lastSize = size;
+  lastType = typeId;
   }
 
 static size_t GCD(size_t n1, size_t n2) {
-  if(n1==n2)
-    return n1;
+  if(n1==1 || n2==1)
+    return 1;
 
-  if(n1<n2) {
-    size_t d = n2 - n1;
-    return GCD(n1, d);
-    } else {
-    size_t d = n1 - n2;
-    return GCD(n2, d);
+  while(n1!=n2) {
+    if(n1<n2)
+      n2 = n2 - n1; else
+      n1 = n1 - n2;
     }
+  return n1;
   }
 
 static size_t LCM(size_t n1, size_t n2)  {
@@ -137,7 +136,7 @@ VBuffer VAllocator::alloc(const void *mem, size_t count, size_t size, size_t ali
     if(memId.typeId==uint32_t(-1))
       continue;
 
-    ret.page = allocMemory(memRq,memId.heapId,memId.typeId,(props[i]&VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT));
+    ret.page = allocMemory(memRq,memId.heapId,memId.typeId,memId.hostVisible);
     if(!ret.page.page)
       continue;
 

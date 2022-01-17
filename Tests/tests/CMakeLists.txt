@@ -3,11 +3,17 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(TempestTests LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-
-include_directories("${CMAKE_SOURCE_DIR}/../../Engine/include")
-
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/testsuite)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/testsuite)
+
+# Setup testing
+enable_testing()
+add_executable(${PROJECT_NAME})
+add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PRIVATE .)
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/../../Engine/include")
+
 
 add_definitions(-DGTEST_LANG_CXX11=1)
 if(MSVC)
@@ -66,6 +72,10 @@ compile_shader(simple_test.frag)
 compile_shader(simple_test.comp)
 compile_shader(image_store_test.comp)
 
+compile_shader(fillbuf.comp)
+compile_shader(img2buf.comp)
+compile_shader(comp_test.frag)
+
 compile_shader(ubo_input.vert)
 
 compile_shader(tess.vert)
@@ -88,7 +98,7 @@ compile_shader(link_defect.frag)
 
 compile_shader(loop_defect.comp)
 
-add_executable(${PROJECT_NAME}
+target_sources(${PROJECT_NAME} PRIVATE
   ${SOURCES}
   ${SHADERS}
   ${GTestSrc}/src/gtest-all.cc
@@ -100,8 +110,6 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/../../Engine" build)
 if(UNIX)
   target_link_libraries(${PROJECT_NAME} -lpthread)
 endif()
-
-add_test(${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME} Tempest)
 

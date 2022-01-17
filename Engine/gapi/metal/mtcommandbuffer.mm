@@ -206,6 +206,18 @@ void MtCommandBuffer::setViewport(const Rect &r) {
   [encDraw setViewport:v];
   }
 
+void MtCommandBuffer::setScissor(const Rect& r) {
+  int x0 = std::max(0,r.x), y0 = std::max(0,r.y);
+  int w  = (r.x+r.w)-x0, h = (r.y+r.h)-y0;
+
+  MTLScissorRect v = {};
+  v.x      = x0;
+  v.y      = y0;
+  v.width  = w;
+  v.height = h;
+  [encDraw setScissorRect:v];
+  }
+
 void MtCommandBuffer::draw(const AbstractGraphicsApi::Buffer& ivbo, size_t offset, size_t vertexCount, size_t firstInstance, size_t instanceCount) {
   auto& vbo = reinterpret_cast<const MtBuffer&>(ivbo);
   [encDraw setVertexBuffer:vbo.impl
@@ -331,7 +343,6 @@ void MtCommandBuffer::setTexture(const MtPipelineLay::MTLBind& mtl,
   }
 
 void MtCommandBuffer::generateMipmap(AbstractGraphicsApi::Texture &image,
-                                     ResourceLayout /*defLayout*/,
                                      uint32_t /*texWidth*/, uint32_t /*texHeight*/,
                                      uint32_t /*mipLevels*/) {
   setEncoder(E_Blit,nullptr);
@@ -354,9 +365,8 @@ void MtCommandBuffer::setPipeline(AbstractGraphicsApi::Pipeline &p) {
   curLay   = px.lay.handler;
   }
 
-void Tempest::Detail::MtCommandBuffer::copy(Tempest::AbstractGraphicsApi::Buffer& dest, ResourceLayout defLayout,
-                                            uint32_t width, uint32_t height, uint32_t mip,
-                                            Tempest::AbstractGraphicsApi::Texture& src, size_t offset) {
+void MtCommandBuffer::copy(AbstractGraphicsApi::Buffer& dest, size_t offset,
+                           AbstractGraphicsApi::Texture& src, uint32_t width, uint32_t height, uint32_t mip) {
   setEncoder(E_Blit,nullptr);
 
   auto& s = reinterpret_cast<MtTexture&>(src);

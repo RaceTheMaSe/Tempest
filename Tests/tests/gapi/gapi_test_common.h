@@ -10,6 +10,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
 
+#include "utils/imagevalidator.h"
+
 namespace GapiTestCommon {
 
 struct Vertex {
@@ -35,7 +37,7 @@ void init() {
   }
 
 template<class GraphicsApi>
-void vbo() {
+void Vbo() {
   using namespace Tempest;
 
   try {
@@ -53,7 +55,7 @@ void vbo() {
   }
 
 template<class GraphicsApi>
-void vboInit() {
+void VboInit() {
   using namespace Tempest;
 
   try {
@@ -96,7 +98,7 @@ void vboInit() {
   }
 
 template<class GraphicsApi>
-void vboDyn() {
+void VboDyn() {
   using namespace Tempest;
 
   Vertex readback[3] = {};
@@ -126,7 +128,7 @@ void vboDyn() {
   }
 
 template<class GraphicsApi, class T>
-void ssboDyn() {
+void SsboDyn() {
   using namespace Tempest;
   try {
     GraphicsApi api{ApiFlags::Validation};
@@ -156,7 +158,7 @@ void ssboDyn() {
   }
 
 template<class GraphicsApi, Tempest::TextureFormat frm, class iType>
-void bufCopy() {
+void SsboCopy() {
   using namespace Tempest;
 
   try {
@@ -175,7 +177,7 @@ void bufCopy() {
     {
       auto enc = cmd.startEncoding(device);
       enc.setFramebuffer({{src,Vec4(ref[0]/maxIType,ref[1]/maxIType,ref[2]/maxIType,ref[3]/maxIType),Tempest::Preserve}});
-      enc.setFramebuffer(nullptr);
+      enc.setFramebuffer({});
       enc.copy(src,0,dst,0);
     }
 
@@ -199,15 +201,15 @@ void bufCopy() {
   }
 
 template<class GraphicsApi>
-void shader() {
+void Shader() {
   using namespace Tempest;
 
   try {
     GraphicsApi api{ApiFlags::Validation};
     Device      device(api);
 
-    auto vert = device.loadShader("shader/simple_test.vert.sprv");
-    auto frag = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert = device.shader("shader/simple_test.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
     }
   catch(std::system_error& e) {
     if(e.code()==Tempest::GraphicsErrc::NoDevice)
@@ -217,15 +219,15 @@ void shader() {
   }
 
 template<class GraphicsApi>
-void pso() {
+void Pso() {
   using namespace Tempest;
 
   try {
     GraphicsApi api{ApiFlags::Validation};
     Device      device(api);
 
-    auto vert = device.loadShader("shader/simple_test.vert.sprv");
-    auto frag = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert = device.shader("shader/simple_test.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
     auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
     }
   catch(std::system_error& e) {
@@ -236,18 +238,18 @@ void pso() {
   }
 
 template<class GraphicsApi>
-void psoTess() {
+void PsoTess() {
   using namespace Tempest;
 
   try {
     GraphicsApi api{ApiFlags::Validation};
     Device      device(api);
 
-    auto tese = device.loadShader("shader/tess.tese.sprv");
-    auto tesc = device.loadShader("shader/tess.tesc.sprv");
+    auto tese = device.shader("shader/tess.tese.sprv");
+    auto tesc = device.shader("shader/tess.tesc.sprv");
 
-    auto vert = device.loadShader("shader/tess.vert.sprv");
-    auto frag = device.loadShader("shader/tess.frag.sprv");
+    auto vert = device.shader("shader/tess.vert.sprv");
+    auto frag = device.shader("shader/tess.frag.sprv");
     auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,tesc,tese,frag);
     }
   catch(std::system_error& e) {
@@ -258,7 +260,7 @@ void psoTess() {
   }
 
 template<class GraphicsApi>
-void fbo(const char* outImg) {
+void Fbo(const char* outImg) {
   using namespace Tempest;
 
   try {
@@ -288,18 +290,23 @@ void fbo(const char* outImg) {
   }
 
 template<class GraphicsApi, Tempest::TextureFormat format>
-void draw(const char* outImage) {
+void Draw(const char* outImage) {
   using namespace Tempest;
 
   try {
     GraphicsApi api{ApiFlags::Validation};
     Device      device(api);
 
+    if(!device.properties().hasAttachFormat(format)) {
+      Log::d("Skipping draw testcase: no format support");
+      return;
+      }
+
     auto vbo  = device.vbo(vboData,3);
     auto ibo  = device.ibo(iboData,3);
 
-    auto vert = device.loadShader("shader/simple_test.vert.sprv");
-    auto frag = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert = device.shader("shader/simple_test.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
     auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
 
     auto tex  = device.attachment(format,128,128);
@@ -309,6 +316,78 @@ void draw(const char* outImage) {
       auto enc = cmd.startEncoding(device);
       enc.setFramebuffer({{tex,Vec4(0,0,1,1),Tempest::Preserve}});
       enc.setUniforms(pso);
+      enc.draw(vbo,ibo);
+    }
+
+    auto sync = device.fence();
+    device.submit(cmd,sync);
+    sync.wait();
+
+    auto pm = device.readPixels(tex);
+    pm.save(outImage);
+
+    const uint32_t ccnt = Pixmap::componentCount(pm.format());
+    uint32_t same = 0;
+    ImageValidator val(pm);
+    for(uint32_t y=0; y<pm.h(); ++y)
+      for(uint32_t x=0; x<pm.w(); ++x) {
+        auto pix = val.at(x,y);
+        auto ref = ImageValidator::Pixel();
+        if(x<y) {
+          ref.x[0] = 0;
+          ref.x[1] = 0;
+          ref.x[2] = 1;
+          ref.x[3] = 1;
+          } else {
+          const float u = (float(x)+0.5f)/float(pm.w());
+          const float v = (float(y)+0.5f)/float(pm.h());
+          ref.x[0] = u;
+          ref.x[1] = v;
+          ref.x[2] = 0;
+          ref.x[3] = 1;
+          }
+
+        for(uint32_t c=0; c<ccnt; ++c)
+          if(std::fabs(pix.x[c]-ref.x[c])<0.01f)
+            same++;
+        }
+    EXPECT_EQ(same,pm.w()*pm.h()*ccnt);
+    }
+  catch(std::system_error& e) {
+    if(e.code()==Tempest::GraphicsErrc::NoDevice)
+      Log::d("Skipping graphics testcase: ", e.what()); else
+      throw;
+    }
+  }
+
+
+template<class GraphicsApi>
+void Viewport(const char* outImage) {
+  using namespace Tempest;
+
+  try {
+    GraphicsApi api{ApiFlags::Validation};
+    Device      device(api);
+
+    auto vbo  = device.vbo(vboData,3);
+    auto ibo  = device.ibo(iboData,3);
+
+    auto vert = device.shader("shader/simple_test.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
+    auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
+
+    auto tex  = device.attachment(TextureFormat::RGBA8,150,150);
+
+    auto cmd  = device.commandBuffer();
+    {
+      auto enc = cmd.startEncoding(device);
+      enc.setFramebuffer({{tex,Vec4(0,0,1,1),Tempest::Preserve}});
+      enc.setUniforms(pso);
+
+      enc.setViewport(-50,25,100,100);
+      enc.draw(vbo,ibo);
+
+      enc.setViewport(150,25,100,100);
       enc.draw(vbo,ibo);
     }
 
@@ -344,8 +423,8 @@ void uniforms(const char* outImage) {
     auto vbo  = device.vbo(vboData,3);
     auto ibo  = device.ibo(iboData,3);
 
-    auto vert = device.loadShader("shader/ubo_input.vert.sprv");
-    auto frag = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert = device.shader("shader/ubo_input.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
     auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
 
     auto tex  = device.attachment(format,128,128);
@@ -376,7 +455,7 @@ void uniforms(const char* outImage) {
   }
 
 template<class GraphicsApi>
-void ssboDispath() {
+void Compute() {
   using namespace Tempest;
 
   try {
@@ -388,7 +467,7 @@ void ssboDispath() {
     auto input  = device.ssbo(inputCpu,sizeof(inputCpu));
     auto output = device.ssbo(nullptr, sizeof(inputCpu));
 
-    auto cs     = device.loadShader("shader/simple_test.comp.sprv");
+    auto cs     = device.shader("shader/simple_test.comp.sprv");
     auto pso    = device.pipeline(cs);
 
     auto ubo    = device.descriptors(pso.layout());
@@ -420,7 +499,131 @@ void ssboDispath() {
   }
 
 template<class GraphicsApi>
-void imageCompute(const char* outImage) {
+void DispathToDraw(const char* outImage) {
+  using namespace Tempest;
+
+  try {
+    GraphicsApi api{ApiFlags::Validation};
+    Device      device(api);
+
+    auto vbo    = device.vbo(vboData,3);
+    auto ibo    = device.ibo(iboData,3);
+    auto ssbo   = device.ssbo(nullptr, sizeof(Vec4)*4);
+    auto tex    = device.attachment(TextureFormat::RGBA8,4,4);
+
+    auto cs     = device.shader("shader/fillbuf.comp.sprv");
+    auto psoC   = device.pipeline(cs);
+
+    auto vs     = device.shader("shader/simple_test.vert.sprv");
+    auto fs     = device.shader("shader/comp_test.frag.sprv");
+    auto psoG   = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vs,fs);
+
+    auto uboCs  = device.descriptors(psoC.layout());
+    uboCs.set(0,ssbo);
+
+    auto uboFs  = device.descriptors(psoG.layout());
+    uboFs.set(0,ssbo);
+
+    auto cmd = device.commandBuffer();
+    {
+      auto enc = cmd.startEncoding(device);
+      enc.setUniforms(psoC,uboCs);
+      enc.dispatch(4,1,1);
+
+      enc.setFramebuffer({{tex,Vec4(0,0,0,0),Tempest::Preserve}});
+      enc.setUniforms(psoG,uboFs);
+      enc.draw(vbo,ibo);
+    }
+
+    auto sync = device.fence();
+    device.submit(cmd,sync);
+    sync.wait();
+
+    auto pm = device.readPixels(tex);
+    pm.save(outImage);
+    }
+  catch(std::system_error& e) {
+    if(e.code()==Tempest::GraphicsErrc::NoDevice)
+      Log::d("Skipping graphics testcase: ", e.what()); else
+      throw;
+    }
+  }
+
+template<class GraphicsApi>
+void DrawToDispath() {
+  using namespace Tempest;
+
+  try {
+    GraphicsApi api{ApiFlags::Validation};
+    Device      device(api);
+
+    auto vbo    = device.vbo(vboData,3);
+    auto ibo    = device.ibo(iboData,3);
+    auto tex    = device.attachment(TextureFormat::RGBA8,4,4);
+    auto ssbo   = device.ssbo(nullptr, sizeof(Vec4)*tex.w()*tex.h());
+
+    auto cs     = device.shader("shader/img2buf.comp.sprv");
+    auto psoC   = device.pipeline(cs);
+
+    auto vs     = device.shader("shader/simple_test.vert.sprv");
+    auto fs     = device.shader("shader/simple_test.frag.sprv");
+    auto psoG   = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vs,fs);
+
+    auto uboCs  = device.descriptors(psoC.layout());
+    uboCs.set(0,tex);
+    uboCs.set(1,ssbo);
+
+    auto cmd = device.commandBuffer();
+    {
+      auto enc = cmd.startEncoding(device);
+      enc.setFramebuffer({{tex,Vec4(0,0,1,1),Tempest::Preserve}});
+      enc.setUniforms(psoG);
+      enc.draw(vbo,ibo);
+
+      enc.setFramebuffer({});
+      enc.setUniforms(psoC,uboCs);
+      enc.dispatch(tex.w(),tex.h(),1);
+    }
+
+    auto sync = device.fence();
+    device.submit(cmd,sync);
+    sync.wait();
+
+    std::vector<Vec4> pm(tex.w()*tex.h());
+    device.readBytes(ssbo,pm.data(),pm.size()*sizeof(pm[0]));
+
+    ImageValidator val(pm,tex.w());
+    for(int32_t y=0; y<tex.h(); ++y)
+      for(int32_t x=0; x<tex.w(); ++x) {
+        auto pix = val.at(x,y);
+        auto ref = ImageValidator::Pixel();
+        if(x<y) {
+          ref.x[0] = 0;
+          ref.x[1] = 0;
+          ref.x[2] = 1;
+          ref.x[3] = 1;
+          } else {
+          const float u = (float(x)+0.5f)/float(tex.w());
+          const float v = (float(y)+0.5f)/float(tex.h());
+          ref.x[0] = u;
+          ref.x[1] = v;
+          ref.x[2] = 0;
+          ref.x[3] = 1;
+          }
+
+        for(uint32_t c=0; c<4; ++c)
+          ASSERT_NEAR(pix.x[c],ref.x[c],0.01f);
+        }
+    }
+  catch(std::system_error& e) {
+    if(e.code()==Tempest::GraphicsErrc::NoDevice)
+      Log::d("Skipping graphics testcase: ", e.what()); else
+      throw;
+    }
+  }
+
+template<class GraphicsApi>
+void ComputeImage(const char* outImage) {
   using namespace Tempest;
 
   try {
@@ -428,9 +631,7 @@ void imageCompute(const char* outImage) {
     Device      device(api);
 
     auto img = device.image2d(TextureFormat::RGBA8,128,128,false);
-
-    auto cs  = device.loadShader("shader/image_store_test.comp.sprv");
-    auto pso = device.pipeline(cs);
+    auto pso = device.pipeline(device.shader("shader/image_store_test.comp.sprv"));
 
     auto ubo = device.descriptors(pso.layout());
     ubo.set(0,img);
@@ -457,7 +658,7 @@ void imageCompute(const char* outImage) {
   }
 
 template<class GraphicsApi, Tempest::TextureFormat format>
-void mipMaps(const char* outImage) {
+void MipMaps(const char* outImage) {
   using namespace Tempest;
 
   try {
@@ -467,8 +668,8 @@ void mipMaps(const char* outImage) {
     auto vbo  = device.vbo(vboData,3);
     auto ibo  = device.ibo(iboData,3);
 
-    auto vert = device.loadShader("shader/simple_test.vert.sprv");
-    auto frag = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert = device.shader("shader/simple_test.vert.sprv");
+    auto frag = device.shader("shader/simple_test.frag.sprv");
     auto pso  = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
 
     auto tex  = device.attachment(format,128,128,true);
@@ -480,7 +681,7 @@ void mipMaps(const char* outImage) {
       enc.setFramebuffer({{tex,Vec4(0,0,1,1),Tempest::Preserve}});
       enc.setUniforms(pso);
       enc.draw(vbo,ibo);
-      enc.setFramebuffer(nullptr);
+      enc.setFramebuffer({});
       enc.generateMipmaps(tex);
     }
     device.submit(cmd,sync);
@@ -504,7 +705,7 @@ void S3TC(const char* /*outImage*/) {
     Device      device(api);
 
     auto src = Pixmap("data/img/tst-dxt5.dds");
-    auto tex = device.loadTexture(src);
+    auto tex = device.texture(src);
     EXPECT_EQ(tex.format(),TextureFormat::DXT5);
 
     auto dst = device.readPixels(tex);
@@ -521,7 +722,7 @@ void S3TC(const char* /*outImage*/) {
   }
 
 template<class GraphicsApi>
-void ssboWriteVs() {
+void SsboWrite() {
   using namespace Tempest;
 
   try {
@@ -537,8 +738,8 @@ void ssboWriteVs() {
     auto vbo    = device.vbo(vboData,3);
     auto ibo    = device.ibo(iboData,3);
 
-    auto vert   = device.loadShader("shader/ssbo_write.vert.sprv");
-    auto frag   = device.loadShader("shader/simple_test.frag.sprv");
+    auto vert   = device.shader("shader/ssbo_write.vert.sprv");
+    auto frag   = device.shader("shader/simple_test.frag.sprv");
     auto pso    = device.pipeline<Vertex>(Topology::Triangles,RenderState(),vert,frag);
 
     auto tex    = device.attachment(TextureFormat::RGBA8,32,32);
@@ -546,8 +747,8 @@ void ssboWriteVs() {
     auto ubo    = device.descriptors(pso.layout());
     ubo.set(0,vsOut);
 
-    // setup computer pipeline
-    auto cs     = device.loadShader("shader/ssbo_write_verify.comp.sprv");
+    // setup compute pipeline
+    auto cs     = device.shader("shader/ssbo_write_verify.comp.sprv");
     auto pso2   = device.pipeline(cs);
     auto csOut  = device.ssbo(nullptr, sizeof(Vec4)*3);
 
@@ -562,7 +763,7 @@ void ssboWriteVs() {
       enc.setUniforms(pso,ubo);
       enc.draw(vbo,ibo);
 
-      enc.setFramebuffer(nullptr);
+      enc.setFramebuffer({});
       enc.setUniforms(pso2,ubo2);
       enc.dispatch(3,1,1);
     }
@@ -588,19 +789,24 @@ void ssboWriteVs() {
   }
 
 template<class GraphicsApi>
-void pushConstant() {
+void PushRemapping() {
   using namespace Tempest;
+
+  struct Push {
+    Vec4 vPush = Vec4(0,1,2,3);
+    float val2 = 0;
+    };
 
   try {
     GraphicsApi api{ApiFlags::Validation};
     Device      device(api);
 
-    Vec4 inputCpu = Vec4(0,1,2,3);
+    Push inputCpu;
 
     auto input  = device.ubo (&inputCpu,sizeof(Tempest::Vec4));
     auto output = device.ssbo(nullptr,  sizeof(Tempest::Vec4));
 
-    auto cs     = device.loadShader("shader/push_constant.comp.sprv");
+    auto cs     = device.shader("shader/push_constant.comp.sprv");
     auto pso    = device.pipeline(cs);
 
     auto ubo = device.descriptors(pso.layout());

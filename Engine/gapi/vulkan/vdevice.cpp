@@ -76,7 +76,6 @@ VDevice::VDevice(VulkanInstance &api, const char* gpuName)
 
   std::vector<VkPhysicalDevice> devices(deviceCount);
   vkEnumeratePhysicalDevices(*api.instance, &deviceCount, devices.data());
-  //std::swap(devices[0],devices[1]);
 
   FakeWindow fakeWnd{*this};
   fakeWnd.surface = createSurface(fakeWnd.w);
@@ -166,7 +165,7 @@ bool VDevice::isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surf, const
          (swapChainAdequate || surf==VK_NULL_HANDLE);
   }
 
-void VDevice::deviceQueueProps(VulkanInstance::VkProp& prop,VkPhysicalDevice device, VkSurfaceKHR surf) {
+void VDevice::deviceQueueProps(VulkanInstance::VkProp& prop, VkPhysicalDevice device, VkSurfaceKHR surf) {
   uint32_t queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
@@ -348,9 +347,10 @@ VDevice::MemIndex VDevice::memoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFl
       continue;
     if(memoryProperties.memoryTypes[i].propertyFlags==props) {
       MemIndex ret;
-      ret.typeId = uint32_t(i);
+      ret.typeId      = uint32_t(i);
       // avoid bufferImageGranularity shenanigans
-      ret.heapId = (tiling==VK_IMAGE_TILING_OPTIMAL && this->props.bufferImageGranularity>1) ? ret.typeId*2+1 : ret.typeId*2+0;
+      ret.heapId      = (tiling==VK_IMAGE_TILING_OPTIMAL && this->props.bufferImageGranularity>1) ? ret.typeId*2+1 : ret.typeId*2+0;
+      ret.hostVisible = (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
       return ret;
       }
     }
@@ -362,7 +362,8 @@ VDevice::MemIndex VDevice::memoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFl
       MemIndex ret;
       ret.typeId = uint32_t(i);
       // avoid bufferImageGranularity shenanigans
-      ret.heapId = (tiling==VK_IMAGE_TILING_OPTIMAL && this->props.bufferImageGranularity>1) ? ret.typeId*2+1 : ret.typeId*2+0;
+      ret.heapId      = (tiling==VK_IMAGE_TILING_OPTIMAL && this->props.bufferImageGranularity>1) ? ret.typeId*2+1 : ret.typeId*2+0;
+      ret.hostVisible = (memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
       return ret;
       }
     }

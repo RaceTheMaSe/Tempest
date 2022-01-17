@@ -5,5 +5,9 @@
 int main(int argc, char *argv[]) {
   RenderDoc rdoc;
   ::testing::InitGoogleTest(&argc, argv);
-  RUN_ALL_TESTS();
+
+  RenderDoc::start();
+  auto ret = RUN_ALL_TESTS();
+  RenderDoc::stop();
+  return ret;
   }

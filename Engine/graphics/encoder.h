@@ -31,7 +31,6 @@ class Encoder<Tempest::CommandBuffer> {
 
     void setFramebuffer(std::initializer_list<AttachmentDesc> rd);
     void setFramebuffer(std::initializer_list<AttachmentDesc> rd, AttachmentDesc zd);
-    void setFramebuffer(std::nullptr_t null);
 
     void setUniforms(const RenderPipeline& p, const DescriptorSet &ubo, const void* data, size_t sz);
     void setUniforms(const RenderPipeline& p, const void* data, size_t sz);
@@ -45,6 +44,9 @@ class Encoder<Tempest::CommandBuffer> {
 
     void setViewport(int x,int y,int w,int h);
     void setViewport(const Rect& vp);
+
+    void setScissor(int x,int y,int w,int h);
+    void setScissor(const Rect& vp);
 
     template<class T>
     void draw(const VertexBuffer<T>& vbo) { implDraw(vbo.impl,0,vbo.size(),0,1); }
@@ -77,7 +79,7 @@ class Encoder<Tempest::CommandBuffer> {
   private:
     Encoder(CommandBuffer* ow);
 
-    enum Stage : uint8_t {
+    enum class Stage : uint8_t {
       None = 0,
       Rendering,
       Compute
@@ -86,7 +88,7 @@ class Encoder<Tempest::CommandBuffer> {
     struct State {
       const AbstractGraphicsApi::Pipeline*     curPipeline = nullptr;
       const AbstractGraphicsApi::CompPipeline* curCompute  = nullptr;
-      Stage                                    stage       = None;
+      Stage                                    stage       = Stage::None;
       };
 
     AbstractGraphicsApi::CommandBuffer* impl = nullptr;

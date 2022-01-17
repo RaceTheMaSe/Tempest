@@ -303,6 +303,14 @@ Pixmap& Pixmap::operator=(const Pixmap &p) {
 Pixmap::~Pixmap() = default;
 
 void Pixmap::save(const char *path, const char *ext) const {
+  if(ext==nullptr) {
+    for(size_t i=0; path[i]; ++i)
+      if(path[i]=='.')
+        ext = (path+i+1);
+    }
+  if(ext!=nullptr && ext[0]=='\0')
+    ext = nullptr;
+
   WFile f(path);
   save(f,ext);
   }

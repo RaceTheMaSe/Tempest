@@ -2,15 +2,6 @@
 #include "ui/event.h"
 
 #ifdef __LINUX__
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <X11/Xcursor/Xcursor.h>
-#include <X11/Xatom.h>
-#include <X11/Xos.h>
-#include <X11/keysymdef.h>
-#include <X11/Xutil.h>
-#undef CursorShape
-
 #include <Tempest/Event>
 #include <Tempest/TextCodec>
 #include <Tempest/Window>
@@ -21,6 +12,14 @@
 #include <thread>
 #include <unordered_map>
 
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xcursor/Xcursor.h>
+#include <X11/Xatom.h>
+#include <X11/Xos.h>
+#include <X11/keysymdef.h>
+#include <X11/Xutil.h>
+#undef CursorShape
 
 struct HWND final {
   ::Window wnd{};
@@ -109,14 +108,6 @@ static void maximizeWindow(HWND& w) {
   }
 
 X11Api::X11Api() {
-  XInitThreads();
-  dpy = XOpenDisplay(nullptr);
-
-  if(dpy == nullptr)
-    throw std::runtime_error("cannot connect to X server!");
-
-  root = DefaultRootWindow(dpy);
-
   static const TranslateKeyPair k[] = {
     { XK_Control_L,       Event::K_LControl  },
     { XK_Control_R,       Event::K_RControl  },
@@ -191,11 +182,16 @@ X11Api::X11Api() {
 
     { 0,                  Event::K_NoKey     }
     };
-
   setupKeyTranslate((const TranslateKeyPair*)k,24);
+
+  XInitThreads();
+  dpy = XOpenDisplay(nullptr);
+
+  if(dpy != nullptr)
+    root = DefaultRootWindow(dpy);
   }
 
-void *X11Api::display() {
+void* X11Api::display() {
   return dpy;
   }
 
@@ -209,8 +205,8 @@ void X11Api::alignGeometry(SystemApi::Window *w, Tempest::Window& owner) {
   }
 
 SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, uint32_t w, uint32_t h, const char* title) {
-  //GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-  //XVisualInfo * vi = glXChooseVisual(dpy, 0, att);
+  if(dpy==nullptr)
+    return nullptr;
 
   long visualMask = VisualScreenMask;
   int numberOfVisuals = 0;
@@ -261,6 +257,9 @@ SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, uint32_t w, 
   }
 
 SystemApi::Window *X11Api::implCreateWindow(Tempest::Window *owner, SystemApi::ShowMode sm, const char* title) {
+  if(dpy==nullptr)
+    return nullptr;
+
   Screen* s = DefaultScreenOfDisplay(dpy);
   int width = s->width;
   int height = s->height;

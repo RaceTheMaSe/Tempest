@@ -3,34 +3,104 @@
 using namespace Tempest;
 using namespace Tempest::Detail;
 
+void ResourceState::setRenderpass(AbstractGraphicsApi::CommandBuffer& cmd,
+                                  const AttachmentDesc* desc, size_t descSize,
+                                  const TextureFormat* frm, AbstractGraphicsApi::Texture** att,
+                                  AbstractGraphicsApi::Swapchain** sw, const uint32_t* imgId) {
+  for(size_t i=0; i<descSize; ++i) {
+    const bool discard = desc[i].load!=AccessOp::Preserve;
+    if(isDepthFormat(frm[i]))
+      setLayout(*att[i],ResourceAccess::DepthAttach,discard);
+    else if(frm[i]==TextureFormat::Undefined)
+      setLayout(*sw[i],imgId[i],ResourceAccess::ColorAttach,discard);
+    else
+      setLayout(*att[i],ResourceAccess::ColorAttach,discard);
+    }
+  flush(cmd);
+  for(size_t i=0; i<descSize; ++i) {
+    const bool discard = desc[i].store!=AccessOp::Preserve;
+    if(isDepthFormat(frm[i]))
+      setLayout(*att[i],ResourceAccess::DepthAttach,discard);
+    else if(frm[i]==TextureFormat::Undefined)
+      setLayout(*sw[i],imgId[i],ResourceAccess::ColorAttach,discard); // execution barrier
+    else
+      setLayout(*att[i],ResourceAccess::Sampler,discard);
+    }
+  }
 
-void ResourceState::setLayout(AbstractGraphicsApi::Swapchain& s, uint32_t id, ResourceLayout lay, bool preserve) {
-  State& img   = findImg(nullptr,&s,id,ResourceLayout::Present,preserve);
+void ResourceState::setLayout(AbstractGraphicsApi::Swapchain& s, uint32_t id, ResourceAccess lay, bool discard) {
+  State& img   = findImg(nullptr,&s,id,ResourceAccess::Present,discard);
   img.next     = lay;
-  img.preserve = preserve;
+  img.discard  = discard;
   img.outdated = true;
   }
 
-void ResourceState::setLayout(AbstractGraphicsApi::Texture& a, ResourceLayout lay, bool preserve) {
-  ResourceLayout def = ResourceLayout::Sampler;
-  if(lay==ResourceLayout::DepthAttach)
-    def = ResourceLayout::DepthAttach; // note: no readable depth
+void ResourceState::setLayout(AbstractGraphicsApi::Texture& a, ResourceAccess lay, bool discard) {
+  ResourceAccess def = ResourceAccess::Sampler;
+  if(lay==ResourceAccess::DepthAttach)
+    def = ResourceAccess::DepthAttach; // note: no readable depth
 
-  State& img   = findImg(&a,nullptr,0,def,preserve);
+  State& img   = findImg(&a,nullptr,0,def,discard);
   img.next     = lay;
-  img.preserve = preserve;
+  img.discard  = discard;
   img.outdated = true;
   }
 
-void ResourceState::setLayout(AbstractGraphicsApi::Buffer& b, ResourceLayout lay) {
-  BufState& buf = findBuf(&b);
-  buf.next      = lay;
-  buf.outdated  = true;
+void ResourceState::setLayout(AbstractGraphicsApi::Buffer& buf, ResourceAccess lay) {
+  for(auto& i:bufState)
+    if(i.buf==&buf) {
+      i.next      = lay;
+      i.outdated  = true;
+      return;
+      }
+
+  // read access assumed as default; RaR barrier are equal to NOP
+  if(lay==ResourceAccess::ComputeRead)
+    return;
+
+  BufState s = {};
+  s.buf      = &buf;
+  s.last     = ResourceAccess::ComputeRead;
+  s.next     = lay;
+  s.outdated = true;
+  bufState.push_back(s);
+  }
+
+void ResourceState::joinCompute() {
+  for(auto& i:bufState) {
+    if(i.buf==nullptr)
+      continue;
+    if((i.last & ResourceAccess::ComputeWrite)!=ResourceAccess::ComputeWrite)
+      continue;
+    i.next     = ResourceAccess::ComputeRead;
+    i.outdated = true;
+    }
   }
 
 void ResourceState::flush(AbstractGraphicsApi::CommandBuffer& cmd) {
   AbstractGraphicsApi::BarrierDesc barrier[MaxBarriers];
   uint8_t                          barrierCnt = 0;
+
+  for(auto& i:bufState) {
+    if(!i.outdated)
+      continue;
+    if(i.last==ResourceAccess::ComputeRead && i.next==ResourceAccess::ComputeRead)
+      continue;
+
+    auto& b = barrier[barrierCnt];
+    b.buffer = i.buf;
+    b.prev   = i.last;
+    b.next   = i.next;
+    ++barrierCnt;
+
+    i.last     = i.next;
+    i.outdated = false;
+    if(barrierCnt==MaxBarriers) {
+      emitBarriers(cmd,barrier,barrierCnt);
+      barrierCnt = 0;
+      }
+    }
+
   for(auto& i:imgState) {
     if(!i.outdated)
       continue;
@@ -38,45 +108,40 @@ void ResourceState::flush(AbstractGraphicsApi::CommandBuffer& cmd) {
     b.swapchain = i.sw;
     b.swId      = i.id;
     b.texture   = i.img;
+    b.mip       = uint32_t(-1);
     b.prev      = i.last;
     b.next      = i.next;
-    b.preserve  = i.preserve;
+    b.discard   = i.discard;
     ++barrierCnt;
 
     i.last     = i.next;
     i.outdated = false;
     if(barrierCnt==MaxBarriers) {
-      cmd.barrier(barrier,barrierCnt);
+      emitBarriers(cmd,barrier,barrierCnt);
       barrierCnt = 0;
       }
     }
 
-  for(auto& i:bufState) {
-    if(!i.outdated)
-      continue;
-
-    if(i.last!=ResourceLayout::Undefined &&
-       !(i.last==ResourceLayout::ComputeRead && i.next==i.last)) {
-      auto& b = barrier[barrierCnt];
-      b.buffer = i.buf;
-      b.prev   = i.last;
-      b.next   = i.next;
-      ++barrierCnt;
-      }
-
-    i.last     = i.next;
-    i.outdated = false;
-    if(barrierCnt==MaxBarriers) {
-      cmd.barrier(barrier,barrierCnt);
-      barrierCnt = 0;
-      }
-    }
-  cmd.barrier(barrier,barrierCnt);
+  emitBarriers(cmd,barrier,barrierCnt);
   }
 
 void ResourceState::finalize(AbstractGraphicsApi::CommandBuffer& cmd) {
   if(imgState.size()==0 && bufState.size()==0)
     return; // early-out
+  for(auto& i:bufState) {
+    if(i.buf==nullptr)
+      continue;
+    if((i.last & ResourceAccess::ComputeWrite)!=ResourceAccess::ComputeWrite)
+      continue;
+    i.next     = ResourceAccess::ComputeRead;
+    i.outdated = true;
+    }
+  for(auto& i:imgState) {
+    if(i.sw==nullptr)
+      continue;
+    i.next     = ResourceAccess::Present;
+    i.outdated = true;
+    }
   flush(cmd);
   imgState.reserve(imgState.size());
   imgState.clear();
@@ -85,7 +150,7 @@ void ResourceState::finalize(AbstractGraphicsApi::CommandBuffer& cmd) {
   }
 
 ResourceState::State& ResourceState::findImg(AbstractGraphicsApi::Texture* img, AbstractGraphicsApi::Swapchain* sw, uint32_t id,
-                                             ResourceLayout def, bool preserve) {
+                                             ResourceAccess def, bool discard) {
   auto nativeImg = img;
   for(auto& i:imgState) {
     if(i.sw==sw && i.id==id && i.img==nativeImg)
@@ -96,21 +161,22 @@ ResourceState::State& ResourceState::findImg(AbstractGraphicsApi::Texture* img, 
   s.id       = id;
   s.img      = img;
   s.last     = def;
-  s.next     = ResourceLayout::Undefined;
-  s.preserve = preserve;
+  s.next     = ResourceAccess::Sampler;
+  s.discard  = discard;
   s.outdated = false;
   imgState.push_back(s);
   return imgState.back();
   }
 
-ResourceState::BufState& ResourceState::findBuf(AbstractGraphicsApi::Buffer* buf) {
-  for(auto& i:bufState)
-    if(i.buf==buf)
-      return i;
-  BufState s={};
-  s.buf      = buf;
-  s.last     = ResourceLayout::Undefined;
-  s.outdated = false;
-  bufState.push_back(s);
-  return bufState.back();
+void ResourceState::emitBarriers(AbstractGraphicsApi::CommandBuffer& cmd, AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) {
+  if(cnt==0)
+    return;
+  std::sort(desc,desc+cnt,[](const AbstractGraphicsApi::BarrierDesc& l, const AbstractGraphicsApi::BarrierDesc& r) {
+    if(l.prev<r.prev)
+      return true;
+    if(l.prev>r.prev)
+      return false;
+    return l.next<r.next;
+    });
+  cmd.barrier(desc,cnt);
   }

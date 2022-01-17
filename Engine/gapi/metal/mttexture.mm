@@ -24,7 +24,12 @@ MtTexture::MtTexture(MtDevice& d, const uint32_t w, const uint32_t h, uint32_t m
 MtTexture::MtTexture(MtDevice& dev, const Pixmap& pm, uint32_t mips, TextureFormat frm)
   :dev(dev), mips(mips) {
   const uint32_t smip  = (isCompressedFormat(frm) ? mips : 1);
-  id<MTLTexture> stage = alloc(frm,pm.w(),pm.h(),smip,MTLStorageModeShared,MTLTextureUsageShaderRead);
+#ifdef __IOS__
+  const MTLStorageMode smode = MTLStorageModeShared;
+#else
+  const MTLStorageMode smode = MTLStorageModeManaged;
+#endif
+  id<MTLTexture> stage = alloc(frm,pm.w(),pm.h(),smip,smode,MTLTextureUsageShaderRead);
 
   try{
     impl = alloc(frm,pm.w(),pm.h(),mips,MTLStorageModePrivate,MTLTextureUsageShaderRead);
@@ -150,7 +155,14 @@ void MtTexture::readPixels(Pixmap& out, TextureFormat frm, const uint32_t w, con
     throw std::runtime_error("not implemented");
   out = Pixmap(w,h,pfrm);
 
-  id<MTLTexture> stage = alloc(frm,w,h,1,MTLStorageModeShared,MTLTextureUsageShaderRead);
+  MTLStorageMode opt = MTLStorageModeManaged;
+#ifdef __IOS__
+  opt = MTLStorageModeShared;
+#else
+  opt = MTLStorageModeManaged;
+#endif
+
+  id<MTLTexture> stage = alloc(frm,w,h,1,opt,MTLTextureUsageShaderRead);
   @autoreleasepool {
     id<MTLCommandBuffer>      cmd = [dev.queue commandBuffer];
     id<MTLBlitCommandEncoder> enc = [cmd blitCommandEncoder];
@@ -162,7 +174,8 @@ void MtTexture::readPixels(Pixmap& out, TextureFormat frm, const uint32_t w, con
                          destinationLevel:0
                          sliceCount:1
                          levelCount:1];
-
+    if(opt==MTLStorageModeManaged)
+      [enc synchronizeResource:stage];
     [enc endEncoding];
     [cmd commit];
     [cmd waitUntilCompleted];

@@ -33,8 +33,7 @@ class VCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
     VCommandBuffer(VDevice &device, VkCommandPoolCreateFlags flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     ~VCommandBuffer() override;
 
-    VkCommandBuffer                impl=nullptr;
-    std::vector<VSwapchain::Sync*> swapchainSync;
+    using AbstractGraphicsApi::CommandBuffer::barrier;
 
     void reset() override;
 
@@ -51,6 +50,7 @@ class VCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
     void endRendering() override;
 
     void setViewport(const Rect& r) override;
+    void setScissor (const Rect& r) override;
 
     void setPipeline(AbstractGraphicsApi::Pipeline& p) override;
     void setBytes   (AbstractGraphicsApi::Pipeline& p, const void* data, size_t size) override;
@@ -65,28 +65,27 @@ class VCommandBuffer:public AbstractGraphicsApi::CommandBuffer {
                      size_t ioffset, size_t isize, size_t voffset, size_t firstInstance, size_t instanceCount) override;
     void dispatch   (size_t x, size_t y, size_t z) override;
 
-    void barrier     (const AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) override;
+    void barrier(const AbstractGraphicsApi::BarrierDesc* desc, size_t cnt) override;
 
-    void changeLayout(AbstractGraphicsApi::Texture& tex, ResourceLayout prev, ResourceLayout next, uint32_t mipId);
-
-    void copy(AbstractGraphicsApi::Buffer& dest, ResourceLayout defLayout, uint32_t width, uint32_t height, uint32_t mip, AbstractGraphicsApi::Texture& src, size_t offset) override;
-    void generateMipmap(AbstractGraphicsApi::Texture& image, ResourceLayout defLayout, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
+    void copy(AbstractGraphicsApi::Buffer& dst, size_t offset, AbstractGraphicsApi::Texture& src, uint32_t width, uint32_t height, uint32_t mip) override;
+    void generateMipmap(AbstractGraphicsApi::Texture& image, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) override;
 
     void copy(AbstractGraphicsApi::Texture& dest, size_t width, size_t height, size_t mip, const AbstractGraphicsApi::Buffer&  src, size_t offset);
     void copy(AbstractGraphicsApi::Buffer&  dest, size_t offsetDest, const AbstractGraphicsApi::Buffer& src, size_t offsetSrc, size_t size);
 
+    void copyNative(AbstractGraphicsApi::Buffer&        dst, size_t offset,
+                    const AbstractGraphicsApi::Texture& src, size_t width, size_t height, size_t mip);
+
     void blit(AbstractGraphicsApi::Texture& src, uint32_t srcW, uint32_t srcH, uint32_t srcMip,
               AbstractGraphicsApi::Texture& dst, uint32_t dstW, uint32_t dstH, uint32_t dstMip);
 
-  private:
-    void implCopy(AbstractGraphicsApi::Buffer&  dest, size_t width, size_t height, size_t mip,
-                  const AbstractGraphicsApi::Texture& src, size_t offset);
-    void implChangeLayout(VkImage dest, VkFormat imageFormat,
-                          VkImageLayout oldLayout, VkImageLayout newLayout, bool discardOld,
-                          uint32_t mipBase, uint32_t mipCount, bool byRegion);
-    void implChangeLayout(AbstractGraphicsApi::Buffer&  buf, ResourceLayout prev, ResourceLayout next);
+    VkCommandBuffer                impl=nullptr;
+    std::vector<VSwapchain::Sync*> swapchainSync;
 
+  private:
     void addDependency(VSwapchain& s, size_t imgId);
+    void emitBarriers(VkPipelineStageFlags src, VkPipelineStageFlags dst, const VkBufferMemoryBarrier* b, uint32_t cnt);
+    void emitBarriers(VkPipelineStageFlags src, VkPipelineStageFlags dst, const VkImageMemoryBarrier* b, uint32_t cnt);
 
     VDevice&                                device;
     VCommandPool                            pool;

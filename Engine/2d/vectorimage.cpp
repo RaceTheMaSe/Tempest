@@ -219,9 +219,10 @@ void VectorImage::Mesh::update(Device& dev, const VectorImage& src, BufferHeap h
     }
   }
 
-void VectorImage::Mesh::draw(Encoder<CommandBuffer>& cmd) {
-  for(auto & b:blocks){
-     if(b.size==0)
+void VectorImage::Mesh::draw(Encoder<CommandBuffer>& cmd) const {
+  for(size_t i=0;i<blocks.size();++i){
+    auto& b = blocks[i];
+    if(b.size==0)
       continue;
     cmd.setUniforms(*b.pipeline,b.desc);
     cmd.draw(vbo,b.begin,b.size);

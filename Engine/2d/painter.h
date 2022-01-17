@@ -53,11 +53,11 @@ class Painter {
     void popState();
 
     void drawRect(float x, float y, float width, float height,
-                  float u1,float v1,float u2,float v2);
-    void drawRect(int x,int y,int width,int height,
-                  float u1,float v1,float u2,float v2);
-    void drawRect(int x,int y,int width,int height,
-                  int u1,int v1,int u2,int v2);
+                  float u1, float v1 ,float u2, float v2);
+    void drawRect(int x, int y, int width, int height,
+                  float u1, float v1, float u2, float v2);
+    void drawRect(int x, int y, int width, int height,
+                  int u1, int v1, int u2, int v2);
     void drawRect(int x,int y,int width,int height);
     void drawRect(int x,int y,unsigned width,unsigned height);
     void drawRect(const Rect& rect);
@@ -144,6 +144,7 @@ class Painter {
                       float u1, float v1, float u2, float v2);
     void implDrawRectF(float x1, float y1, float x2, float y2,
                        float u1, float v1, float u2, float v2);
+    void implDrawWideLine(float width, int x1,int y1,int x2,int y2);
 
     friend class Font;
   };
