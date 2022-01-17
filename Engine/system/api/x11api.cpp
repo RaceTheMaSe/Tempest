@@ -183,12 +183,14 @@ X11Api::X11Api() {
     { 0,                  Event::K_NoKey     }
     };
   setupKeyTranslate((const TranslateKeyPair*)k,24);
-
-  XInitThreads();
+  
+  XInitThreads(); // FIXME: keep previous init logic as the changed variant does not work on a Ubuntu 20.04 X11
   dpy = XOpenDisplay(nullptr);
 
-  if(dpy != nullptr)
-    root = DefaultRootWindow(dpy);
+  if(dpy == nullptr)
+    throw std::runtime_error("cannot connect to X server!");
+
+  root = DefaultRootWindow(dpy);
   }
 
 void* X11Api::display() {
