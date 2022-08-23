@@ -48,7 +48,8 @@ ALCint toAlChannels(ChannelConfig c) {
 std::vector<std::string> SoundDevice::enumerateDevices(bool /*extendedProviders*/, bool beautify) {
   std::vector<std::string> devicesNames;
   if (alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT") == AL_TRUE) {
-    const ALCchar *allDevices = nullptr; const ALCchar *defaultDeviceName = nullptr;
+    const ALCchar *allDevices = nullptr;
+    const ALCchar *defaultDeviceName = nullptr;
     allDevices        = alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
     defaultDeviceName = alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER);
     ALCchar current[4096]={};
@@ -70,6 +71,8 @@ std::vector<std::string> SoundDevice::enumerateDevices(bool /*extendedProviders*
       }
     }
   }
+  else
+    devicesNames.push_back(std::string(alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER)));
   return devicesNames;
 }
 
