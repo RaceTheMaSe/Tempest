@@ -142,13 +142,9 @@ namespace Tempest {
       }
     };
 
-  //! Способы фильтрации текстуры.
   enum class Filter : uint8_t {
-    //! ближайшая фильтрация
     Nearest,
-    //! линейная фильтрация
     Linear,
-    //! Count
     Count
     };
 

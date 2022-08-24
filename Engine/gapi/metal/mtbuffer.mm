@@ -1,7 +1,7 @@
 #include "mtbuffer.h"
 #include "mtdevice.h"
 
-#include "utility/compiller_hints.h"
+#include "utility/compiler_hints.h"
 #include "gapi/graphicsmemutils.h"
 
 #import <Metal/MTLDevice.h>

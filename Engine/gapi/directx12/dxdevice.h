@@ -12,7 +12,7 @@
 #include "gapi/directx12/dxcommandbuffer.h"
 #include "exceptions/exception.h"
 #include "utility/spinlock.h"
-#include "utility/compiller_hints.h"
+#include "utility/compiler_hints.h"
 #include "dxallocator.h"
 #include "dxfence.h"
 #include "gapi/uploadengine.h"

@@ -4,7 +4,7 @@
 #include <Tempest/RenderState>
 #include <Tempest/Except>
 
-#include "../utility/compiller_hints.h"
+#include "../utility/compiler_hints.h"
 #include "mtsamplercache.h"
 #import  <Metal/MTLPixelFormat.h>
 #import  <Metal/MTLVertexDescriptor.h>

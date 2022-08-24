@@ -21,14 +21,14 @@ class Signal<void(Args...args)> {
 
     template<class T,class Base,class Ret,class ... TArgs>
     void bind(T* obj,Ret (Base::*fn)(TArgs...a)) {
-      using Check=decltype((std::declval<T>().*fn)(std::declval<Args>()...)); // beautify compiller error message
+      using Check=decltype((std::declval<T>().*fn)(std::declval<Args>()...)); // beautify compiler error message
       static_assert(std::is_same<Check,Ret>::value,""); // unused type warning
       storage.template push<TImpl<T,Base,Ret,TArgs...>>(obj,fn);
       }
 
     template<class T,class Base,class Ret,class ... TArgs>
     void bind(T* obj,Ret (Base::*fn)(TArgs...a) const) {
-      using Check=decltype((std::declval<T>().*fn)(std::declval<Args>()...)); // beautify compiller error message
+      using Check=decltype((std::declval<T>().*fn)(std::declval<Args>()...)); // beautify compiler error message
       static_assert(std::is_same<Check,Ret>::value,""); // unused type warning
       storage.template push<TImplConst<T,Base,Ret,TArgs...>>(obj,fn);
       }
