@@ -17,7 +17,8 @@ class ShaderReflection final {
       SsboRW =3,
       ImgR   =4,
       ImgRW  =5,
-      Push   =6,
+      Push   =6
+      // Sampler=7, // hlsl has shared samplers and images that are needed for proper init in pShader
       };
 
     enum Stage : uint8_t {

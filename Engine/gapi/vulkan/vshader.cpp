@@ -21,6 +21,7 @@ VShader::VShader(VDevice& device, const void *source, size_t src_size)
 
   {
   spirv_cross::Compiler comp(createInfo.pCode,uint32_t(src_size/4));
+  comp.build_combined_image_samplers();
   ShaderReflection::getVertexDecl(vdecl,comp);
   ShaderReflection::getBindings(lay,comp);
   }

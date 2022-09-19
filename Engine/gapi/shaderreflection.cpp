@@ -121,6 +121,26 @@ void ShaderReflection::getBindings(std::vector<Binding>&  lay,
     b.spvId  = resource.id;
     lay.push_back(b);
     }
+  // for(auto &resource : resources.separate_images) { // HACK: build_combined() solves for a first iteration maybe .... seperate images are treated as sampled images, this was to get hlsl texture samplers considered at least..of course wrong
+  //   unsigned binding = comp.get_decoration(resource.id, spv::DecorationBinding);
+  //   auto&    t       = comp.get_type_from_variable(resource.id);
+  //   Binding b;
+  //   b.layout = binding;
+  //   b.cls    = ImgR; // FIXME: are seperate images also possibly to write...probably yes
+  //   b.stage  = s;
+  //   b.spvId  = resource.id;
+  //   lay.push_back(b);
+  //   }
+  // for(auto &resource : resources.separate_samplers) {
+  //   unsigned binding = comp.get_decoration(resource.id, spv::DecorationBinding);
+  //   auto&    t       = comp.get_type_from_variable(resource.id);
+  //   Binding b;
+  //   b.layout = binding;
+  //   b.cls    = Ubo; // NOTE: vulkan mapping zero is sampler and used as ubo in this implementation...what I am missing?
+  //   b.stage  = s;
+  //   b.spvId  = resource.id;
+  //   lay.push_back(b);
+  //   }
   }
 
 void ShaderReflection::merge(std::vector<ShaderReflection::Binding>& ret,
