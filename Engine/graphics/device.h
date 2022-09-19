@@ -126,7 +126,7 @@ class Device {
     DescriptorSet        descriptors(const ComputePipeline& pso) { return descriptors(pso.layout()); }
     DescriptorSet        descriptors(const PipelineLayout&  lay);
 
-    Texture2d            texture    (const Pixmap& pm, const bool mips = true);
+    Texture2d            texture    (const Pixmap& pm, const bool mips = true, uint32_t maxMipsLevel=uint32_t(-1));
     Attachment           attachment (TextureFormat frm, const uint32_t w, const uint32_t h, const bool mips = false);
     ZBuffer              zbuffer    (TextureFormat frm, const uint32_t w, const uint32_t h);
     StorageImage         image2d    (TextureFormat frm, const uint32_t w, const uint32_t h, const bool mips = false);

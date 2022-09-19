@@ -132,7 +132,7 @@ ZBuffer Device::zbuffer(TextureFormat frm, const uint32_t w, const uint32_t h) {
   return ZBuffer(std::move(t),devProps.hasSamplerFormat(frm));
   }
 
-Texture2d Device::texture(const Pixmap &pm, const bool mips) {
+Texture2d Device::texture(const Pixmap &pm, const bool mips, uint32_t /*maxMipsLevel*/) {
   TextureFormat format = Pixmap::toTextureFormat(pm.format());
   uint32_t      mipCnt = mips ? mipCount(pm.w(),pm.h()) : 1;
   const Pixmap* p=&pm;
