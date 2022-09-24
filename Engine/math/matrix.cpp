@@ -623,12 +623,12 @@ Tempest::Vec3 Matrix4x4::position() const {
   return pos;
   }
 
-// from btMatrix
+// from btMatrix - only 180 degree supported
 Tempest::Vec3 Matrix4x4::yawPitchRoll() const {
   float yaw   = std::atan2(at(1,0),at(0,0));
   float pitch = std::asin(-at(2,0));
   float roll  = std::atan2(at(2,1),at(2,3));
-  if(pitch==M_PI_2) {
+  if(pitch-M_PI_2 < std::numeric_limits<float>::epsilon()) {
     if(yaw>0)
       yaw-=(float)M_PI;
     else
