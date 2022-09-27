@@ -539,7 +539,7 @@ static ALenum SetSourcefv(ALsource *Source, ALCcontext *Context, SrcFloatProp pr
         case sfDistanceModel:
         case sfDirectFilterGainHFAuto:
         case sfAuxSendFilterGainAuto:
-        case sfAuxSendFilterGainHFAuto:            
+        case sfAuxSendFilterGainHFAuto:
         case sfDirectChannelsSOFT:
             ival = (ALint)values[0];
             return SetSourceiv(Source, Context, (SrcIntProp)prop, &ival);

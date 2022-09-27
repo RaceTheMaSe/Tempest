@@ -146,8 +146,8 @@ std::unique_ptr<char[]> Sound::readWAVFull(IDevice &f, WAVEHeader& header, FmtCh
   if(f.read(&header,sizeof(WAVEHeader))!=sizeof(WAVEHeader))
     return nullptr;
 
-  if(std::memcmp("RIFF",(char*)header.riff,4)!=0 ||
-     std::memcmp("WAVE",(char*)header.wave,4)!=0)
+  if(std::memcmp("RIFF",header.riff,4)!=0 ||
+     std::memcmp("WAVE",header.wave,4)!=0)
     return nullptr;
 
   while(true){
@@ -238,7 +238,7 @@ int Sound::decodeAdPcmBlock(int16_t *outbuf, const uint8_t *inbuf, size_t inbufs
 
   for(int ch=0; ch<channels; ch++) {
     pcmdata[ch] = *outbuf++ = int16_t(inbuf [0] | (inbuf [1] << 8));
-    index[ch] = (int8_t)inbuf[2];
+    index[ch] = inbuf[2];
 
     if(index[ch]<0 || index[ch]>88 || inbuf[3])     // sanitize the input a little...
       return 0;

@@ -95,7 +95,7 @@ struct SoundEffect::Impl {
 
       int bufC = (bufInQueue-bufProcessed);
       if(bufC>2){
-        //alWait(ctx); // uncommented for Android and reverb effect extension - not to wait may be wrong but lets see ... this wait blocks the program from switching worlds and exiting and receiving a signal to unlock
+        //alWait(ctx); // FIXME: uncommented for Android and reverb effect extension - not to wait may be wrong but lets see ... this wait blocks the program from switching worlds and exiting and receiving a signal to unlock
         continue;
         }
 
