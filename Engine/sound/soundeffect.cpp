@@ -330,7 +330,7 @@ float SoundEffect::volume() const {
 
 void SoundEffect::setReverb(float val) {
   if(impl->source==0 || !impl->dev) {
-    Log::e("Sound device invalid while accessing reverb");
+    // Log::e("Sound device invalid while accessing reverb");
     return;
     }
   if(!impl->dev->efxValid())
@@ -344,7 +344,7 @@ void SoundEffect::setReverb(float val) {
 
 void SoundEffect::setReverbDecay(float val) {
   if(impl->source==0 || !impl->dev) {
-    Log::e("Sound device invalid while accessing reverb decay");
+    // Log::e("Sound device invalid while accessing reverb decay");
     return;
     }
   if(!impl->dev->efxValid())
@@ -360,7 +360,7 @@ void SoundEffect::setReverbDecay(float val) {
 void SoundEffect::setReverbCategory(ReverbCategory category) {
   impl->category = category;
   if(!impl->dev) {
-    Log::e("Sound device invalid while accessing reverb category");
+    // Log::e("Sound device invalid while accessing reverb category");
     return;
   }
   if(!impl->dev->efxValid())
