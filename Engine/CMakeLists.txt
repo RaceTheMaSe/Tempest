@@ -9,7 +9,7 @@ option(TEMPEST_BUILD_SHARED "Build shared Tempest." ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-if(MSVC)
+if(WIN32)
   option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" ON )
 else()
   option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" OFF)
