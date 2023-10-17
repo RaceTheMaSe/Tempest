@@ -236,6 +236,12 @@ elseif(UNIX)
   target_link_libraries(${PROJECT_NAME} PRIVATE X11 Xcursor)
 endif()
 
+# PDB debug symbols with MinGW LLVM
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${PROJECT_NAME} PUBLIC -gcodeview)
+    target_link_options(${PROJECT_NAME} PUBLIC -Wl,--pdb=)
+endif()
+
 install(
     TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
