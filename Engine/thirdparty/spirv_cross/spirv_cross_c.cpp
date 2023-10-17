@@ -251,7 +251,7 @@ spvc_result spvc_context_parse_spirv(spvc_context context, const SpvId *spirv, s
 		pir->context = context;
 		Parser parser(spirv, word_count);
 		parser.parse();
-		pir->parsed = move(parser.get_parsed_ir());
+		pir->parsed = std::move(parser.get_parsed_ir());
 		*parsed_ir = pir.get();
 		context->allocations.push_back(std::move(pir));
 	}
@@ -283,7 +283,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 		{
 		case SPVC_BACKEND_NONE:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new Compiler(move(parsed_ir->parsed)));
+				comp->compiler.reset(new Compiler(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new Compiler(parsed_ir->parsed));
 			break;
