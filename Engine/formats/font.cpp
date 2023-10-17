@@ -13,7 +13,7 @@
 #include <algorithm>
 
 #ifdef __WINDOWS__
-#include <Shlobj.h>
+#include <shlobj.h>
 #endif
 
 using namespace Tempest;

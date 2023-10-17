@@ -24,7 +24,7 @@ struct PixmapCodecPng::Impl {
                Pixmap::Format& frm, uint32_t& outW, uint32_t& outH, uint32_t& outBpp) {
 #if defined(_MSC_VER)
     if(setjmp((_JBTYPE*)png_jmpbuf(png_ptr))) {
-#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__ANDROID__)
+#elif (defined(__GNUC__) || defined(__clang__)) && (!defined(__ANDROID__) && !defined(_WIN32))
     if(setjmp((struct __jmp_buf_tag*)png_jmpbuf(png_ptr))) {
 #else
     if(setjmp(png_jmpbuf(png_ptr))) {
@@ -241,7 +241,7 @@ bool PixmapCodecPng::save(ODevice& f, const char* ext, const uint8_t* data,
 
 #if defined(_MSC_VER)
   if(setjmp((_JBTYPE*)png_jmpbuf(png_ptr))) {
-#elif (defined(__GNUC__) || defined (__clang__)) && !defined(__ANDROID__)
+#elif (defined(__GNUC__) || defined(__clang__)) && (!defined(__ANDROID__) && !defined(_WIN32))
   if(setjmp((struct __jmp_buf_tag*)png_jmpbuf(png_ptr))) {
 #else
   if(setjmp(png_jmpbuf(png_ptr))) {

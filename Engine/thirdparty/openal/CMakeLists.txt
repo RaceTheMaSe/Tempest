@@ -61,7 +61,7 @@ file(GLOB SOURCES
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${AlcBackend})
 
 if(WIN32)
-  target_link_libraries(${PROJECT_NAME} PRIVATE dxguid Dsound winmm Kernel32)
+  target_link_libraries(${PROJECT_NAME} PRIVATE dxguid dsound winmm kernel32)
 elseif(ANDROID)
   target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES)
 elseif(APPLE)

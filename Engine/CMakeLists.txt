@@ -188,6 +188,19 @@ file(GLOB SOURCES
     "**/**/**/**/*.cpp"
   )
 
+# remove files of graphics API that are not built
+if(NOT TEMPEST_BUILD_VULKAN)
+  list(FILTER SOURCES EXCLUDE REGEX "vulkan")
+endif()
+if(NOT TEMPEST_BUILD_METAL)
+  list(FILTER SOURCES EXCLUDE REGEX "^mt")
+endif()
+if(NOT TEMPEST_BUILD_DIRECTX12)
+  list(FILTER SOURCES EXCLUDE REGEX "^dx")
+  list(FILTER SOURCES EXCLUDE REGEX "comptr")
+  list(FILTER SOURCES EXCLUDE REGEX "guid")
+endif()
+
 if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "11.2")
   enable_language(OBJCXX)
@@ -213,7 +226,7 @@ set_target_properties(
     )
 
 if(WIN32)
-  target_link_libraries(${PROJECT_NAME} PRIVATE shlwapi Kernel32)
+  target_link_libraries(${PROJECT_NAME} PRIVATE shlwapi kernel32 pthread)
 elseif(ANDROID)
   target_link_libraries(${PROJECT_NAME} PRIVATE log android vulkan)
 elseif(APPLE)

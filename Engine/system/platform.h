@@ -1,9 +1,11 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
-  #undef  __WINDOWS_PHONE__
-  #define __WINDOWS_PHONE__ 1
+#if defined(WINAPI_FAMILY_PHONE_APP)
+  #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP)
+    #undef  __WINDOWS_PHONE__
+    #define __WINDOWS_PHONE__ 1
+  #endif
 #endif
 
 #if (defined(WIN32) || defined(_WIN32)) && !defined(__WINDOWS_PHONE__)
