@@ -46,13 +46,13 @@ static void stbiSkip(void* user, int n) {
   }
 
 static void stbi__start_file(stbi__context *s, StbContext *f) {
-  static stbi_io_callbacks stbi__stdio_callbacks = {
+  static stbi_io_callbacks stbi_stdio_callbacks = {
     stbiRead,
     stbiSkip,
     stbiEof,
     };
 
-  stbi__start_callbacks(s,&stbi__stdio_callbacks,reinterpret_cast<void*>(f));
+  stbi__start_callbacks(s,&stbi_stdio_callbacks,reinterpret_cast<void*>(f));
   }
 
 static uint8_t* loadUnorm(stbi__context& s, uint32_t &ow, uint32_t &oh, Pixmap::Format &frm) {

@@ -49,9 +49,9 @@ std::vector<std::string> SoundDevice::enumerateDevices(bool /*extendedProviders*
   std::vector<std::string> devicesNames;
   if (alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT") == AL_TRUE) {
     const ALCchar *allDevices = nullptr;
-    const ALCchar *defaultDeviceName = nullptr;
+    // const ALCchar *defaultDeviceName = nullptr;
     allDevices        = alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
-    defaultDeviceName = alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER);
+    // defaultDeviceName = alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER);
     ALCchar current[4096]={};
     size_t i=0;
     auto *currBegin = (ALCchar*)current;
@@ -61,7 +61,7 @@ std::vector<std::string> SoundDevice::enumerateDevices(bool /*extendedProviders*
       if(allDevices[i]==0) {
         std::string device(currBegin);
         if(beautify) {
-          if(device.find("HDA ")!=std::string::npos) device=device.substr(4);
+          if(device.find("HDA ")!=std::string::npos) device=device.substr(4); // Realtek High Definition Audio
           if(device.find('(')   !=std::string::npos) device=device.substr(0,device.find('(')-1);
           if(device.find(", ")  !=std::string::npos) device.replace(device.find(", "),2," - ");
         }
@@ -230,10 +230,10 @@ void SoundDevice::suspend() {
 
 bool SoundDevice::isClearedOfErrors() {
   std::string errMsg;
-  static ALenum prevErr=0;
+  // static ALenum prevErr=0;
   auto lastErr = alcGetError(data->dev->dev);
   if(lastErr!=0 ) { //&& prevErr!=lastErr
-    prevErr=lastErr;
+    // prevErr=lastErr;
     switch(lastErr) {
       case AL_INVALID_NAME:      errMsg="Invalid name";      break;
       case AL_INVALID_ENUM:      errMsg="Invalid enum";      break;

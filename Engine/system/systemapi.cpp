@@ -93,7 +93,7 @@ uint16_t SystemApi::translateKey(uint64_t scancode) {
 
   for(auto & i:m.k0)
     if( i.src<=scancode &&
-                     scancode<=i.src+9 ){
+                     (int)scancode<=i.src+9 ){
       auto dx = (scancode-i.src);
       return Event::KeyType(i.result + dx);
       }
@@ -279,11 +279,15 @@ void SystemApi::shutdown() {
 void SystemApi::registerApplication(Application *p) {
 #if defined(ANDROID)
   inst().implRegisterApplication(p);
+#else
+  (void)p;
 #endif
 }
 
 void SystemApi::unregisterApplication(Application *p) {
 #if defined(ANDROID)
   inst().implUnregisterApplication(p);
+#else
+  (void)p;
 #endif
 }

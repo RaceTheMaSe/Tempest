@@ -284,12 +284,12 @@ void EventDispatcher::dispatchPointerDown(Widget &wnd, PointerEvent &e) {
   if(auto w = lock(pointerUp[e.pointerId])) {
     //Tempest::Log::i("Pointer down");
     auto p = e.pos() - w->widget->mapToRoot(Point());
-    PointerEvent e1(e.pointerId,
+    PointerEvent e2(e.pointerId,
                   (float)p.x,
                   (float)p.y,
                   Event::Type::PointerDown );
     
-    w->widget->pointerDownEvent(e1);
+    w->widget->pointerDownEvent(e2);
     if(e.isAccepted()) {
       return;
     }

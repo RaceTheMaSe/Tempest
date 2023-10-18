@@ -105,11 +105,11 @@ struct DxCommandBuffer::Blit : Stage {
     }
 
   void exec(DxCommandBuffer& cmd) override {
-    auto& impl = *cmd.impl;
-    auto& dev  = cmd.dev;
+    auto& cImpl = *cmd.impl;
+    auto& cDev  = cmd.dev;
 
     const DXGI_FORMAT frm = src.format;
-    impl.OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
+    cImpl.OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
 
     D3D12_VIEWPORT vp={};
     vp.TopLeftX = float(0.f);
@@ -118,25 +118,25 @@ struct DxCommandBuffer::Blit : Stage {
     vp.Height   = float(dstH);
     vp.MinDepth = 0.f;
     vp.MaxDepth = 1.f;
-    impl.RSSetViewports(1, &vp);
+    cImpl.RSSetViewports(1, &vp);
 
     D3D12_RECT sr={};
     sr.left   = 0;
     sr.top    = 0;
     sr.right  = LONG(dstW);
     sr.bottom = LONG(dstH);
-    impl.RSSetScissorRects(1, &sr);
+    cImpl.RSSetScissorRects(1, &sr);
 
     desc.set(0,&src,srcMip,Sampler2d::bilinear(),src.format);
 
-    auto& shader = *dev.blit.handler;
-    impl.SetPipelineState(&shader.instance(frm));
-    impl.SetGraphicsRootSignature(shader.sign.get());
-    impl.IASetPrimitiveTopology(shader.topology);
+    auto& shader = *cDev.blit.handler;
+    cImpl.SetPipelineState(&shader.instance(frm));
+    cImpl.SetGraphicsRootSignature(shader.sign.get());
+    cImpl.IASetPrimitiveTopology(shader.topology);
     cmd.implSetUniforms(desc,false);
 
-    impl.IASetVertexBuffers(0,0,nullptr);
-    impl.DrawInstanced(6,1,0,0);
+    cImpl.IASetVertexBuffers(0,0,nullptr);
+    cImpl.DrawInstanced(6,1,0,0);
     };
 
   DxTexture&                   src;
@@ -174,8 +174,8 @@ struct DxCommandBuffer::MipMaps : Stage {
     }
 
   void blit(DxCommandBuffer& cmd, uint32_t srcMip, uint32_t dstW, uint32_t dstH) {
-    auto& impl = *cmd.impl;
-    auto& dev  = cmd.dev;
+    auto& cImpl = *cmd.impl;
+    auto& cDev  = cmd.dev;
 
     D3D12_VIEWPORT vp={};
     vp.TopLeftX = float(0.f);
@@ -184,49 +184,49 @@ struct DxCommandBuffer::MipMaps : Stage {
     vp.Height   = float(dstH);
     vp.MinDepth = 0.f;
     vp.MaxDepth = 1.f;
-    impl.RSSetViewports(1, &vp);
+    cImpl.RSSetViewports(1, &vp);
 
     D3D12_RECT sr={};
     sr.left   = 0;
     sr.top    = 0;
     sr.right  = LONG(dstW);
     sr.bottom = LONG(dstH);
-    impl.RSSetScissorRects(1, &sr);
+    cImpl.RSSetScissorRects(1, &sr);
 
-    desc.emplace_back(*dev.blitLayout.handler);
+    desc.emplace_back(*cDev.blitLayout.handler);
     DxDescriptorArray& ubo = this->desc.back();
     ubo.set(0,&img,srcMip,Sampler2d::bilinear(),img.format);
     cmd.implSetUniforms(ubo,false);
 
-    impl.DrawInstanced(6,1,0,0);
+    cImpl.DrawInstanced(6,1,0,0);
     }
 
   void exec(DxCommandBuffer& cmd) override {
-    auto& impl = *cmd.impl;
-    auto& dev  = cmd.dev;
+    auto& cImpl = *cmd.impl;
+    auto& cDev  = cmd.dev;
 
     int32_t w = int32_t(texW);
     int32_t h = int32_t(texH);
 
-    auto& shader = *dev.blit.handler;
-    impl.SetPipelineState(&shader.instance(img.format));
-    impl.SetGraphicsRootSignature(shader.sign.get());
-    impl.IASetPrimitiveTopology(shader.topology);
+    auto& shader = *cDev.blit.handler;
+    cImpl.SetPipelineState(&shader.instance(img.format));
+    cImpl.SetGraphicsRootSignature(shader.sign.get());
+    cImpl.IASetPrimitiveTopology(shader.topology);
 
-    impl.IASetVertexBuffers(0,0,nullptr);
+    cImpl.IASetVertexBuffers(0,0,nullptr);
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle  = rtvHeap->GetCPUDescriptorHandleForHeapStart();
-    auto                        rtvHeapInc = dev.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    auto                        rtvHeapInc = cDev.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    auto& resState = cmd.resState;
-    resState.setLayout(img,ResourceAccess::ColorAttach);
-    resState.flush(cmd);
+    auto& cResState = cmd.resState;
+    cResState.setLayout(img,ResourceAccess::ColorAttach);
+    cResState.flush(cmd);
     for(uint32_t i=1; i<mipLevels; ++i) {
       const int mw = (w==1 ? 1 : w/2);
       const int mh = (h==1 ? 1 : h/2);
 
       cmd.barrier(img,ResourceAccess::ColorAttach,ResourceAccess::Sampler,i-1);
-      impl.OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
+      cImpl.OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
       blit(cmd,i-1,mw,mh);
 
       w             = mw;
@@ -253,7 +253,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
     }
 
   void exec(DxCommandBuffer& cmd) override {
-    auto& impl = *cmd.impl;
+    auto& cImpl = *cmd.impl;
 
     struct PushUbo {
       int32_t mip     = 0;
@@ -268,25 +268,25 @@ struct DxCommandBuffer::CopyBuf : Stage {
     desc.set    (0,&src,0,Sampler2d::nearest(),src.format);
     desc.setSsbo(1,&dst,0);
 
-    impl.SetPipelineState(prog.impl.get());
-    impl.SetComputeRootSignature(prog.sign.get());
+    cImpl.SetPipelineState(prog.impl.get());
+    cImpl.SetComputeRootSignature(prog.sign.get());
     cmd.implSetUniforms(desc,true);
-    impl.SetComputeRoot32BitConstants(UINT(prog.pushConstantId),UINT(sizeof(push)/4),&push,0);
+    cImpl.SetComputeRoot32BitConstants(UINT(prog.pushConstantId),UINT(sizeof(push)/4),&push,0);
     const size_t maxWG = 65535;
 
-    auto& resState = cmd.resState;
-    resState.setLayout(dst,ResourceAccess::ComputeWrite);
-    resState.setLayout(src,ResourceAccess::TransferSrc);
-    resState.flush(cmd);
+    auto& cResState = cmd.resState;
+    cResState.setLayout(dst,ResourceAccess::ComputeWrite);
+    cResState.setLayout(src,ResourceAccess::TransferSrc);
+    cResState.flush(cmd);
 
-    impl.Dispatch(UINT(std::min(outSize,maxWG)),UINT((outSize+maxWG-1)%maxWG),1u);
+    cImpl.Dispatch(UINT(std::min(outSize,maxWG)),UINT((outSize+maxWG-1)%maxWG),1u);
 
-    resState.setLayout(dst,ResourceAccess::ComputeRead);
-    resState.setLayout(src,ResourceAccess::Sampler); // TODO: storage images
+    cResState.setLayout(dst,ResourceAccess::ComputeRead);
+    cResState.setLayout(src,ResourceAccess::Sampler); // TODO: storage images
     }
 
   DxCompPipeline& shader(DxCommandBuffer& cmd, int32_t& bitCnt, int32_t& compCnt) {
-    auto& dev = cmd.dev;
+    auto& cDev = cmd.dev;
     switch(src.format) {
       case DXGI_FORMAT_R8_TYPELESS:
       case DXGI_FORMAT_R8_UNORM:
@@ -295,7 +295,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R8_SINT:
         bitCnt  = 8;
         compCnt = 1;
-        return *dev.copyS.handler;
+        return *cDev.copyS.handler;
       case DXGI_FORMAT_R8G8_TYPELESS:
       case DXGI_FORMAT_R8G8_UNORM:
       case DXGI_FORMAT_R8G8_UINT:
@@ -303,7 +303,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R8G8_SINT:
         bitCnt  = 8;
         compCnt = 2;
-        return *dev.copyS.handler;
+        return *cDev.copyS.handler;
       case DXGI_FORMAT_R8G8B8A8_TYPELESS:
       case DXGI_FORMAT_R8G8B8A8_UNORM:
       case DXGI_FORMAT_R8G8B8A8_UINT:
@@ -311,7 +311,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R8G8B8A8_SINT:
         bitCnt  = 8;
         compCnt = 4;
-        return *dev.copy.handler;
+        return *cDev.copy.handler;
       case DXGI_FORMAT_R16_TYPELESS:
       case DXGI_FORMAT_R16_UNORM:
       case DXGI_FORMAT_R16_UINT:
@@ -319,7 +319,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R16_SINT:
         bitCnt  = 16;
         compCnt = 1;
-        return *dev.copyS.handler;
+        return *cDev.copyS.handler;
       case DXGI_FORMAT_R16G16_TYPELESS:
       case DXGI_FORMAT_R16G16_UNORM:
       case DXGI_FORMAT_R16G16_UINT:
@@ -327,7 +327,7 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R16G16_SINT:
         bitCnt  = 16;
         compCnt = 2;
-        return *dev.copyS.handler;
+        return *cDev.copyS.handler;
       case DXGI_FORMAT_R16G16B16A16_TYPELESS:
       case DXGI_FORMAT_R16G16B16A16_UNORM:
       case DXGI_FORMAT_R16G16B16A16_UINT:
@@ -335,11 +335,11 @@ struct DxCommandBuffer::CopyBuf : Stage {
       case DXGI_FORMAT_R16G16B16A16_SINT:
         bitCnt  = 16;
         compCnt = 4;
-        return *dev.copyS.handler;
+        return *cDev.copyS.handler;
       default:
         dxAssert(E_NOTIMPL);
       }
-    return *dev.copy.handler;
+    return *cDev.copy.handler;
     }
 
   DxBuffer&         dst;

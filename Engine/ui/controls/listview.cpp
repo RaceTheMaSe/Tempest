@@ -55,8 +55,8 @@ void ListView::invalidateView(){
   auto& w = sc.centralWidget();
   while(w.widgetsCount()>0) {
     size_t i=w.widgetsCount()-1;
-    auto wx = w.takeWidget(&w.widget(i));
-    delegate->removeView(wx,i);
+    auto wy = w.takeWidget(&w.widget(i));
+    delegate->removeView(wy,i);
     }
 
   updateView();
@@ -71,15 +71,15 @@ void ListView::updateView() {
   // remove extra widgets
   while(w.widgetsCount()>cnt) {
     size_t i=w.widgetsCount()-1;
-    auto wx = w.takeWidget(&w.widget(i));
-    delegate->removeView(wx,i);
+    auto wy = w.takeWidget(&w.widget(i));
+    delegate->removeView(wy,i);
     }
 
   // update old-ones
   for(size_t i=0;i<cnt && i<wcount;++i) {
-    auto wx = w.takeWidget(&w.widget(i));
-    wx = delegate->update(wx,i);
-    w.addWidget(wx,i);
+    auto wy = w.takeWidget(&w.widget(i));
+    wy = delegate->update(wy,i);
+    w.addWidget(wy,i);
     }
 
   // new widgets

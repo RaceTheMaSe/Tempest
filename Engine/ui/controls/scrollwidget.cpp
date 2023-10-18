@@ -16,18 +16,18 @@ struct ScrollWidget::BoxLayout: public Tempest::LinearLayout {
     LinearLayout::applyLayout();
     }
 
-  Size wrapContent(Widget& ow, Orientation orient, bool inParent) {
+  Size wrapContent(Widget& owg, Orientation orient, bool inParent) {
     const Widget* root=inParent ? sc : nullptr;
     int sw=0,sh=0;
 
     int vcount = 0;
-    for(size_t i=0;i<ow.widgetsCount();i++) {
-      auto& wx = ow.widget(i);
-      if( !wx.isVisible() )
+    for(size_t i=0;i<owg.widgetsCount();i++) {
+      auto& wg = owg.widget(i);
+      if( !wg.isVisible() )
         continue;
       vcount++;
-      Size s   = wx.sizeHint();
-      Size min = wx.minSize();
+      Size s   = wg.sizeHint();
+      Size min = wg.minSize();
       s.w = std::max(s.w,min.w);
       s.h = std::max(s.h,min.h);
 
@@ -42,17 +42,17 @@ struct ScrollWidget::BoxLayout: public Tempest::LinearLayout {
 
     if(orient==Horizontal) {
       if(vcount>0)
-        sw += (vcount-1)*ow.spacing();
+        sw += (vcount-1)*owg.spacing();
       if(root)
         sh=std::max(sh,root->h());
       } else {
       if(vcount>0)
-        sh += (vcount-1)*ow.spacing();
+        sh += (vcount-1)*owg.spacing();
       if(root)
         sw=std::max(sw,root->w());
       }
 
-    const Margin& m = ow.margins();
+    const Margin& m = owg.margins();
     if(orient==Horizontal)
       sw += m.xMargin(); else
       sh += m.yMargin();
@@ -194,7 +194,7 @@ bool ScrollWidget::updateScrolls(Orientation orient,bool noRetry) {
   return true;
   }
 
-void ScrollWidget::emplace(Widget& hlp, Widget& cen, Widget *scH, Widget *scV, Size hint, const Rect& place) {
+void ScrollWidget::emplace(Widget& hlp, Widget& cw, Widget *scH, Widget *scV, Size hint, const Rect& place) {
   int sp = spacing();
   int dx = scV==nullptr ? 0 : (scV->sizeHint().w);
   int dy = scH==nullptr ? 0 : (scH->sizeHint().h);
@@ -210,7 +210,7 @@ void ScrollWidget::emplace(Widget& hlp, Widget& cen, Widget *scH, Widget *scV, S
     dy+=sp;
 
   hlp.setGeometry(place.x,place.y,std::max(0,place.w-dx),std::max(0,place.h-dy));
-  cen.resize(std::max(0,hint.w-dx),std::max(0,hint.h-dy));
+  cw.resize(std::max(0,hint.w-dx),std::max(0,hint.h-dy));
   }
 
 Widget *ScrollWidget::findFirst() {

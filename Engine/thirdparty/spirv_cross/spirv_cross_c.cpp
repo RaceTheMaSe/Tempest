@@ -366,6 +366,9 @@ spvc_result spvc_compiler_create_compiler_options(spvc_compiler compiler, spvc_c
 			opt->glsl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_common_options();
 			opt->msl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_msl_options();
 			break;
+#else
+		case SPVC_BACKEND_MSL:
+			break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -374,12 +377,18 @@ spvc_result spvc_compiler_create_compiler_options(spvc_compiler compiler, spvc_c
 			opt->glsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_common_options();
 			opt->hlsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_hlsl_options();
 			break;
+#else
+		case SPVC_BACKEND_HLSL:
+			break;
 #endif
 
 #if SPIRV_CROSS_C_API_GLSL
 		case SPVC_BACKEND_GLSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_GLSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
 			opt->glsl = static_cast<CompilerGLSL *>(compiler->compiler.get())->get_common_options();
+			break;
+#else
+		case SPVC_BACKEND_GLSL:
 			break;
 #endif
 
@@ -713,12 +722,13 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		break;
 #endif
 
+	case SPVC_COMPILER_OPTION_UNKNOWN: // workaround if no backend is specified resulting in C4065 - switch statement contains 'default' but no 'case' labels
 	default:
 		options->context->report_error("Unknown option.");
 		return SPVC_ERROR_INVALID_ARGUMENT;
 	}
 
-	return SPVC_SUCCESS;
+	// return SPVC_SUCCESS;
 }
 
 spvc_result spvc_compiler_install_compiler_options(spvc_compiler compiler, spvc_compiler_options options)
@@ -730,6 +740,9 @@ spvc_result spvc_compiler_install_compiler_options(spvc_compiler compiler, spvc_
 	case SPVC_BACKEND_GLSL:
 		static_cast<CompilerGLSL &>(*compiler->compiler).set_common_options(options->glsl);
 		break;
+#else
+	case SPVC_BACKEND_GLSL:
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -737,12 +750,18 @@ spvc_result spvc_compiler_install_compiler_options(spvc_compiler compiler, spvc_
 		static_cast<CompilerHLSL &>(*compiler->compiler).set_common_options(options->glsl);
 		static_cast<CompilerHLSL &>(*compiler->compiler).set_hlsl_options(options->hlsl);
 		break;
+#else
+	case SPVC_BACKEND_HLSL:
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_MSL
 	case SPVC_BACKEND_MSL:
 		static_cast<CompilerMSL &>(*compiler->compiler).set_common_options(options->glsl);
 		static_cast<CompilerMSL &>(*compiler->compiler).set_msl_options(options->msl);
+		break;
+#else
+	case SPVC_BACKEND_MSL:
 		break;
 #endif
 

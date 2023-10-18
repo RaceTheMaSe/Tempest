@@ -44,11 +44,11 @@ bool Dir::scan(const char *name, const std::function<void(const std::string&,Fil
 
   std::string tmp;
   while( FindNextFileW(hFind, &ffd)!=0 ){
-    const int len = WideCharToMultiByte(CP_UTF8,0,ffd.cFileName,-1,nullptr,0,nullptr,nullptr);
+    const int l = WideCharToMultiByte(CP_UTF8,0,ffd.cFileName,-1,nullptr,0,nullptr,nullptr);
     if(len<=0)
       continue;
 
-    tmp.resize(size_t(len));
+    tmp.resize(size_t(l));
     WideCharToMultiByte(CP_UTF8,0,ffd.cFileName,-1,&tmp[0],int(tmp.size()),nullptr,nullptr);
 
     if(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -108,10 +108,10 @@ bool Dir::scan(const char16_t *path, const std::function<void (const std::u16str
     return false;
 
   while( FindNextFileW(hFind, &ffd)!=0 ){
-    std::u16string path=reinterpret_cast<const char16_t*>(ffd.cFileName);
+    std::u16string filepath=reinterpret_cast<const char16_t*>(ffd.cFileName);
     if(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-      cb(path,FT_Dir); else
-      cb(path,FT_File);
+      cb(filepath,FT_Dir); else
+      cb(filepath,FT_File);
     }
   if( GetLastError() != ERROR_NO_MORE_FILES )
     return false;

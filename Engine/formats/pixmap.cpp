@@ -76,6 +76,7 @@ struct Pixmap::Impl {
           case 2: noncompresedConv<uint8_t,uint16_t>(w,h, data,other.data, compDst, compSrc); return;
           case 4: noncompresedConv<uint8_t,float>   (w,h, data,other.data, compDst, compSrc); return;
           }
+        [[fallthrough]];
         }
       case 2:{
         switch(byteSrc) {
@@ -83,6 +84,7 @@ struct Pixmap::Impl {
           case 2: noncompresedConv<uint16_t,uint16_t>(w,h, data,other.data, compDst, compSrc); return;
           case 4: noncompresedConv<uint16_t,float>   (w,h, data,other.data, compDst, compSrc); return;
           }
+        [[fallthrough]];
         }
       case 4:{
         switch(byteSrc) {
@@ -152,11 +154,11 @@ struct Pixmap::Impl {
       const Tin*  s   = src +i*eltIn;
 
       Tout tmp[4] = {0,0,0,one};
-      for(uint8_t i=0;i<eltIn;++i)
-        copy(tmp[i],s[i]);
+      for(uint8_t idx=0;idx<eltIn;++idx)
+        copy(tmp[idx],s[idx]);
 
-      for(uint8_t i=0;i<eltOut;++i)
-        copy(pix[i],tmp[i]);
+      for(uint8_t idx=0;idx<eltOut;++idx)
+        copy(pix[idx],tmp[idx]);
       }
     }
 
@@ -164,7 +166,7 @@ struct Pixmap::Impl {
     r = v;
     }
   static void copy(uint8_t& r,uint16_t v){
-    r = v/256;
+    r = uint8_t(v/256);
     }
   static void copy(uint8_t& r,float v){
     r = uint8_t(std::fmax(0.f,std::fmin(v,1.f))*255.f);

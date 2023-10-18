@@ -97,9 +97,9 @@ RFile &RFile::operator =(RFile &&other) noexcept {
 
 size_t RFile::read(void *dest, size_t size) {
 #ifdef __WINDOWS__
-  HANDLE fn          = HANDLE(handle);
+  HANDLE fh          = HANDLE(handle);
   DWORD  dwBytesRead = DWORD(size);
-  DWORD  cnt         = ReadFile(fn, dest, DWORD(size), &dwBytesRead, nullptr) ? dwBytesRead : 0;
+  DWORD  cnt         = ReadFile(fh, dest, DWORD(size), &dwBytesRead, nullptr) ? dwBytesRead : 0;
 
   return cnt;
 #else
@@ -109,8 +109,8 @@ size_t RFile::read(void *dest, size_t size) {
 
 size_t RFile::size() const {
 #ifdef __WINDOWS__
-  HANDLE fn = HANDLE(handle);
-  return GetFileSize(fn,nullptr);
+  HANDLE fh = HANDLE(handle);
+  return GetFileSize(fh,nullptr);
 #else
   FILE* f = reinterpret_cast<FILE*>(handle);
   const long curr = ftell(f);
@@ -124,15 +124,15 @@ size_t RFile::size() const {
 uint8_t RFile::peek() {
 #ifdef __WINDOWS__
   uint8_t ret = 0;
-  HANDLE  fn  = HANDLE(handle);
+  HANDLE  fh  = HANDLE(handle);
 
-  LONG current=LONG(SetFilePointer(fn,0,nullptr,FILE_CURRENT));
+  LONG current=LONG(SetFilePointer(fh,0,nullptr,FILE_CURRENT));
   if(read(&ret,1)==1) {
-    SetFilePointer(fn,current,nullptr,FILE_BEGIN);
+    SetFilePointer(fh,current,nullptr,FILE_BEGIN);
     return ret;
     }
 
-  SetFilePointer(fn,current,nullptr,FILE_BEGIN);
+  SetFilePointer(fh,current,nullptr,FILE_BEGIN);
   return 0;
 #else
   uint8_t ch=0;
@@ -146,9 +146,9 @@ uint8_t RFile::peek() {
 
 size_t RFile::seek(size_t advance) {
 #ifdef __WINDOWS__
-  HANDLE fn      = HANDLE(handle);
-  LONG   current = LONG(SetFilePointer(fn,0,nullptr,FILE_CURRENT));
-  LONG   npos    = LONG(SetFilePointer(fn,LONG(advance),nullptr,FILE_CURRENT));
+  HANDLE fh      = HANDLE(handle);
+  LONG   current = LONG(SetFilePointer(fh,0,nullptr,FILE_CURRENT));
+  LONG   npos    = LONG(SetFilePointer(fh,LONG(advance),nullptr,FILE_CURRENT));
 
   if(INVALID_SET_FILE_POINTER==DWORD(npos))
     return 0;
@@ -164,11 +164,11 @@ size_t RFile::seek(size_t advance) {
 
 size_t RFile::unget(size_t advance) {
 #ifdef __WINDOWS__
-  HANDLE fn      = HANDLE(handle);
-  LONG   current = LONG(SetFilePointer(fn,0,nullptr,FILE_CURRENT));
+  HANDLE fh      = HANDLE(handle);
+  LONG   current = LONG(SetFilePointer(fh,0,nullptr,FILE_CURRENT));
   if(LONG(advance)>current)
     advance=size_t(current);
-  LONG   npos    = LONG(SetFilePointer(fn,-LONG(advance),nullptr,FILE_CURRENT));
+  LONG   npos    = LONG(SetFilePointer(fh,-LONG(advance),nullptr,FILE_CURRENT));
 
   if(INVALID_SET_FILE_POINTER==DWORD(npos))
     return 0;

@@ -85,7 +85,7 @@ DxTexture DxAllocator::alloc(const Pixmap& pm, uint32_t mip, DXGI_FORMAT format)
   ComPtr<ID3D12Resource> ret;
 
   D3D12_RESOURCE_DESC resDesc = {};
-  resDesc.MipLevels          = mip;
+  resDesc.MipLevels          = (UINT16)mip;
   resDesc.Format             = format;
   resDesc.Width              = pm.w();
   resDesc.Height             = pm.h();
@@ -126,7 +126,7 @@ DxTexture DxAllocator::alloc(const uint32_t w, const uint32_t h, const uint32_t 
   D3D12_CLEAR_VALUE clr={};
 
   D3D12_RESOURCE_DESC resDesc = {};
-  resDesc.MipLevels          = mip;
+  resDesc.MipLevels          = (UINT16)mip;
   resDesc.Format             = Detail::nativeFormat(frm);
   resDesc.Width              = w;
   resDesc.Height             = h;

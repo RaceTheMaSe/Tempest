@@ -66,13 +66,13 @@ class AbstractListDelegate : public ListDelegate {
   protected:
     const VT& data;
 
-    void initializeItem(Ctrl* c, const T& data){
+    void initializeItem(Ctrl* c, const T& initdata){
       SizePolicy p = c->sizePolicy();
       p.typeH      = Preferred;
       p.maxSize.w  = SizePolicy::maxWidgetSize().w;
       c->setSizePolicy(p);
 
-      c->setText(textOf(data));
+      c->setText(textOf(initdata));
       }
 
     template<class C>

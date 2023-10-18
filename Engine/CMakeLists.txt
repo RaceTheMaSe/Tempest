@@ -11,14 +11,18 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(WIN32)
   option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" ON )
-else()
+  option(TEMPEST_BUILD_VULKAN      "Build vulkan support"    OFF) # optional but recommended
+  option(TEMPEST_BUILD_METAL       "Build metal support"     OFF)
+elseif(APPLE)
   option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" OFF)
-endif()
-
-if(APPLE)
   option(TEMPEST_BUILD_VULKAN      "Build vulkan support"    OFF)
   option(TEMPEST_BUILD_METAL       "Build metal support"     ON )
+elseif(ANDROID)
+  option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" OFF)
+  option(TEMPEST_BUILD_VULKAN      "Build vulkan support"    ON )
+  option(TEMPEST_BUILD_METAL       "Build metal support"     OFF)
 else()
+  option(TEMPEST_BUILD_DIRECTX12   "Build directx12 support" OFF)
   option(TEMPEST_BUILD_VULKAN      "Build vulkan support"    ON )
   option(TEMPEST_BUILD_METAL       "Build metal support"     OFF)
 endif()
@@ -130,7 +134,8 @@ file(GLOB SHADER_SOURCES
   "${PROJECT_SOURCE_DIR}/shaders/*.comp")
 
 # GLSL to SPIRV compiler
-find_program(GLSLANGVALIDATOR glslangValidator "/opt/homebrew/bin")
+set(GLSLANGVALIDATOR glslangValidator)
+#find_program(GLSLANGVALIDATOR glslangValidator "/opt/homebrew/bin")
 if(NOT GLSLANGVALIDATOR)
   message(FATAL_ERROR "glslangValidator required")
 endif()
@@ -225,8 +230,17 @@ set_target_properties(
     PUBLIC_HEADER "${PUB_HEADERS}"
     )
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  target_compile_options(${PROJECT_NAME} PUBLIC /W4)
+else()
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 if(WIN32)
-  target_link_libraries(${PROJECT_NAME} PRIVATE shlwapi kernel32 pthread)
+  target_link_libraries(${PROJECT_NAME} PRIVATE shlwapi kernel32)
+  if(IS_A_MINGW_BUILD)
+    target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
+  endif()
 elseif(ANDROID)
   target_link_libraries(${PROJECT_NAME} PRIVATE log android vulkan)
 elseif(APPLE)

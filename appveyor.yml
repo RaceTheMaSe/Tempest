@@ -43,7 +43,7 @@ install:
       }
 
     if($IsLinux) {
-      # GLSL compiller
+      # GLSL compiler
       mkdir glslang
       cd glslang
       Invoke-WebRequest -Uri https://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-linux-Release.zip -OutFile glslang-master.zip
@@ -85,7 +85,7 @@ build_script:
 test_script:
   - cmd: set Path=C:/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin;%Path%
   - cmd: cd %APPVEYOR_BUILD_FOLDER%\build\testsuite
-  # - cmd: TempestTests.exe   disable, since appveyor image doesn't have vulkan drievr anymore
+  # - cmd: TempestTests.exe   disable, since appveyor image doesn't have vulkan driver anymore
   - sh:  cd $APPVEYOR_BUILD_FOLDER/build/testsuite
   - sh:  printenv
   - sh:  ./TempestTests

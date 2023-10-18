@@ -250,7 +250,7 @@ VDevice::SwapChainSupport VDevice::querySwapChainSupport(VkPhysicalDevice device
   uint32_t presentModeCount = 0;
   vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
-  if(presentModeCount != 0 && presentModeCount != -1){
+  if(presentModeCount != 0 && presentModeCount != uint32_t(-1)){
     // with invalid surface presentModeCount was large - happened when started with screen on and came here with screen off, so surface is lost, but event not handled in androidapi, because its in the same thread as this code path
     details.presentModes.resize(presentModeCount);
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());

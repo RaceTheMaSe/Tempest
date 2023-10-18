@@ -50,11 +50,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =reinterpret_cast<const uint16_t*>(src+iy*sw);
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix+=4){
-          data0[dx  ]=src0[ix  ]/256;
-          data0[dx+1]=src0[ix+1]/256;
-          data0[dx+2]=src0[ix+2]/256;
-          data0[dx+3]=src0[ix+3]/256;
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix+=4){
+          data0[d  ]=uint8_t(src0[ix  ]/256);
+          data0[d+1]=uint8_t(src0[ix+1]/256);
+          data0[d+2]=uint8_t(src0[ix+2]/256);
+          data0[d+3]=uint8_t(src0[ix+3]/256);
           }
         }
       break;
@@ -63,11 +63,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =reinterpret_cast<const uint16_t*>(src+iy*sw);
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix+=3){
-          data0[dx  ]=src0[ix  ]/256;
-          data0[dx+1]=src0[ix+1]/256;
-          data0[dx+2]=src0[ix+2]/256;
-          data0[dx+3]=255;
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix+=3){
+          data0[d  ]=uint8_t(src0[ix  ]/256);
+          data0[d+1]=uint8_t(src0[ix+1]/256);
+          data0[d+2]=uint8_t(src0[ix+2]/256);
+          data0[d+3]=255;
           }
         }
       break;
@@ -76,11 +76,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =reinterpret_cast<const uint16_t*>(src+iy*sw);
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix+=3){
-          data0[dx  ]=src0[ix  ]/256;
-          data0[dx+1]=src0[ix  ]/256;
-          data0[dx+2]=src0[ix  ]/256;
-          data0[dx+3]=src0[ix+1]/256;
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix+=3){
+          data0[d  ]=uint8_t(src0[ix  ]/256);
+          data0[d+1]=uint8_t(src0[ix  ]/256);
+          data0[d+2]=uint8_t(src0[ix  ]/256);
+          data0[d+3]=uint8_t(src0[ix+1]/256);
           }
         }
       break;
@@ -89,11 +89,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =reinterpret_cast<const uint16_t*>(src+iy*sw);
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix++){
-          data0[dx  ]=255;
-          data0[dx+1]=255;
-          data0[dx+2]=255;
-          data0[dx+3]=src0[ix]/256;
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix++){
+          data0[d  ]=255;
+          data0[d+1]=255;
+          data0[d+2]=255;
+          data0[d+3]=uint8_t(src0[ix]/256);
           }
         }
       break;
@@ -107,11 +107,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =src+iy*sw;
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix+=3){
-          data0[dx  ]=src0[ix  ];
-          data0[dx+1]=src0[ix+1];
-          data0[dx+2]=src0[ix+2];
-          data0[dx+3]=255;
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix+=3){
+          data0[d  ]=src0[ix  ];
+          data0[d+1]=src0[ix+1];
+          data0[d+2]=src0[ix+2];
+          data0[d+3]=255;
           }
         }
       break;
@@ -120,11 +120,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =src+iy*sw;
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix+=2){
-          data0[dx  ]=src0[ix  ];
-          data0[dx+1]=src0[ix  ];
-          data0[dx+2]=src0[ix  ];
-          data0[dx+3]=src0[ix+1];
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix+=2){
+          data0[d  ]=src0[ix  ];
+          data0[d+1]=src0[ix  ];
+          data0[d+2]=src0[ix  ];
+          data0[d+3]=src0[ix+1];
           }
         }
       break;
@@ -133,11 +133,11 @@ void TextureAtlas::emplace(TextureAtlas::Allocation &dest, const void* img,
       for(uint32_t iy=0;iy<sh;++iy){
         auto data0=data+((y+iy)*dw+dx);
         auto src0 =src+iy*sw;
-        for(uint32_t ix=0,dx=0;ix<sw;dx+=4,ix++){
-          data0[dx  ]=255;
-          data0[dx+1]=255;
-          data0[dx+2]=255;
-          data0[dx+3]=src0[ix];
+        for(uint32_t ix=0,d=0;ix<sw;d+=4,ix++){
+          data0[d  ]=255;
+          data0[d+1]=255;
+          data0[d+2]=255;
+          data0[d+3]=src0[ix];
           }
         }
       break;

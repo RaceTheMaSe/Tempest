@@ -226,7 +226,7 @@ void TextModel::paint(Painter& p, const Color& color, int x, int y) const {
   paint(p,fnt,color,x,y);
   }
 
-void TextModel::paint(Painter &p, const Font& fnt, const Color& color, int fx, int fy) const {
+void TextModel::paint(Painter &p, const Font& font, const Color& color, int fx, int fy) const {
   auto x = float(fx);
   auto y = float(fy);
 
@@ -240,11 +240,11 @@ void TextModel::paint(Painter &p, const Font& fnt, const Color& color, int fx, i
       }
     if(ch=='\n'){
       x =  0;
-      y += fnt.pixelSize();
+      y += font.pixelSize();
       continue;
       }
 
-    auto l=fnt.letter(ch,p);
+    auto l=font.letter(ch,p);
     if(!l.view.isEmpty()) {
       p.setBrush(Brush(l.view,color,PaintDevice::Alpha));
       p.drawRect(int(x+(float)l.dpos.x),int(y+(float)l.dpos.y),l.view.w(),l.view.h());
@@ -259,7 +259,7 @@ void TextModel::calcSize() const {
   sz = calcSize(fnt);
   }
 
-TextModel::Sz TextModel::calcSize(const Font& fnt) const {
+TextModel::Sz TextModel::calcSize(const Font& font) const {
   float x=0, w=0;
   int   y=0, top=0;
 
@@ -270,19 +270,19 @@ TextModel::Sz TextModel::calcSize(const Font& fnt) const {
       w = std::max(w,x);
       x = 0;
       y = 0;
-      top+=int(fnt.pixelSize());
+      top+=int(font.pixelSize());
       } else {
-      auto l=fnt.letterGeometry(ch);
+      auto l=font.letterGeometry(ch);
       x += (float)l.advance.x;
       y =  std::max(-l.dpos.y,y);
       }
     }
   w = std::max(w,x);
 
-  Sz sz;
-  sz.wrapHeight=y+top;
-  sz.sizeHint  =Size(int(std::ceil(w)),top+int(fnt.pixelSize()));
-  return sz;
+  Sz s;
+  s.wrapHeight=y+top;
+  s.sizeHint  =Size(int(std::ceil(w)),top+int(font.pixelSize()));
+  return s;
   }
 
 void TextModel::buildIndex() {

@@ -87,10 +87,10 @@ struct FontElement::LetterTable {
 
   template<size_t lvl>
   Letter* implFind(Detail::Bucket<lvl>& b,const uint8_t* k,bool create){
-    auto& ptr = b.next[*k];
-    if(ptr==nullptr && create)
-      ptr.reset(new Detail::Bucket<lvl-1>());
-    if(ptr==nullptr)
+    auto& p = b.next[*k];
+    if(p==nullptr && create)
+      p.reset(new Detail::Bucket<lvl-1>());
+    if(p==nullptr)
       return nullptr;
     return implFind(*b.next[*k],k+1,create);
     }
@@ -148,17 +148,17 @@ struct FontElement::Impl {
     return rasterBuf;
     }
 
-  uint8_t* getGlyphBitmapSubpixel(stbtt_fontinfo *info,
+  uint8_t* getGlyphBitmapSubpixel(stbtt_fontinfo *finfo,
                                   float scale,int  glyph,
                                   int&  width,int& height,
                                   int&  xoff, int& yoff) {
     assert(scale>0.f);
 
     stbtt_vertex *vertices = nullptr;
-    int num_verts = stbtt_GetGlyphShape(info, glyph, &vertices);
+    int num_verts = stbtt_GetGlyphShape(finfo, glyph, &vertices);
 
     int ix0=0,iy0=0,ix1=0,iy1=0;
-    stbtt_GetGlyphBitmapBoxSubpixel(info, glyph, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, &ix0,&iy0,&ix1,&iy1);
+    stbtt_GetGlyphBitmapBoxSubpixel(finfo, glyph, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, &ix0,&iy0,&ix1,&iy1);
 
     stbtt__bitmap gbm={};
     // now we get the size
@@ -175,11 +175,11 @@ struct FontElement::Impl {
       gbm.pixels = ttfMalloc(size_t(gbm.w)*size_t(gbm.h));
       if(gbm.pixels!=nullptr) {
         gbm.stride = gbm.w;
-        stbtt_Rasterize(&gbm, 0.35f, vertices, num_verts, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, ix0, iy0, 1, info->userdata);
+        stbtt_Rasterize(&gbm, 0.35f, vertices, num_verts, scale, scale, 0.f/*shift_x*/, 0.f/*shift_y*/, ix0, iy0, 1, finfo->userdata);
         }
       }
 
-    STBTT_free(vertices,info->userdata);
+    STBTT_free(vertices,finfo->userdata);
     return gbm.pixels;
     }
 
@@ -188,10 +188,10 @@ struct FontElement::Impl {
     return l;
     }
 
-  const Letter& letter(char32_t ch,float size,TextureAtlas* tex) {
+  const Letter& letter(char32_t ch,float sz,TextureAtlas* tex) {
     {
     std::lock_guard<std::mutex> guard(syncMap);
-    auto cc=map.find(size,ch);
+    auto cc=map.find(sz,ch);
     if(cc!=nullptr){
       if(cc->hasView || tex==nullptr)
         return *cc;
@@ -200,11 +200,11 @@ struct FontElement::Impl {
 
     if(this->size==0)
       return nullLater();
-    return allocLetter(ch,size,tex,false);
+    return allocLetter(ch,sz,tex,false);
     }
 
-  const Letter& allocLetter(char32_t ch,float size,TextureAtlas* tex,bool fallback) {
-    const float scale = stbtt_ScaleForPixelHeight(&info,size); //size/(ascent-descent);
+  const Letter& allocLetter(char32_t ch,float sz,TextureAtlas* tex,bool fallbackLetter) {
+    const float scale = stbtt_ScaleForPixelHeight(&info,sz); //sz/(ascent-descent);
     if(!(scale>0.f))
       return nullLater();
 
@@ -231,13 +231,13 @@ struct FontElement::Impl {
       }
 
     if((w<=0 || h<=0) && ax==0) {
-      if(!fallback)
-        return allocFallbackLetter(ch,size,tex);
+      if(!fallbackLetter)
+        return allocFallbackLetter(ch,sz,tex);
       return nullLater();
       }
 
     std::lock_guard<std::mutex> guard(syncMap);
-    Letter& lt = map.at(size,ch);
+    Letter& lt = map.at(sz,ch);
     lt.view    = std::move(spr);
     lt.size    = Size(w,h);
     lt.dpos    = Point(dx,dy);
@@ -246,7 +246,7 @@ struct FontElement::Impl {
     return lt;
     }
 
-  const Letter& allocFallbackLetter(char32_t ch,float size,TextureAtlas* tex) {
+  const Letter& allocFallbackLetter(char32_t ch,float sz,TextureAtlas* tex) {
     try {
       std::lock_guard<std::mutex> guard(syncMap);
       if(fallback==nullptr){
@@ -255,8 +255,8 @@ struct FontElement::Impl {
           throw std::system_error(Tempest::SystemErrc::UnableToLoadAsset);
         }
 
-      Letter  lf = fallback->allocLetter(ch,size,tex,true);
-      Letter& lt = map.at(size,ch);
+      Letter  lf = fallback->allocLetter(ch,sz,tex,true);
+      Letter& lt = map.at(sz,ch);
       lt = lf;
       return lt;
       }
@@ -265,10 +265,10 @@ struct FontElement::Impl {
       }
     }
 
-  Metrics       metrics(float size) const {
+  Metrics       metrics(float sz) const {
     if(this->size==0)
       return {};
-    const float scale = stbtt_ScaleForPixelHeight(&info,size);
+    const float scale = stbtt_ScaleForPixelHeight(&info,sz);
     Metrics m = metrics0;
     m.ascent  = int((float)m.ascent*scale);
     m.descent = int((float)m.descent*scale);

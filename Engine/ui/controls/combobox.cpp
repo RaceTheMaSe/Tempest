@@ -188,10 +188,10 @@ void ComboBox::openMenu() {
 
   Widget* root = this;
   while(true) {
-    auto ow = root->owner();
-    if(ow==nullptr)
+    auto o = root->owner();
+    if(o==nullptr)
       break;
-    root = ow;
+    root = o;
     }
 
   auto at = this->mapToRoot(Point(0,0));

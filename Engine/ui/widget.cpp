@@ -123,12 +123,12 @@ void Widget::freeLayout() noexcept {
   }
 
 void Widget::implDisableSum(Widget *root,int diff) noexcept {
-  root->astate.disable += diff;
+  root->astate.disable += (uint16_t)diff;
 
   const std::vector<Widget*> & w = root->wx;
 
-  for( Widget* wx:w )
-    implDisableSum(wx,diff);
+  for( Widget* wg:w )
+    implDisableSum(wg,diff);
   }
 
 void Widget::dispatchPaintEvent(PaintEvent& e) {
@@ -139,21 +139,21 @@ void Widget::dispatchPaintEvent(PaintEvent& e) {
 void Widget::paintNested(PaintEvent& e) {
   Widget::Iterator it(this);
   for(;it.hasNext();it.next()) {
-    Widget& wx=*it.get();
-    if(!wx.isVisible())
+    Widget& wg=*it.get();
+    if(!wg.isVisible())
       continue;
 
     Rect r = e.viewPort();
-    r.x -= wx.x();
-    r.y -= wx.y();
-    Rect sc = r.intersected(Rect(0,0,wx.w(),wx.h()));
+    r.x -= wg.x();
+    r.y -= wg.y();
+    Rect sc = r.intersected(Rect(0,0,wg.w(),wg.h()));
 
     if(sc.isEmpty())
       continue;
 
-    PaintEvent ex(e,wx.x(),wx.y(),sc.x,sc.y,sc.w,sc.h);
-    wx.astate.needToUpdate = false;
-    wx.dispatchPaintEvent(ex);
+    PaintEvent ex(e,wg.x(),wg.y(),sc.x,sc.y,sc.w,sc.h);
+    wg.astate.needToUpdate = false;
+    wg.dispatchPaintEvent(ex);
     }
   }
 
@@ -161,9 +161,9 @@ void Widget::dispatchPolishEvent(PolishEvent& e) {
   polishEvent(e);
   Widget::Iterator it(this);
   for(;it.hasNext();it.next()) {
-    Widget& wx=*it.get();
-    if(wx.stl==nullptr)
-      wx.dispatchPolishEvent(e);
+    Widget& wg=*it.get();
+    if(wg.stl==nullptr)
+      wg.dispatchPolishEvent(e);
     }
   }
 
@@ -232,10 +232,10 @@ Widget& Widget::implAddWidget(Widget *w,size_t at) {
 
 Widget *Widget::takeWidget(Widget *w) {
   if(astate.focus==w) {
-    auto wx = this;
-    while(wx!=nullptr){
-      wx->astate.focus=nullptr;
-      wx = wx->owner();
+    auto wg = this;
+    while(wg!=nullptr){
+      wg->astate.focus=nullptr;
+      wg = wg->owner();
       }
     }
   if(astate.disable>0)
@@ -500,10 +500,10 @@ void Widget::implSetFocus(Widget* Additive::*add, bool WidgetState::*flag, bool 
         }
 
       if(value) {
-        Widget* w = this;
-        while(w->owner()) {
-          w->owner()->astate.*add=w;
-          w = w->owner();
+        Widget* wg = this;
+        while(wg->owner()) {
+          wg->owner()->astate.*add=wg;
+          wg = wg->owner();
           }
         next->wstate.*flag=true;
         } else {
@@ -571,14 +571,14 @@ void Widget::update() noexcept {
     if(w->astate.needToUpdate)
       return;
     w->astate.needToUpdate=true;
-    auto ow = w->owner();
-    if(ow==nullptr) {
+    auto owg = w->owner();
+    if(owg==nullptr) {
       if(auto overlay = dynamic_cast<UiOverlay*>(w)){
         overlay->updateWindow();
         }
       return;
       }
-    w = ow;
+    w = owg;
     }
   }
 

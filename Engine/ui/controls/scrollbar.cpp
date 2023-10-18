@@ -46,20 +46,20 @@ void ScrollBar::implSetOrientation(Orientation ori) {
   }
 
 ScrollBar::Elements ScrollBar::elements() const {
-  const auto stl = style().visibleElements();
+  const auto stle = style().visibleElements();
   uint8_t smask = 0;
   if(orientation()==Vertical) {
-    if(stl&Style::E_ArrowUp)
+    if(stle&Style::E_ArrowUp)
       smask |= Elt_Dec;
-    if(stl&Style::E_ArrowDown)
+    if(stle&Style::E_ArrowDown)
       smask |= Elt_Inc;
     } else {
-    if(stl&Style::E_ArrowLeft)
+    if(stle&Style::E_ArrowLeft)
       smask |= Elt_Dec;
-    if(stl&Style::E_ArrowRight)
+    if(stle&Style::E_ArrowRight)
       smask |= Elt_Inc;
     }
-  if(stl&Style::E_CentralButton)
+  if(stle&Style::E_CentralButton)
     smask |= Elt_Cen;
   return Elements(eltMask & smask);
   }
@@ -228,8 +228,8 @@ void ScrollBar::decL() {
   }
 
 Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
-  const int  wx       = (orient==Orientation::Vertical) ? w() : h();
-  const int  sz       = std::max((orient==Orientation::Vertical) ? h() : w(), wx*2);
+  const int  wdth     = (orient==Orientation::Vertical) ? w() : h();
+  const int  sz       = std::max((orient==Orientation::Vertical) ? h() : w(), wdth*2);
   const auto elements = this->elements();
 
   switch(e) {
@@ -238,14 +238,14 @@ Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
     case Elt_Dec: {
       if((elements&Elt_Dec)==0)
         return {};
-      return {0,0,wx,wx};
+      return {0,0,wdth,wdth};
       }
     case Elt_Inc: {
       if((elements&Elt_Inc)==0)
         return {};
       if(orient==Orientation::Vertical)
-        return {0,sz-wx,wx,wx}; else
-        return {sz-wx,0,wx,wx};
+        return {0,sz-wdth,wdth,wdth}; else
+        return {sz-wdth,0,wdth,wdth};
       }
     case Elt_Space: {
       int x     = 0;
@@ -253,11 +253,11 @@ Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
       if((elements&Elt_Cen)==0)
         return {};
       if((elements&Elt_Inc)!=0) {
-        space -= wx;
-        x+=wx;
+        space -= wdth;
+        x+=wdth;
         }
       if((elements&Elt_Dec)!=0)
-        space -= wx;
+        space -= wdth;
 
       if(orient==Orientation::Vertical)
         return {0,x,w(),space}; else
@@ -268,15 +268,15 @@ Rect ScrollBar::elementRect(ScrollBar::Elements e) const {
       if((elements&Elt_Cen)==0)
         return {};
       if((elements&Elt_Inc)!=0)
-        space -= wx;
+        space -= wdth;
       if((elements&Elt_Dec)!=0)
-        space -= wx;
+        space -= wdth;
 
       int cen   = std::min(cenBtnSize,space);
       float k = (float)mValue/float(rmax-rmin);
       int   x = int(float(space-cen)*k);
       if((elements&Elt_Inc)!=0)
-        x+=wx;
+        x+=wdth;
 
       if(orient==Orientation::Vertical)
         return {0,x,w(),cen}; else

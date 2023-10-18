@@ -150,43 +150,43 @@ Widget *Menu::createItems(const std::vector<Item>& items) {
   return list;
   }
 
-Widget *Menu::createItem(const Menu::Item &decl) {
-  auto* b = new ItemButton(decl.items);
+Widget *Menu::createItem(const Menu::Item &declr) {
+  auto* b = new ItemButton(declr.items);
 
-  b->setText(decl.text);
-  b->setExtraText(decl.text2);
-  b->setIcon(decl.icon);
-  b->onClick.bind(&decl.activated,&Signal<void()>::operator());
+  b->setText(declr.text);
+  b->setExtraText(declr.text2);
+  b->setIcon(declr.icon);
+  b->onClick.bind(&declr.activated,&Signal<void()>::operator());
   b->onClick.bind(this,&Menu::close);
   b->onMouseEnter.bind(this,&Menu::openSubMenu);
 
   return b;
   }
 
-void Menu::openSubMenu(const Declarator &decl, Widget &owner) {
-  if(panels.size()<=decl.level)
-    panels.resize(decl.level+1);
+void Menu::openSubMenu(const Declarator &declr, Widget &owner) {
+  if(panels.size()<=declr.level)
+    panels.resize(declr.level+1);
 
-  for(size_t i=decl.level;i<panels.size(); ++i){
+  for(size_t i=declr.level;i<panels.size(); ++i){
     if(panels[i].widget!=nullptr) {
       delete panels[i].widget;
       panels[i].widget = nullptr;
       }
     }
 
-  if(!overlay || overlay->owner==nullptr || decl.items.size()==0)
+  if(!overlay || overlay->owner==nullptr || declr.items.size()==0)
     return;
 
-  Widget *box = createDropList(*overlay->owner,false,decl.items);
+  Widget *box = createDropList(*overlay->owner,false,declr.items);
   if(!box)
     return;
   box->setEnabled(owner.isEnabled());
-  Widget* root = decl.level>0 ? panels[decl.level-1].widget : nullptr;
+  Widget* root = declr.level>0 ? panels[declr.level-1].widget : nullptr;
 
-  panels[decl.level].widget = box;
+  panels[declr.level].widget = box;
   if(root!=nullptr)
-    panels[decl.level].pos = Point(root->w(),owner.y()); else
-    panels[decl.level].pos = Point(owner.w(),0);
+    panels[declr.level].pos = Point(root->w(),owner.y()); else
+    panels[declr.level].pos = Point(owner.w(),0);
   overlay->addWidget(box);
   box->setFocus(true);
   overlay->invalidatePos();
@@ -211,9 +211,9 @@ void Menu::setupMenuPanel(Widget& box) {
   box.setFocus(true);
   }
 
-void Menu::initMenuLevels(Menu::Declarator &decl) {
-  for(Item& i:decl.items){
-    i.items.level = decl.level+1;
+void Menu::initMenuLevels(Menu::Declarator &declr) {
+  for(Item& i:declr.items){
+    i.items.level = declr.level+1;
     initMenuLevels(i.items);
     }
   }

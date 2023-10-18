@@ -63,7 +63,7 @@ static Atom& _NET_WM_STATE(){
   return w;
   }
 
-static Atom& _NET_WM_STATE_MAXIMIZED_HORZ(){
+/*static Atom& _NET_WM_STATE_MAXIMIZED_HORZ(){
   static Atom w  = XInternAtom( dpy, "_NET_WM_STATE_MAXIMIZED_HORZ", 0);
   return w;
   }
@@ -71,7 +71,7 @@ static Atom& _NET_WM_STATE_MAXIMIZED_HORZ(){
 static Atom& _NET_WM_STATE_MAXIMIZED_VERT(){
   static Atom w  = XInternAtom( dpy, "_NET_WM_STATE_MAXIMIZED_VERT", 0);
   return w;
-  }
+  }*/
 
 static Atom& _NET_WM_STATE_FULLSCREEN(){
   static Atom w  = XInternAtom( dpy, "_NET_WM_STATE_FULLSCREEN", 0);
@@ -97,7 +97,7 @@ static Event::MouseButton toButton( XButtonEvent& msg ){
   return Event::ButtonNone;
   }
 
-static void maximizeWindow(HWND& w) {
+/*static void maximizeWindow(HWND& w) {
   Atom a[2];
   a[0] = _NET_WM_STATE_MAXIMIZED_HORZ();
   a[1] = _NET_WM_STATE_MAXIMIZED_VERT();
@@ -105,7 +105,7 @@ static void maximizeWindow(HWND& w) {
   XChangeProperty ( dpy, w, _NET_WM_STATE(),
     XA_ATOM, 32, PropModeReplace, reinterpret_cast<const unsigned char*>(a), 2);
   XSync(dpy,False);
-  }
+  }*/
 
 X11Api::X11Api() {
   static const TranslateKeyPair k[] = {

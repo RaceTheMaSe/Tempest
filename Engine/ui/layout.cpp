@@ -80,10 +80,10 @@ void Layout::bind(Widget *wx) {
   applyLayout();
   }
 
-void LinearLayout::applyLayout(Widget &w, Orientation ori) {
-  if(ori==Horizontal)
-    implApplyLayout<true>(w); else
-    implApplyLayout<false>(w);
+void LinearLayout::applyLayout(Widget &wg, Orientation o) {
+  if(o==Horizontal)
+    implApplyLayout<true>(wg); else
+    implApplyLayout<false>(wg);
   }
 
 template<bool hor>

@@ -118,13 +118,13 @@ void Sound::implLoad(IDevice &f) {
   WAVEHeader header={};
   FmtChunk   fmt={};
   size_t     dataSize=0;
-  std::unique_ptr<char[]> data = readWAVFull(mem,header,fmt,dataSize);
+  std::unique_ptr<char[]> sdata = readWAVFull(mem,header,fmt,dataSize);
 
   int format=0;
-  if(data) {
+  if(sdata) {
     switch(fmt.bitsPerSample) {
       case 4:
-        decodeAdPcm(fmt,reinterpret_cast<uint8_t*>(data.get()),uint32_t(dataSize),uint32_t(-1));
+        decodeAdPcm(fmt,reinterpret_cast<uint8_t*>(sdata.get()),uint32_t(dataSize),uint32_t(-1));
         return;
       case 8:
         format = (fmt.channels==1) ? AL_FORMAT_MONO8  : AL_FORMAT_STEREO8;
@@ -136,7 +136,7 @@ void Sound::implLoad(IDevice &f) {
         return;
       }
 
-    upload(data.get(),format,dataSize,fmt.samplesPerSec);
+    upload(sdata.get(),format,dataSize,fmt.samplesPerSec);
     }
   }
 
@@ -261,7 +261,7 @@ int Sound::decodeAdPcmBlock(int16_t *outbuf, const uint8_t *inbuf, size_t inbufs
         if (*inbuf & 8) delta = -delta;
 
         pcmdata[ch] += delta;
-        index  [ch] += indexTable[*inbuf & 0x7];
+        index  [ch] += int8_t(indexTable[*inbuf & 0x7]);
         index  [ch] = std::min<int8_t>(std::max<int8_t>(index[ch],0),88);
         pcmdata[ch] = std::min(std::max(pcmdata[ch],-32768),32767);
         outbuf[i*2*channels] = int16_t(pcmdata[ch]);
@@ -275,7 +275,7 @@ int Sound::decodeAdPcmBlock(int16_t *outbuf, const uint8_t *inbuf, size_t inbufs
         if (*inbuf & 0x80) delta = -delta;
 
         pcmdata[ch] += delta;
-        index  [ch] += indexTable[(*inbuf >> 4) & 0x7];
+        index  [ch] += int8_t(indexTable[(*inbuf >> 4) & 0x7]);
         index  [ch] = std::min<int8_t>(std::max<int8_t>(index[ch],0),88);
         pcmdata[ch] = std::min(std::max(pcmdata[ch],-32768),32767);
         outbuf [(i*2+1)*channels] = int16_t(pcmdata[ch]);

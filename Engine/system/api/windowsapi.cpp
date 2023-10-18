@@ -256,11 +256,11 @@ void WindowsApi::implProcessEvents(SystemApi::AppCallBack& cb) {
     if(cb.onTimer()==0)
       std::this_thread::yield();
     for(auto& i:windows) {
-      HWND             h  = HWND(i);
-      Tempest::Window* cb = reinterpret_cast<Tempest::Window*>(GetWindowLongPtr(h,GWLP_USERDATA));
-      LONG             s  = GetWindowLongA(h,GWL_STYLE);
-      if(cb && 0==(s&WS_MINIMIZE))
-        SystemApi::dispatchRender(*cb);
+      HWND             h   = HWND(i);
+      Tempest::Window* cbw = reinterpret_cast<Tempest::Window*>(GetWindowLongPtr(h,GWLP_USERDATA));
+      LONG             s   = GetWindowLongA(h,GWL_STYLE);
+      if(cbw && 0==(s&WS_MINIMIZE))
+        SystemApi::dispatchRender(*cbw);
       }
     }
   }

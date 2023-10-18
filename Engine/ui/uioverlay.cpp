@@ -17,8 +17,8 @@ void UiOverlay::updateWindow() {
   }
 
 bool UiOverlay::bind(Widget& w) {
-  if(auto wx = dynamic_cast<Window*>(&w))
-    return bind(*wx);
+  if(auto wnd = dynamic_cast<Window*>(&w))
+    return bind(*wnd);
   return false;
   }
 

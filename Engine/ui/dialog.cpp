@@ -11,34 +11,34 @@ struct Dialog::LayShadow : Tempest::Layout {
   bool hasLay = false;
 
   void applyLayout() override {
-    Widget& ow    = *owner();
-    size_t  count = ow.widgetsCount();
+    Widget& owg   = *owner();
+    size_t  count = owg.widgetsCount();
 
-    if(hasLay || ow.size().isEmpty())
+    if(hasLay || owg.size().isEmpty())
       return;
 
     const bool sendShowEvent = !hasLay;
     hasLay = true;
 
     for(size_t i=0;i<count;++i){
-      Widget& w = ow.widget(i);
+      Widget& wg = owg.widget(i);
 
       if(sendShowEvent) {
-        if(auto d = dynamic_cast<Dialog*>(&w))
+        if(auto d = dynamic_cast<Dialog*>(&wg))
           d->showEvent();
         }
 
-      Point pos = w.pos();
-      if(w.x()+w.w()>ow.w())
-        pos.x = ow.w()-w.w();
-      if(w.y()+w.h()>ow.h())
-        pos.y = ow.h()-w.h();
+      Point pos = wg.pos();
+      if(wg.x()+wg.w()>owg.w())
+        pos.x = owg.w()-wg.w();
+      if(wg.y()+wg.h()>owg.h())
+        pos.y = owg.h()-wg.h();
       if(pos.x<=0)
         pos.x = 0;
       if(pos.y<=0)
         pos.y = 0;
 
-      w.setPosition(pos);
+      wg.setPosition(pos);
       }
     }
   };
@@ -53,13 +53,13 @@ struct Dialog::Overlay : public Tempest::UiOverlay {
       e.accept(); else
       e.ignore();
     if(dlg.popup) {
-      CloseEvent e;
-      e.accept();
-      dlg.closeEvent(e);
-      if(e.isAccepted()) {
+      CloseEvent ce;
+      ce.accept();
+      dlg.closeEvent(ce);
+      if(ce.isAccepted()) {
         dlg.close();
         } else {
-        e.accept();
+        ce.accept();
         }
       }
     }
@@ -179,7 +179,7 @@ void Dialog::keyUpEvent(KeyEvent& e) {
   }
 
 void Dialog::keyDownEvent(GamepadKeyEvent &e) {
-  if(e.key==GamepadKeyEvent::G_B || GamepadKeyEvent::G_Start) // and other cancel keys
+  if(e.key==GamepadKeyEvent::G_B || e.key==GamepadKeyEvent::G_Start) // and other cancel keys
     close();
 }
 
@@ -201,9 +201,9 @@ void Dialog::paintShadow(PaintEvent &e) {
   }
 
 void Dialog::showEvent() {
-  auto& ow = *owner();
+  auto& owg = *owner();
   Point pos;
-  pos.x = (ow.w()-this->w())/2;
-  pos.y = (ow.h()-this->h())/2;
+  pos.x = (owg.w()-this->w())/2;
+  pos.y = (owg.h()-this->h())/2;
   setPosition(pos);
   }

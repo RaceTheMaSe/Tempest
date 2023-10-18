@@ -128,8 +128,8 @@ struct SoundEffect::Impl {
     source=0;
     }
 
-  void renderSound(SoundProducer& src,int16_t* data,size_t sz) noexcept {
-    src.renderSound(data,sz);
+  void renderSound(SoundProducer& src,int16_t* sdata,size_t sz) noexcept {
+    src.renderSound(sdata,sz);
     }
 
   void setPause(bool b) {

@@ -138,22 +138,22 @@ void UploadEngine<Device,CommandBuffer,Fence,Buffer>::waitFor(AbstractGraphicsAp
   }
 
 template<class Device, class CommandBuffer, class Fence, class Buffer>
-void UploadEngine<Device,CommandBuffer,Fence,Buffer>::submit(std::unique_ptr<Commands>&& cmd) {
-  device.submit(*cmd,cmd->fence);
+void UploadEngine<Device,CommandBuffer,Fence,Buffer>::submit(std::unique_ptr<Commands>&& c) {
+  device.submit(*c,c->fence);
 
   std::lock_guard<SpinLock> guard(sync);
-  this->cmd.push_back(std::move(cmd));
+  this->cmd.push_back(std::move(c));
   hasWaits = true;
   }
 
 template<class Device, class CommandBuffer, class Fence, class Buffer>
-void UploadEngine<Device,CommandBuffer,Fence,Buffer>::submitAndWait(std::unique_ptr<Commands>&& cmd) {
-  device.submit(*cmd,cmd->fence);
-  cmd->fence.wait();
-  cmd->reset();
+void UploadEngine<Device,CommandBuffer,Fence,Buffer>::submitAndWait(std::unique_ptr<Commands>&& c) {
+  device.submit(*c,c->fence);
+  c->fence.wait();
+  c->reset();
 
   std::lock_guard<SpinLock> guard(sync);
-  this->cmd.push_back(std::move(cmd));
+  this->cmd.push_back(std::move(c));
   }
 
 template<class Device, class CommandBuffer, class Fence, class Buffer>

@@ -22,6 +22,7 @@ static D3D12_SHADER_VISIBILITY nativeFormat(ShaderReflection::Stage stage){
       return D3D12_SHADER_VISIBILITY_GEOMETRY;
     case ShaderReflection::Stage::Compute:
       return D3D12_SHADER_VISIBILITY_ALL;
+    default: break;
     }
   return D3D12_SHADER_VISIBILITY_ALL;
   }
@@ -84,20 +85,20 @@ size_t DxPipelineLay::descriptorsCount() {
   return lay.size();
   }
 
-void DxPipelineLay::init(const std::vector<Binding>& lay, const ShaderReflection::PushBlock& pb) {
+void DxPipelineLay::init(const std::vector<Binding>& layer, const ShaderReflection::PushBlock& pb) {
   auto& device = *dev.device;
   descSize = device.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
   smpSize  = device.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
   uint32_t lastBind=0;
-  for(auto& i:lay)
+  for(auto& i:layer)
     lastBind = std::max(lastBind,i.layout);
-  if(lay.size()>0)
+  if(layer.size()>0)
     prm.resize(lastBind+1);
 
   std::vector<Parameter> desc;
-  for(size_t i=0;i<lay.size();++i) {
-    auto& l = lay[i];
+  for(size_t i=0;i<layer.size();++i) {
+    auto& l = layer[i];
     if(l.stage==ShaderReflection::Stage(0))
       continue;
     switch(l.cls) {
